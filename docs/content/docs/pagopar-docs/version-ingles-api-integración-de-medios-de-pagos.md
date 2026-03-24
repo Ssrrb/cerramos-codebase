@@ -1,3 +1,7 @@
+---
+title: "(Versión Inglés) API - Steps to integrate Pagopar to my website"
+---
+
 # (Versión Inglés) API - Steps to integrate Pagopar to my website
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/version-ingles-api-integraci%C3%B3n-de-medios-de-pagos

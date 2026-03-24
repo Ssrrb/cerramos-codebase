@@ -1,3 +1,7 @@
+---
+title: "Obtener datos del comercio"
+---
+
 # Obtener datos del comercio
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/datos-del-comercio

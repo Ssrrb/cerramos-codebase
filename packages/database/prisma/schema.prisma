@@ -161,6 +161,7 @@ model ProductLink {
   commerce        Commerce              @relation(fields: [commerceId], references: [id], onDelete: Cascade)
   variants        ProductVariantOption[]
   orders          Order[]
+  orderItems      OrderItem[]
 }
 
 model ProductVariantOption {

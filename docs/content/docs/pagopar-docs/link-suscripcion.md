@@ -1,3 +1,7 @@
+---
+title: "Link de suscripción"
+---
+
 # Link de suscripción
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/link-suscripcion

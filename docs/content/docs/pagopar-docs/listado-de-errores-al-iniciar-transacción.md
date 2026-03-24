@@ -1,3 +1,7 @@
+---
+title: "Listado de errores al iniciar transacción"
+---
+
 # Listado de errores al iniciar transacción
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/listado-de-errores-al-iniciar-transacci%C3%B3n

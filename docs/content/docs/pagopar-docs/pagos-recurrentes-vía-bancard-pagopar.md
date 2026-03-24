@@ -1,3 +1,7 @@
+---
+title: "Pagos Recurrentes vía Bancard/Pagopar"
+---
+
 # Pagos Recurrentes vía Bancard/Pagopar
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/pagos-recurrentes-v%C3%ADa-bancard-pagopar

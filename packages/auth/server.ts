@@ -54,12 +54,14 @@ export const currentUser = async (): Promise<AuthUser | null> => null;
 
 export const clerkClient = async () => ({
   organizations: {
-    getOrganizationMembershipList: async () => ({
+    getOrganizationMembershipList: async (
+      _options?: Record<string, unknown>
+    ) => ({
       data: [] as OrganizationMembership[],
     }),
   },
   users: {
-    getUserList: async () => ({
+    getUserList: async (_options?: Record<string, unknown>) => ({
       data: [] as AuthUser[],
     }),
   },

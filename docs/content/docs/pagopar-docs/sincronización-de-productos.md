@@ -1,3 +1,7 @@
+---
+title: "Sincronización de productos"
+---
+
 # Sincronización de productos
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/sincronizaci%C3%B3n-de-productos

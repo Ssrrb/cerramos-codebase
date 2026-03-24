@@ -1,3 +1,7 @@
+---
+title: "API - Integración de medios de pagos"
+---
+
 # API - Integración de medios de pagos
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/api-integracion-medios-pagos

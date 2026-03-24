@@ -1,3 +1,7 @@
+---
+title: "Reversar un pedido pagado"
+---
+
 # Reversar un pedido pagado
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/reversar-un-pedido-pagado

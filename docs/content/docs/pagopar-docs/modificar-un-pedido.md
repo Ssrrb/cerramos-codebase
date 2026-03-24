@@ -1,3 +1,7 @@
+---
+title: "Modificar un pedido"
+---
+
 # Modificar un pedido
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/modificar-un-pedido

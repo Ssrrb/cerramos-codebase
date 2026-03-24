@@ -1,3 +1,7 @@
+---
+title: "Catastro de tarjetas - Pagos recurrentes - Preautorización"
+---
+
 # Catastro de tarjetas - Pagos recurrentes - Preautorización
 
 - Source: https://soporte.pagopar.com/portal/es/kb/articles/catastro-tarjetas-pagos-recurrentes-preautorizacion

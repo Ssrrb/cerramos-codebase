@@ -21,7 +21,7 @@ const apps = [
     name: "app",
     title: "Lightning-fast app template",
     description:
-      "Start building your app with a shadcn/ui template that's already set up with everything you need — Tailwind, Clerk and more.",
+      "Start building your app with a shadcn/ui template that's already set up with everything you need — Tailwind, Better Auth, Drizzle and more.",
     image: AppImage,
   },
   {

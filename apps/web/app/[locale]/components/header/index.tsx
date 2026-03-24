@@ -13,9 +13,10 @@ import { LanguageSwitcher } from "./language-switcher";
 
 interface HeaderProps {
   dictionary: Dictionary;
+  isAuthenticated: boolean;
 }
 
-export const Header = ({ dictionary }: HeaderProps) => {
+export const Header = ({ dictionary, isAuthenticated }: HeaderProps) => {
   const navigationItems = [
     {
       title: dictionary.web.header.home,
@@ -124,13 +125,17 @@ export const Header = ({ dictionary }: HeaderProps) => {
           <div className="hidden md:inline">
             <ModeToggle />
           </div>
-          <Button asChild className="hidden md:inline" variant="outline">
-            <Link href={`${env.NEXT_PUBLIC_APP_URL}/sign-in`}>
-              {dictionary.web.header.signIn}
-            </Link>
-          </Button>
+          {!isAuthenticated && (
+            <Button asChild className="hidden md:inline" variant="outline">
+              <Link href={`${env.NEXT_PUBLIC_APP_URL}/sign-in`}>
+                {dictionary.web.header.signIn}
+              </Link>
+            </Button>
+          )}
           <Button asChild>
-            <Link href={`${env.NEXT_PUBLIC_APP_URL}/sign-up`}>
+            <Link
+              href={`${env.NEXT_PUBLIC_APP_URL}${isAuthenticated ? "" : "/sign-up"}`}
+            >
               {dictionary.web.header.signUp}
             </Link>
           </Button>

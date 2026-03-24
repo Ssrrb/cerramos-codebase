@@ -35,20 +35,23 @@ analytics?.capture({
 });
 ```
 
-## Webhooks
+## Server Events
 
-To automatically capture authentication and payment events, we've combined PostHog's Node.js server-side library with Clerk and Stripe webhooks to wire it up as follows:
+To automatically capture authentication and payment events, combine PostHog's server-side library with Better Auth callbacks or route handlers in the `app` app and Stripe webhooks in the `api` app:
 
 <Mermaid chart={`
 graph TD
-  A[User Action in App] -->|Triggers| B[Auth Webhook]
+  A[User Action in App] -->|Triggers| B[Better Auth Handler]
   A -->|Triggers| E[Payments Webhook]
   A -->|Client-Side Call| PostHog
-  B -->|Sends Data| C1[webhooks/auth]
+  B -->|Sends Data| C1[api/auth]
   E -->|Sends Data| C2[webhooks/payments]
 
-  subgraph API
+  subgraph App
     C1
+  end
+
+  subgraph API
     C2
   end
 

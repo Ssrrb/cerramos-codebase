@@ -1,7 +1,7 @@
 import { auth } from "@repo/auth/server";
 import { database, schema } from "@repo/database";
 import { ilike } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { Header } from "../components/header";
 
 interface SearchPageProperties {
@@ -31,7 +31,7 @@ const SearchPage = async ({ searchParams }: SearchPageProperties) => {
   const { orgId } = await auth();
 
   if (!orgId) {
-    notFound();
+    redirect("/onboarding");
   }
 
   const pages = await database

@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import Arcjet from "./arcjet.svg";
 import BaseHub from "./basehub.svg";
 import BetterStack from "./better-stack.svg";
-import Clerk from "./clerk.svg";
 import Cmdk from "./cmdk.svg";
 import GoogleAnalytics from "./google-analytics.svg";
 import Liveblocks from "./liveblocks.svg";
@@ -33,8 +32,8 @@ const rows = [
         className: "[animation-delay:-26s] [animation-duration:30s]",
       },
       {
-        label: "Clerk",
-        src: Clerk,
+        label: "Better Auth",
+        monogram: "BA",
         className: "[animation-delay:-8s] [animation-duration:30s]",
       },
       {
@@ -196,7 +195,13 @@ export const Features = () => (
                 )}
                 key={logo.label}
               >
-                <Image alt="" className="size-4" src={logo.src} />
+                {logo.src ? (
+                  <Image alt="" className="size-4" src={logo.src} />
+                ) : (
+                  <span className="grid size-4 place-items-center rounded-full bg-foreground/10 font-semibold text-[8px] text-foreground">
+                    {logo.monogram}
+                  </span>
+                )}
                 <span className="font-medium text-foreground text-sm/6">
                   {logo.label}
                 </span>

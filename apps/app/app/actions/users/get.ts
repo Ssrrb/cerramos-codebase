@@ -2,7 +2,7 @@
 
 import {
   auth,
-  clerkClient,
+  listCommerceMembers,
   type OrganizationMembership,
 } from "@repo/auth/server";
 
@@ -55,12 +55,9 @@ export const getUsers = async (
       throw new Error("Not logged in");
     }
 
-    const clerk = await clerkClient();
-
-    const members = await clerk.organizations.getOrganizationMembershipList({
-      organizationId: orgId,
-      limit: 100,
-    });
+    const members = {
+      data: await listCommerceMembers(orgId, 100),
+    };
 
     const data: Liveblocks["UserMeta"]["info"][] = members.data
       .filter(

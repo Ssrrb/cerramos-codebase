@@ -3,6 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import { keys } from "./keys";
 
 export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
+  authToken: keys().SENTRY_AUTH_TOKEN,
   org: keys().SENTRY_ORG,
   project: keys().SENTRY_PROJECT,
 

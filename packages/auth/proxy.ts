@@ -1,11 +1,13 @@
+import { getSessionCookie } from "better-auth/cookies";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { AUTH_COOKIE_PREFIX } from "./utils";
 
 type MiddlewareCallback = (
   auth: {
-    userId: string | null;
     orgId: string | null;
     sessionId: string | null;
+    userId: string | null;
   },
   request: NextRequest,
   event: NextFetchEvent
@@ -13,11 +15,15 @@ type MiddlewareCallback = (
 
 export const authMiddleware = (callback?: MiddlewareCallback) => {
   return async (request: NextRequest, event: NextFetchEvent) => {
+    const sessionId = getSessionCookie(request, {
+      cookiePrefix: AUTH_COOKIE_PREFIX,
+    });
+
     const response = await callback?.(
       {
-        userId: null,
         orgId: null,
-        sessionId: null,
+        sessionId,
+        userId: null,
       },
       request,
       event

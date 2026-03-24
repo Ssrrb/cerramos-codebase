@@ -28,7 +28,7 @@ Database and ORM configuration is located in `@repo/database`. You can import th
 import { database, schema } from '@repo/database';
 
 const Page = async () => {
-  const users = await database.select().from(schema.appUser);
+  const users = await database.select().from(schema.user);
 
   // Do something with users!
 }

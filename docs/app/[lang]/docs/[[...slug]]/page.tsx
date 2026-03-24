@@ -38,7 +38,7 @@ const Page = async ({ params }: PageProps<"/[lang]/docs/[[...slug]]">) => {
     <DocsPage
       full={page.data.full}
       tableOfContent={{
-        style: "clerk",
+        style: "normal",
         footer: (
           <div className="my-3 space-y-3">
             <Separator />

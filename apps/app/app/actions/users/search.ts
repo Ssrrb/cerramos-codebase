@@ -2,7 +2,7 @@
 
 import {
   auth,
-  clerkClient,
+  listCommerceMembers,
   type OrganizationMembership,
 } from "@repo/auth/server";
 import Fuse from "fuse.js";
@@ -36,12 +36,9 @@ export const searchUsers = async (
       throw new Error("Not logged in");
     }
 
-    const clerk = await clerkClient();
-
-    const members = await clerk.organizations.getOrganizationMembershipList({
-      organizationId: orgId,
-      limit: 100,
-    });
+    const members = {
+      data: await listCommerceMembers(orgId, 100),
+    };
 
     const users = members.data.map((user) => ({
       id: user.id,

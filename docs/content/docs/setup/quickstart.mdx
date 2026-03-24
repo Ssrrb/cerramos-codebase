@@ -10,7 +10,7 @@ related:
   - /docs/setup/env
 ---
 
-This guide gets you from zero to a running dev server with the minimum required setup. Only two services are truly required to boot: **Clerk** (authentication) and a **PostgreSQL database**.
+This guide gets you from zero to a running dev server with the minimum required setup. Only two services are truly required to boot: **Better Auth** (backed by your own app, database, and optional Google OAuth) and a **PostgreSQL database**.
 
 <Tip>
   Don't worry about other environment variables — features that need them (Stripe, analytics, email, etc.) will gracefully degrade or show warnings. You can add them later.
@@ -39,25 +39,23 @@ You'll be prompted for a project name and package manager. Once complete, `cd` i
 </Step>
 
 <Step>
-### Set up Clerk
+### Set up Better Auth
 
-1. Sign up at [clerk.com](https://clerk.com) and create a new application
-2. Go to **API Keys** in your Clerk dashboard
-3. Copy the **Publishable key** (`pk_test_...`) and **Secret key** (`sk_test_...`)
-
-Add them to both `apps/app/.env.local` and `apps/web/.env.local`:
+Add the auth variables to `apps/app/.env.local` and the shared public URLs to `apps/web/.env.local`:
 
 ```bash
-CLERK_SECRET_KEY="sk_test_..."
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/"
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/"
+BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_AUTH_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_AUTH_SIGN_UP_URL="/sign-up"
+NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL="/"
+NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL="/"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_WEB_URL="http://localhost:3001"
 ```
 
 <Info>
-  The `NEXT_PUBLIC_CLERK_*_URL` values are already set in the `.env.example` files. You only need to add the two API keys.
+  Google OAuth is optional for local development. If you want Google sign-in, also set `AUTH_GOOGLE_CLIENT_ID` and `AUTH_GOOGLE_CLIENT_SECRET` in `apps/app/.env.local`.
 </Info>
 </Step>
 
@@ -70,7 +68,7 @@ Get a free PostgreSQL database from [Neon](https://neon.tech) (or use any Postgr
 DATABASE_URL="postgresql://user:password@host:5432/dbname"
 ```
 
-Then run the migration to scaffold your tables:
+Then run the Drizzle migration to scaffold your tables:
 
 ```package-install
 npm run migrate
@@ -100,6 +98,7 @@ Your apps are now running at:
 Now that you're up and running, you can:
 
 - Review the full [environment variables](/docs/setup/env) page to enable optional features
+- Configure shared auth cookies for production if `app` and `web` live on sibling subdomains
 - Set up [Stripe](/docs/packages/payments) for payments
 - Set up [Resend](/docs/packages/email) for transactional emails
 - Set up [BaseHub](/docs/packages/cms/overview) for CMS content

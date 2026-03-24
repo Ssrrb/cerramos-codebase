@@ -11,7 +11,7 @@ related:
 
 next-forge makes use of the CSS variables offered by [shadcn/ui](https://ui.shadcn.com/). They're a brilliant way of abstracting the scaling and maintenance difficulties associated with [Dark Mode](/docs/packages/design-system/dark-mode) and whitelabelling.
 
-These colors have also been applied to other tools, such as the `AuthProvider`, to ensure that third-party components align with the application design as closely as possible.
+These colors are also available to first-party auth screens and shared application layouts so the authentication flow matches the rest of the product without a separate theme layer.
 
 ## Usage
 
@@ -42,23 +42,4 @@ export const MyComponent = () => (
 
 ## Caveats
 
-Currently, it's not possible to change the Clerk theme to match the exact theme of the app. This is because Clerk's Theme doesn't accept custom CSS variables. We'd like to be able to add the following in the future:
-
-```jsx title="packages/design-system/providers/clerk.tsx {4-15}"
-const variables: Theme['variables'] = {
-  // ...
-
-  colorBackground: 'hsl(var(--background))',
-  colorPrimary: 'hsl(var(--primary))',
-  colorDanger: 'hsl(var(--destructive))',
-  colorInputBackground: 'hsl(var(--transparent))',
-  colorInputText: 'hsl(var(--text-foreground))',
-  colorNeutral: 'hsl(var(--neutral))',
-  colorShimmer: 'hsl(var(--primary) / 10%)',
-  colorSuccess: 'hsl(var(--success))',
-  colorText: 'hsl(var(--text-foreground))',
-  colorTextOnPrimaryBackground: 'hsl(var(--text-foreground))',
-  colorTextSecondary: 'hsl(var(--text-muted-foreground))',
-  colorWarning: 'hsl(var(--warning))',
-};
-```
+If you introduce third-party hosted auth UI later, you may need a separate theming bridge. The current Better Auth setup renders first-party React components, so it can consume the design system directly.

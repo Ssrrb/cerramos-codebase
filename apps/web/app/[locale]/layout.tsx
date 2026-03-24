@@ -1,5 +1,6 @@
 import "./styles.css";
 import { AnalyticsProvider } from "@repo/analytics/provider";
+import { currentUser } from "@repo/auth/server";
 import { Toolbar as CMSToolbar } from "@repo/cms/components/toolbar";
 import { DesignSystemProvider } from "@repo/design-system";
 import { fonts } from "@repo/design-system/lib/fonts";
@@ -20,6 +21,7 @@ interface RootLayoutProperties {
 const RootLayout = async ({ children, params }: RootLayoutProperties) => {
   const { locale } = await params;
   const dictionary = await getDictionary(locale);
+  const user = await currentUser();
 
   return (
     <html
@@ -30,7 +32,7 @@ const RootLayout = async ({ children, params }: RootLayoutProperties) => {
       <body>
         <AnalyticsProvider>
           <DesignSystemProvider>
-            <Header dictionary={dictionary} />
+            <Header dictionary={dictionary} isAuthenticated={Boolean(user)} />
             {children}
             <Footer />
           </DesignSystemProvider>

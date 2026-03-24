@@ -134,12 +134,14 @@ export const customer = pgTable(
   (table) => [uniqueIndex("Customer_email_key").on(table.email)]
 );
 
-export const appUser = pgTable(
-  "AppUser",
+export const user = pgTable(
+  "user",
   {
     id: cuidPrimaryKey(),
     email: text("email").notNull(),
     name: text("name"),
+    emailVerified: boolean("emailVerified").notNull().default(false),
+    image: text("image"),
     role: appUserRoleEnum("role").notNull().default("buyer"),
     commerceId: text("commerceId").references(() => commerce.id),
     customerId: text("customerId").references(() => customer.id),
@@ -147,45 +149,81 @@ export const appUser = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    uniqueIndex("AppUser_email_key").on(table.email),
-    index("AppUser_commerceId_idx").on(table.commerceId),
-    index("AppUser_customerId_idx").on(table.customerId),
+    uniqueIndex("user_email_key").on(table.email),
+    index("user_commerceId_idx").on(table.commerceId),
+    index("user_customerId_idx").on(table.customerId),
   ]
 );
 
-export const authSession = pgTable(
-  "AuthSession",
+export const session = pgTable(
+  "session",
   {
     id: cuidPrimaryKey(),
-    tokenHash: text("tokenHash").notNull(),
+    token: text("token").notNull(),
     userId: text("userId")
       .notNull()
-      .references(() => appUser.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }).notNull(),
+    ipAddress: text("ipAddress"),
+    userAgent: text("userAgent"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("session_token_key").on(table.token),
+    index("session_userId_idx").on(table.userId),
+  ]
+);
+
+export const account = pgTable(
+  "account",
+  {
+    id: cuidPrimaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    accountId: text("accountId").notNull(),
+    providerId: text("providerId").notNull(),
+    accessToken: text("accessToken"),
+    refreshToken: text("refreshToken"),
+    accessTokenExpiresAt: timestamp("accessTokenExpiresAt", {
+      mode: "date",
+      precision: 3,
+    }),
+    refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt", {
+      mode: "date",
+      precision: 3,
+    }),
+    scope: text("scope"),
+    idToken: text("idToken"),
+    password: text("password"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("account_userId_idx").on(table.userId),
+    uniqueIndex("account_providerId_accountId_key").on(
+      table.providerId,
+      table.accountId
+    ),
+  ]
+);
+
+export const verification = pgTable(
+  "verification",
+  {
+    id: cuidPrimaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
     expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }).notNull(),
     createdAt: createdAt(),
-    lastSeenAt: timestamp("lastSeenAt", { mode: "date", precision: 3 }),
+    updatedAt: updatedAt(),
   },
   (table) => [
-    uniqueIndex("AuthSession_tokenHash_key").on(table.tokenHash),
-    index("AuthSession_userId_idx").on(table.userId),
-  ]
-);
-
-export const oAuthAccount = pgTable(
-  "OAuthAccount",
-  {
-    id: cuidPrimaryKey(),
-    userId: text("userId")
-      .notNull()
-      .references(() => appUser.id, { onDelete: "cascade" }),
-    provider: customerIdentityProviderEnum("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
-  },
-  (table) => [
-    index("OAuthAccount_userId_idx").on(table.userId),
-    uniqueIndex("OAuthAccount_provider_providerAccountId_key").on(
-      table.provider,
-      table.providerAccountId
+    index("verification_identifier_idx").on(table.identifier),
+    uniqueIndex("verification_identifier_value_key").on(
+      table.identifier,
+      table.value
     ),
   ]
 );

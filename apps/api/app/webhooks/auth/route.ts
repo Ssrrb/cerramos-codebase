@@ -6,7 +6,7 @@ export const POST = async (request: Request): Promise<Response> => {
   return NextResponse.json(
     {
       message:
-        "External auth webhooks are disabled. Cerramos uses first-party auth and DB-backed sessions.",
+        "External auth webhooks are disabled. Cerramos uses Better Auth with first-party, DB-backed sessions.",
       ok: false,
     },
     { status: 410 }

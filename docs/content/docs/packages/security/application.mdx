@@ -34,7 +34,7 @@ For the `web` app, bot detection and the Arcjet Shield WAF are both configured i
 
 ### App
 
-For `app`, the central client is extended in the authenticated route layout in `apps/app/app/(authenticated)/layout.tsx` with bot detection to block all bots except preview link generators. This will run just on authenticated routes. For additional protection you may want to configure Arcjet on the `apps/app/app/(unauthenticated)/layout.tsx` route as well, but Clerk includes bot detection and rate limiting in their login route handlers by default.
+For `app`, the central client is extended in the authenticated route layout in `apps/app/app/(authenticated)/layout.tsx` with bot detection to block all bots except preview link generators. This will run just on authenticated routes. For additional protection you may also want to apply Arcjet to the unauthenticated auth pages and the Better Auth handler mounted at `apps/app/app/api/auth/[...all]/route.ts`.
 
 When a rule is triggered, the request will be blocked and an error returned. You can customize the error message in code, redirect to a different page, or handle the error in a different way as needed.
 

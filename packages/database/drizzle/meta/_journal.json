@@ -8,6 +8,13 @@
       "when": 1774375503778,
       "tag": "0000_sturdy_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774376314249,
+      "tag": "0001_better_auth_cutover",
+      "breakpoints": true
     }
   ]
 }

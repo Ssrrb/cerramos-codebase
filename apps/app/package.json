@@ -2,7 +2,9 @@
   "name": "app",
   "private": true,
   "scripts": {
+    "predev": "bun run --cwd ../../packages/database generate",
     "dev": "bun --bun next dev -p 3000",
+    "prebuild": "bun run --cwd ../../packages/database generate",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "analyze": "ANALYZE=true npm run build",

@@ -1,5 +1,14 @@
 # Customization
 
+## Contents
+
+- [Swapping Providers](#swapping-providers)
+- [Deployment to Vercel](#deployment-to-vercel)
+- [Adding New Apps](#adding-new-apps)
+- [Adding New Packages](#adding-new-packages)
+- [Design System Theming](#design-system-theming)
+- [Extending Features](#extending-features)
+
 ## Swapping Providers
 
 next-forge is designed to be modular. Each integration can be replaced by modifying its corresponding package.

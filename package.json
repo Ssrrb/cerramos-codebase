@@ -16,6 +16,7 @@
     "dist/index.js"
   ],
   "scripts": {
+    "postinstall": "bun run --cwd packages/database generate",
     "build": "turbo build",
     "dev": "turbo dev",
     "check": "ultracite check",

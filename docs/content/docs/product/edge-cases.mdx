@@ -1,0 +1,92 @@
+---
+title: Edge Cases
+description: Casos límite y restricciones que mantienen el MVP honesto.
+order: 6
+---
+
+## 1. Link inválido, inactivo o vencido
+
+Si el `product_link` no existe, está inactivo o venció, el flujo no debe improvisar.
+
+- mostrar estado claro
+- impedir creación de pedido
+- ofrecer retorno al comercio solo si existe una alternativa válida
+
+## 2. Pago exitoso sin confirmación del comercio
+
+Este es el caso más delicado del MVP.
+
+- el pedido puede estar `paid` y seguir sin estar `confirmed`
+- el comprador necesita una promesa simple
+- si la tienda no confirma en tiempo, el sistema debe iniciar reversión o reembolso cuando el proveedor lo soporta
+
+## 3. Wallet o método no soportado
+
+Apple Pay y Google Pay son capacidades condicionadas por proveedor y mercado.
+
+- no deben prometerse como disponibilidad universal
+- el backend debe habilitarlos solo cuando realmente existan para ese comercio y contexto
+- si no están soportados, el flujo cae a métodos compatibles sin romper la experiencia
+
+## 4. Webhook tardío, repetido o fuera de orden
+
+Los eventos del proveedor pueden llegar tarde o duplicados.
+
+- registrar todos los eventos relevantes
+- deduplicar por identificador externo cuando exista
+- impedir transiciones inválidas por reenvío
+
+## 5. Comercio no verificado
+
+Un comercio no verificado no puede comportarse como uno confiable.
+
+- no debe operar libremente en producción
+- no debe recibir prepago sin condiciones
+- debe quedar limitado a carriles de bajo riesgo hasta superar verificación
+
+## 6. Catálogo demasiado complejo
+
+Si un caso exige:
+
+- múltiples productos por compra
+- combinaciones de variantes
+- add-ons
+- bundles
+
+entonces ya no es el MVP actual. Debe tratarse como expansión futura, no como excepción puntual.
+
+## 7. Pedido expirado con acciones pendientes
+
+Cuando el pedido expira:
+
+- se bloquean nuevas acciones operativas
+- se preserva el historial
+- se evalúa cancelación o reversión de cobro si existía intento activo
+
+## 8. Terminología que agranda el alcance
+
+Decir “factura” cuando el sistema solo produce un resumen comercial crea deuda legal y de producto.
+
+- usar siempre terminología comercial correcta
+- evitar lenguaje que sugiera cumplimiento fiscal inexistente
+
+## 9. Form fatigue
+
+Si el flujo suma campos por comodidad interna, el producto pierde su ventaja.
+
+- cada campo debe justificar su existencia
+- los formularios largos son un edge case de diseño, no una simple decisión de UX
+
+## Constraint summary
+
+- un producto por link
+- un item por pedido
+- una sola dimensión de variante
+- una sola cuenta operativa por comercio
+- sin CRM, sin ERP, sin facturación fiscal, sin carrito multiproducto
+
+## Source material
+
+- [Aclaraciones Arquitectura MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/00_resumen/Aclaraciones%20Arquitectura%20MVP%20Cerramos.md)
+- [Checkout conversion](file:///Users/sebastian/Desktop/cerramos/docs/01_I+D/checkout_conversion.md)
+- [Modelo de Datos MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/04_arquitectura/Modelo%20de%20Datos%20MVP%20Cerramos.md)

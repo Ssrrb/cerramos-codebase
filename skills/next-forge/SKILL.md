@@ -1,146 +1,78 @@
 ---
 name: next-forge
-description: Expert assistance for next-forge — a production-grade Turborepo template for Next.js SaaS apps. Triggers on questions about next-forge installation, setup, architecture, packages, customization, deployment, and development workflows.
+description: Use when Codex needs to install, configure, customize, debug, extend, or explain a next-forge codebase or starter. Covers questions about project setup, Turborepo architecture, app/package responsibilities, environment variables, provider swaps, Vercel deployment, and next-forge development workflows.
 ---
 
 # next-forge
 
-next-forge is a production-grade Turborepo template for building Next.js SaaS applications. It provides a monorepo structure with multiple apps, shared packages, and integrations for authentication, database, payments, email, CMS, analytics, observability, security, and more.
+Use this skill as an operator's guide for next-forge. Keep the main skill lean, answer from memory when the request is simple, and load only the reference file that matches the user's question.
 
-## Quick Start
+## Start Here
 
-Initialize a new project:
+1. Confirm whether the user is working from an existing next-forge repo or creating a new one.
+2. Identify the task shape before reading references:
+   - Setup, install, env vars, migrations, local development: read `references/setup.md`
+   - Repo layout, apps, packages, scripts, Turborepo behavior: read `references/architecture.md`
+   - Package responsibilities, exports, package-level integration details: read `references/packages.md`
+   - Swapping providers, extending features, deployment, theming: read `references/customization.md`
+3. Prefer the narrowest possible answer. Do not restate the entire framework when the user asked for one package, one env var, or one workflow.
+4. When the request touches the codebase, inspect the local repo and answer from the actual files first. Use the references to interpret next-forge conventions, not to override what exists on disk.
 
-```bash
-npx next-forge@latest init
-```
+## Working Rules
 
-The CLI prompts for a project name and package manager (bun, npm, yarn, or pnpm). After installation:
+- Treat next-forge as a modular Turborepo template with multiple apps under `apps/` and shared packages under `packages/`.
+- Assume PostgreSQL is the only required integration. Other providers are optional and should degrade gracefully when their env vars are absent.
+- Keep answers aligned with App Router conventions: server components by default, client components only where interactivity is needed.
+- Preserve the `@repo/<name>` package naming convention unless the user is explicitly reworking the workspace structure.
+- Prefer incremental changes inside the existing package boundaries instead of cross-cutting rewrites.
 
-1. Set the `DATABASE_URL` in `packages/database/.env` pointing to a PostgreSQL database (Neon recommended).
-2. Run database migrations: `bun run migrate`
-3. Add any optional integration keys to the appropriate `.env.local` files.
-4. Start development: `bun run dev`
+## Default Operating Flow
 
-All integrations besides the database are optional. Missing environment variables gracefully disable features rather than causing errors.
+### Setup or bootstrap requests
 
-## Architecture Overview
+1. Read `references/setup.md`.
+2. Verify prerequisites, install command, required env vars, database setup, and local dev commands.
+3. Call out which variables are mandatory versus optional.
+4. If the user is blocked, inspect the repo's actual `.env*`, package scripts, and package-level `keys.ts` files.
 
-The monorepo contains apps and packages. Apps are deployable applications. Packages are shared libraries imported as `@repo/<package-name>`.
+### Architecture or navigation requests
 
-**Apps** (in `/apps/`):
+1. Read `references/architecture.md`.
+2. Map the request to the correct app or package.
+3. Explain ownership clearly:
+   - `apps/*` are deployable surfaces.
+   - `packages/*` hold shared capabilities imported as `@repo/*`.
+4. Mention root scripts or Turbo filtering only if they help solve the task.
 
-| App | Port | Purpose |
-|-----|------|---------|
-| `app` | 3000 | Main authenticated SaaS application |
-| `web` | 3001 | Marketing website with CMS and SEO |
-| `api` | 3002 | Serverless API for webhooks, cron jobs |
-| `email` | 3003 | React Email preview server |
-| `docs` | 3004 | Documentation site (Mintlify) |
-| `storybook` | 6006 | Design system component workshop |
-| `studio` | 3005 | Prisma Studio for database editing |
+### Package-specific questions
 
-**Core Packages**: `auth`, `database`, `payments`, `email`, `cms`, `design-system`, `analytics`, `observability`, `security`, `storage`, `seo`, `feature-flags`, `internationalization`, `webhooks`, `cron`, `notifications`, `collaboration`, `ai`, `rate-limit`, `next-config`, `typescript-config`.
+1. Read `references/packages.md`.
+2. Identify the package's provider, key exports, and runtime location.
+3. Check the local package implementation before recommending code changes.
+4. If the user is integrating a feature, point them to the real entrypoints and webhook routes rather than summarizing package marketing copy.
 
-For detailed structure, see `references/architecture.md`.
+### Customization or deployment requests
 
-## Key Concepts
+1. Read `references/customization.md`.
+2. Preserve package boundaries when swapping providers.
+3. Mention all files that typically need changes: package implementation, env validation, webhook handlers, and consuming app usage.
+4. For Vercel deployment, treat `app`, `web`, and `api` as separate projects unless the repo clearly diverged.
 
-### Environment Variables
+## Answering Guidance
 
-Environment variable files live alongside apps and packages:
+- Distinguish template defaults from repo-specific reality. Say "next-forge defaults to ..." when you are describing the starter, and "this repo currently ..." when you inspected the workspace.
+- When debugging env issues, look for package-local `keys.ts`, `.env.local`, and `packages/database/.env` before guessing.
+- When recommending provider swaps, mention the minimal surface area to change first: the owning package, any webhook routes, and any provider-specific UI or middleware.
+- When the user asks "where does X live?", answer with the most likely app or package first, then verify against the repo.
+- Do not duplicate the long package catalog or setup checklist in your response unless the user explicitly wants an overview.
 
-- `apps/app/.env.local` — Main app keys (Clerk, Stripe, etc.)
-- `apps/web/.env.local` — Marketing site keys
-- `apps/api/.env.local` — API keys
-- `packages/database/.env` — `DATABASE_URL` (required)
-- `packages/cms/.env.local` — BaseHub token
-- `packages/internationalization/.env.local` — Languine project ID
+## Reference Map
 
-Each package has a `keys.ts` file that validates environment variables with Zod via `@t3-oss/env-nextjs`. Type safety is enforced at build time.
-
-### Inter-App URLs
-
-Local URLs are pre-configured:
-
-- `NEXT_PUBLIC_APP_URL=http://localhost:3000`
-- `NEXT_PUBLIC_WEB_URL=http://localhost:3001`
-- `NEXT_PUBLIC_API_URL=http://localhost:3002`
-- `NEXT_PUBLIC_DOCS_URL=http://localhost:3004`
-
-Update these to production domains when deploying (e.g., `app.yourdomain.com`, `www.yourdomain.com`).
-
-### Server Components First
-
-`page.tsx` and `layout.tsx` files are always server components. Client interactivity goes in separate files with `'use client'`. Access databases, secrets, and server-only APIs directly in server components and server actions.
-
-### Graceful Degradation
-
-All integrations beyond the database are optional. Clients use optional chaining (e.g., `stripe?.prices.list()`, `resend?.emails.send()`). If the corresponding environment variable is not set, the feature is silently disabled.
-
-## Common Tasks
-
-### Running Development
-
-```bash
-bun run dev                  # All apps
-bun dev --filter app         # Single app (port 3000)
-bun dev --filter web         # Marketing site (port 3001)
-```
-
-### Database Migrations
-
-After changing `packages/database/prisma/schema.prisma`:
-
-```bash
-bun run migrate
-```
-
-This runs Prisma format, generate, and db push in sequence.
-
-### Adding shadcn/ui Components
-
-```bash
-npx shadcn@latest add [component] -c packages/design-system
-```
-
-Update existing components:
-
-```bash
-bun run bump-ui
-```
-
-### Adding a New Package
-
-Create a new directory in `/packages/` with a `package.json` using the `@repo/<name>` naming convention. Add it as a dependency in consuming apps.
-
-### Linting and Formatting
-
-```bash
-bun run lint                 # Check code style (Ultracite/Biome)
-bun run format               # Fix code style
-```
-
-### Testing
-
-```bash
-bun run test                 # Run tests across monorepo
-```
-
-### Building
-
-```bash
-bun run build                # Build all apps and packages
-bun run analyze              # Bundle analysis
-```
-
-### Deployment
-
-Deploy to Vercel by creating separate projects for `app`, `web`, and `api` — each pointing to its respective root directory under `/apps/`. Add environment variables per project or use Vercel Team Environment Variables.
-
-For detailed setup and customization instructions, see:
-
-- `references/setup.md` — Installation, prerequisites, environment variables, database and Stripe CLI setup
-- `references/packages.md` — Detailed documentation for every package
-- `references/customization.md` — Swapping providers, extending features, deployment configuration
-- `references/architecture.md` — Full monorepo structure, Turborepo pipeline, scripts
+- `references/setup.md`
+  Use for installation, prerequisites, env vars, database bootstrap, Stripe CLI, and local development commands.
+- `references/architecture.md`
+  Use for app/package layout, Turbo tasks, scripts, filtering, and build outputs.
+- `references/packages.md`
+  Use for package-by-package responsibilities, exports, webhook endpoints, and provider defaults.
+- `references/customization.md`
+  Use for swapping providers, adding apps/packages, deployment patterns, theming, and feature extensions.

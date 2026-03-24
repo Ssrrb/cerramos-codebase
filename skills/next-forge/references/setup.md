@@ -1,5 +1,16 @@
 # Setup
 
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Required Environment Variables](#required-environment-variables)
+- [Optional Environment Variables](#optional-environment-variables)
+- [Database Setup](#database-setup)
+- [Stripe CLI Setup](#stripe-cli-setup)
+- [Running Development](#running-development)
+- [Environment Variable Validation](#environment-variable-validation)
+
 ## Prerequisites
 
 - Node.js >= 18

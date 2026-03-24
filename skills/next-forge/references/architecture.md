@@ -1,5 +1,15 @@
 # Architecture
 
+## Contents
+
+- [Monorepo Structure](#monorepo-structure)
+- [Apps](#apps)
+- [Package Naming](#package-naming)
+- [Turborepo Pipeline](#turborepo-pipeline)
+- [Root Scripts](#root-scripts)
+- [Filtering](#filtering)
+- [Build Outputs](#build-outputs)
+
 ## Monorepo Structure
 
 next-forge uses Turborepo to manage a monorepo with apps and packages.

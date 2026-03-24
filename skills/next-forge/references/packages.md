@@ -1,5 +1,29 @@
 # Packages
 
+## Contents
+
+- [Authentication (`@repo/auth`)](#authentication-repoauth)
+- [Database (`@repo/database`)](#database-repodatabase)
+- [Payments (`@repo/payments`)](#payments-repopayments)
+- [Email (`@repo/email`)](#email-repoemail)
+- [CMS (`@repo/cms`)](#cms-repocms)
+- [Design System (`@repo/design-system`)](#design-system-repodesign-system)
+- [Analytics (`@repo/analytics`)](#analytics-repoanalytics)
+- [Observability (`@repo/observability`)](#observability-repoobservability)
+- [Storage (`@repo/storage`)](#storage-repostorage)
+- [Security (`@repo/security`)](#security-reposecurity)
+- [SEO (`@repo/seo`)](#seo-reposeo)
+- [Feature Flags (`@repo/feature-flags`)](#feature-flags-repofeature-flags)
+- [Internationalization (`@repo/internationalization`)](#internationalization-repointernationalization)
+- [Webhooks (`@repo/webhooks`)](#webhooks-repowebhooks)
+- [Cron Jobs (`@repo/cron`)](#cron-jobs-repocron)
+- [Notifications (`@repo/notifications`)](#notifications-reponotifications)
+- [Collaboration (`@repo/collaboration`)](#collaboration-repocollaboration)
+- [AI (`@repo/ai`)](#ai-repoai)
+- [Rate Limit (`@repo/rate-limit`)](#rate-limit-reporate-limit)
+- [Next Config (`@repo/next-config`)](#next-config-reponext-config)
+- [TypeScript Config (`@repo/typescript-config`)](#typescript-config-repotypescript-config)
+
 All packages live in `/packages/` and are imported as `@repo/<name>`.
 
 ## Authentication (`@repo/auth`)

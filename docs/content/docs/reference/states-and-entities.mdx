@@ -1,0 +1,75 @@
+---
+title: States and Entities
+description: Glosario canónico de entidades y estados para mantener coherencia entre specs.
+order: 1
+---
+
+## Entidades mínimas
+
+| Entidad | Propósito |
+| --- | --- |
+| `commerce` | Comercio que opera dentro de Cerramos |
+| `product_link` | Link público de entrada a una sola oferta |
+| `product_variant_option` | Opción simple de variante |
+| `customer` | Comprador persistido |
+| `customer_identity` | Identidad externa de Google o Apple |
+| `customer_consent` | Consentimiento auditable para guardar datos |
+| `delivery_info` | Datos de entrega o retiro |
+| `order` | Snapshot operativo del pedido |
+| `order_item` | Único item permitido por pedido en MVP |
+| `payment_intent` | Intención o referencia de cobro |
+| `payment_event` | Registro idempotente de eventos del proveedor |
+| `payment_risk_state` | Estado de liberación o reversión de fondos |
+| `order_status_history` | Historial auditable de transiciones |
+
+## Estados del pedido
+
+| Estado | Definición |
+| --- | --- |
+| `new` | Pedido creado sin pago obligatorio |
+| `pending_payment` | Pedido creado, a la espera de cobro |
+| `paid` | Cobro exitoso, todavía sin aceptación operativa |
+| `confirmed` | Pedido confirmado por el comercio |
+| `expired` | Pedido vencido por falta de confirmación |
+| `cancelled` | Pedido cancelado por el comercio o el sistema |
+
+## Estados del pago
+
+| Estado | Definición |
+| --- | --- |
+| `not_required` | El pedido no requiere cobro |
+| `pending` | Cobro iniciado o pendiente |
+| `authorized` | Fondos autorizados pero no liberados |
+| `paid` | Cobro exitoso |
+| `failed` | Cobro fallido |
+| `expired` | Intento vencido |
+| `cancelled` | Intento cancelado |
+
+## Estados de riesgo de pago
+
+| Estado | Definición |
+| --- | --- |
+| `pending` | Revisión o retención inicial |
+| `held` | Fondos retenidos |
+| `release_ready` | Fondos listos para liberar tras confirmación |
+| `reverse_pending` | Reversión o devolución en proceso |
+| `reversed` | Fondos revertidos |
+
+## Invariantes
+
+- Un `product_link` representa un solo producto u oferta.
+- Un `order` del MVP contiene un solo `order_item`.
+- `paid` no implica `confirmed`.
+- No puede crearse un nuevo intento de pago sobre un pedido `expired` o `cancelled`.
+- El panel interno es la fuente de verdad operativa.
+
+## Términos que deben mantenerse
+
+- usar `resumen del pedido`
+- usar `comprobante comercial`
+- evitar `factura` cuando se hable del MVP
+
+## Source material
+
+- [Aclaraciones Arquitectura MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/00_resumen/Aclaraciones%20Arquitectura%20MVP%20Cerramos.md)
+- [Modelo de Datos MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/04_arquitectura/Modelo%20de%20Datos%20MVP%20Cerramos.md)

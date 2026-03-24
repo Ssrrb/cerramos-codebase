@@ -1,0 +1,168 @@
+---
+title: API Design
+description: "Contrato conceptual del sistema: recursos, estados y límites de integración."
+order: 5
+---
+
+## Principio
+
+La API no debe exponer “todo el negocio”. Debe exponer lo necesario para resolver un checkout por link, registrar el pedido y operarlo con claridad.
+
+## Recursos públicos de checkout
+
+### `product_link`
+
+Representa el punto de entrada público desde redes o mensajería.
+
+Debe resolver:
+
+- comercio
+- producto u oferta
+- vigencia del link
+- variantes simples disponibles
+- condiciones de pago y entrega aplicables
+
+### `checkout_session`
+
+Recurso efímero calculado por backend para evitar que el frontend decida precios, expiración o métodos de pago.
+
+Debe contener como mínimo:
+
+- resumen del producto
+- cantidad y variante válidas
+- subtotal y total
+- métodos de pago habilitados
+- requisitos de identidad
+- ventana de expiración aplicable
+
+### `order`
+
+Se crea al completar el checkout y fija el snapshot operativo del pedido.
+
+Debe contener como mínimo:
+
+- `merchant_id`
+- `product_link_id`
+- `buyer_identity_id`
+- `order_status`
+- `payment_status`
+- `fulfillment_type`
+- `delivery_info`
+- `expires_at`
+
+## Recursos operativos del comercio
+
+### `merchant_profile`
+
+Expone datos base del comercio y su estado operativo.
+
+### `merchant_orders`
+
+Lista pedidos por comercio con filtros mínimos por estado y recencia.
+
+### `merchant_order_detail`
+
+Muestra:
+
+- resumen del pedido
+- historial de estados
+- referencia de pago
+- datos del comprador
+- notas logísticas
+
+### Acciones operativas
+
+Las acciones mínimas del panel son:
+
+- confirmar pedido
+- cancelar pedido
+- consultar historial
+
+No se incluyen flujos de multiusuario ni permisos por rol en MVP.
+
+## Recursos de pago
+
+### `payment_intent`
+
+Representa la intención de cobro asociada a un pedido concreto.
+
+Debe separar:
+
+- proveedor
+- referencia externa
+- método de pago
+- monto
+- estado interno normalizado
+
+### `payment_event`
+
+Ledger idempotente de callbacks y webhooks del proveedor.
+
+Debe registrar:
+
+- identificador externo cuando exista
+- tipo de evento
+- payload recibido
+- momento de recepción
+- resultado de procesamiento
+
+## Contrato de proveedor
+
+Todo adaptador de pago debe poder implementar un contrato interno equivalente a:
+
+```ts
+type PaymentProviderAdapter = {
+  createCheckoutSession(order: OrderSnapshot): Promise<ProviderCheckout>;
+  authorize(order: OrderSnapshot, payload: PaymentPayload): Promise<ProviderResult>;
+  capture(paymentId: string, amount?: number): Promise<ProviderResult>;
+  cancel(paymentId: string): Promise<ProviderResult>;
+  refund(paymentId: string, amount?: number): Promise<ProviderResult>;
+  parseWebhook(payload: unknown, headers: Headers): Promise<NormalizedPaymentEvent>;
+  verifyWebhook(payload: unknown, headers: Headers): Promise<boolean>;
+  normalizeStatus(input: unknown): PaymentStatus;
+};
+```
+
+La meta es una sola: cambiar de proveedor sin reescribir el corazón del producto.
+
+## Máquinas de estado
+
+### Order state
+
+- `new`
+- `pending_payment`
+- `paid`
+- `confirmed`
+- `expired`
+- `cancelled`
+
+### Payment state
+
+- `not_required`
+- `pending`
+- `authorized`
+- `paid`
+- `failed`
+- `expired`
+- `cancelled`
+
+### Payment risk state
+
+- `pending`
+- `held`
+- `release_ready`
+- `reverse_pending`
+- `reversed`
+
+## Reglas de contrato
+
+- El frontend no calcula montos finales.
+- El frontend no decide qué métodos de pago están habilitados.
+- No puede crearse un nuevo `payment_intent` sobre un pedido `expired` o `cancelled`.
+- `paid` nunca fuerza por sí solo la transición a `confirmed`.
+
+## Source material
+
+- [Requisitos del MVP](file:///Users/sebastian/Desktop/cerramos/docs/03_producto/requisitos.md)
+- [Investigación de arquitectura](file:///Users/sebastian/Desktop/cerramos/docs/01_I+D/investigacion_arq.md)
+- [Modelo de Datos MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/04_arquitectura/Modelo%20de%20Datos%20MVP%20Cerramos.md)

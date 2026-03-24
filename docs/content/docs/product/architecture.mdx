@@ -1,0 +1,128 @@
+---
+title: Architecture
+description: Estructura técnica del MVP y decisiones que mantienen el sistema pequeño y claro.
+order: 4
+---
+
+## Principio rector
+
+La arquitectura no debe diseñarse como un CRUD genérico. Debe diseñarse como una **plataforma de checkout y orquestación de pedidos**.
+
+Eso cambia la prioridad:
+
+- primero integridad del pedido
+- luego continuidad del pago
+- después operación del comercio
+
+## Forma recomendada
+
+El MVP debe implementarse como un **monolito modular**:
+
+- frontend en Next.js
+- backend dedicado en TypeScript
+- PostgreSQL como núcleo transaccional
+- Redis para estados efímeros, throttling e idempotencia
+- procesamiento asíncrono para webhooks, conciliación y expiraciones
+
+No hay razón para partirlo en microservicios en esta etapa.
+
+## Módulos dominantes
+
+- `auth`
+- `merchant`
+- `catalog`
+- `link`
+- `checkout`
+- `payment`
+- `webhook`
+- `delivery`
+- `audit`
+
+La razón no es orden cosmético. Es evitar que pagos, checkout y operación terminen mezclados en una sola capa sin límites.
+
+## Modelo de compra
+
+- un `product_link` apunta a un solo producto u oferta
+- un pedido contiene un solo `order_item`
+- la variante permitida es de una sola dimensión
+- el carrito multiproducto queda fuera de MVP
+
+Esta restricción mantiene pequeño el sistema de precios, validación y estados.
+
+## Identidad y buyer flow
+
+- el login es obligatorio antes del cierre del pedido
+- Google y Apple son los caminos de identidad recurrente
+- la persistencia de datos requiere consentimiento
+
+La identidad no se trata como una capa decorativa. Se trata como parte del control de calidad del pedido.
+
+## Operación del comercio
+
+El panel interno es la fuente de verdad.
+
+- email y WhatsApp pueden alertar
+- solo el panel define el estado operativo
+- el historial de cambios debe ser auditable
+
+Si el pedido “vive” en mensajes, el producto se fragmenta.
+
+## Payments architecture
+
+El módulo de pagos debe organizarse alrededor de un orquestador con adaptadores por proveedor.
+
+### Responsabilidades mínimas
+
+- crear la referencia o intención de pago
+- normalizar estados del proveedor
+- verificar webhooks
+- asegurar idempotencia
+- disparar reversiones o cancelaciones automáticas cuando aplica
+
+### Abstracciones mínimas
+
+- proveedor
+- método de pago
+- referencia externa
+- estado del pago
+- metadatos no sensibles
+
+## Estados separados
+
+La plataforma debe modelar dos máquinas distintas:
+
+- estado del pedido
+- estado del pago
+
+Un pedido pagado todavía puede estar pendiente de confirmación operativa. Esa separación es obligatoria para no prometer algo que el comercio aún no aceptó.
+
+## Entidades mínimas
+
+- `commerce`
+- `product_link`
+- `product_variant_option`
+- `customer`
+- `customer_identity`
+- `customer_consent`
+- `delivery_info`
+- `order`
+- `order_item`
+- `payment_provider`
+- `payment_intent`
+- `payment_event`
+- `payment_risk_state`
+- `order_status_history`
+
+## Lo que la arquitectura protege
+
+La arquitectura del MVP debe impedir tres deformaciones comunes:
+
+- crecer hacia “mini ecommerce” antes de validar el cierre por link
+- asumir responsabilidad de pasarela propia
+- convertir alertas o chats en fuente de verdad operativa
+
+## Source material
+
+- [Investigación de arquitectura](file:///Users/sebastian/Desktop/cerramos/docs/01_I+D/investigacion_arq.md)
+- [Aclaraciones Arquitectura MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/00_resumen/Aclaraciones%20Arquitectura%20MVP%20Cerramos.md)
+- [Guía de Arquitectura Backend](file:///Users/sebastian/Desktop/cerramos/docs/04_arquitectura/Gui%CC%81a%20de%20Arquitectura%20Backend_%20Pagos%20y%20Checkout.md)

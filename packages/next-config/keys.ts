@@ -1,6 +1,8 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
 export const keys = () =>
   createEnv({
     server: {
@@ -30,8 +32,12 @@ export const keys = () =>
       VERCEL_URL: process.env.VERCEL_URL,
       VERCEL_REGION: process.env.VERCEL_REGION,
       VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
-      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-      NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL,
+      NEXT_PUBLIC_APP_URL:
+        process.env.NEXT_PUBLIC_APP_URL ??
+        (isDevelopment ? "http://localhost:3000" : undefined),
+      NEXT_PUBLIC_WEB_URL:
+        process.env.NEXT_PUBLIC_WEB_URL ??
+        (isDevelopment ? "http://localhost:3001" : undefined),
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
       NEXT_PUBLIC_DOCS_URL: process.env.NEXT_PUBLIC_DOCS_URL,
     },

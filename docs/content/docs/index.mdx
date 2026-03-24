@@ -1,29 +1,56 @@
 ---
-title: Overview
-description: What is next-forge and how do I get started?
-type: overview
-summary: An introduction to next-forge and how to get started.
-related:
-  - /docs/setup/quickstart
-  - /docs/philosophy
-  - /docs/structure
+title: Docs Home
+description: Punto de entrada del sistema de documentación curada de Cerramos.
+order: 0
 ---
 
-next-forge is a production-grade [Turborepo](https://turborepo.com) template for [Next.js](https://nextjs.org/) apps. It is designed to be a comprehensive starting point for new apps, providing a solid, opinionated foundation with a minimal amount of configuration.
+## Una sola historia
 
-It is a culmination of my experience building web apps over the last decade and is designed to help you build your new SaaS app as thoroughly as possible, balancing speed and quality.
+Cerramos no existe para “digitalizar comercios” en abstracto. Existe para **convertir un clic en un pedido claro**.  
+Este espacio reorganiza la documentación alrededor de esa promesa y corta todo lo que la diluye.
 
-## Demo
+## Cómo leer esta documentación
 
-We have a demo version of next-forge that you can use to get a feel for the project!
+### Product
 
-Here are the URLs:
+Define el producto canónico: problema, alcance, requisitos, historias, arquitectura, API y límites.
 
-- [Web](https://demo.next-forge.com)
-- [App](https://app.demo.next-forge.com)
-- [Storybook](https://storybook.demo.next-forge.com)
-- [API](https://api.demo.next-forge.com/health)
+- [Overview](/docs/product/overview)
+- [Requirements](/docs/product/requirements)
+- [User stories](/docs/product/user-stories)
+- [Architecture](/docs/product/architecture)
+- [API design](/docs/product/api-design)
+- [Edge cases](/docs/product/edge-cases)
 
-## Contributing
+### Process
 
-We welcome contributions from the community! Please see the [contributing guide](https://github.com/vercel/next-forge/blob/main/.github/CONTRIBUTING.md) for more information. You can also check out these links to join the conversation.
+Explica cómo escribir nuevos specs sin volver al caos de notas dispersas.
+
+- [Organizing specs](/docs/process/organizing-specs)
+- [Spec template](/docs/process/spec-template)
+
+### Reference
+
+Concentra definiciones que deben mantenerse estables entre documentos.
+
+- [States and entities](/docs/reference/states-and-entities)
+
+## Decisiones canónicas
+
+- El comprador debe iniciar sesión antes de completar la compra.
+- Cada link vende un solo producto u oferta.
+- Cada pedido del MVP contiene un solo item.
+- El estado operativo del pedido y el estado del pago viven separados.
+- El MVP emite un **resumen del pedido** o **comprobante comercial**, nunca una factura fiscal.
+
+## Qué cambió respecto a las notas originales
+
+- Se redujo la documentación a un sistema pequeño y escalable.
+- Se separó la narrativa de producto de la especificación operativa.
+- Se dejó `/docs` como archivo fuente, no como estructura final.
+
+## Source material
+
+- [README del repositorio](file:///Users/sebastian/Desktop/cerramos/README.md)
+- [Estrategia MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/00_resumen/Estrategia%20MVP%20Cerramos.md)
+- [Requisitos del MVP](file:///Users/sebastian/Desktop/cerramos/docs/03_producto/requisitos.md)

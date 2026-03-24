@@ -159,4 +159,4 @@ docker compose up --build
 
 When deploying with Docker, pass your environment variables at runtime using `--env-file` or `-e` flags. Do not bake secrets into the image. Learn more about how [environment variables](/docs/setup/env) work in next-forge.
 
-If certain variables are needed at build time (e.g. `DATABASE_URL` for Prisma), uncomment the relevant `ARG` and `ENV` lines in the builder stage.
+If certain variables are needed at build time (for example, a database URL used by a build-time script), uncomment the relevant `ARG` and `ENV` lines in the builder stage.

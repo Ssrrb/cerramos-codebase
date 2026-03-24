@@ -1,7 +1,11 @@
-import { VercelToolbar } from "@vercel/toolbar/next";
-import { keys } from "../keys";
+import { isToolbarEnabled } from "../lib/toolbar";
 
-const isToolbarEnabled = () =>
-  Boolean(keys().FLAGS_SECRET && process.env.VERCEL);
+export const Toolbar = async () => {
+  if (!isToolbarEnabled()) {
+    return null;
+  }
 
-export const Toolbar = () => (isToolbarEnabled() ? <VercelToolbar /> : null);
+  const { VercelToolbar } = await import("@vercel/toolbar/next");
+
+  return <VercelToolbar />;
+};

@@ -16,7 +16,6 @@
     "dist/index.js"
   ],
   "scripts": {
-    "postinstall": "bun run --cwd packages/database generate",
     "build": "turbo build",
     "dev": "turbo dev",
     "check": "ultracite check",
@@ -27,9 +26,12 @@
     "boundaries": "turbo boundaries",
     "bump-deps": "bunx npm-check-updates --deep -u && bun install",
     "bump-ui": "bunx shadcn@latest add --all --overwrite -c packages/design-system",
-    "migrate": "cd packages/database && bunx prisma format && bunx prisma generate && bunx prisma migrate dev",
-    "migrate:deploy": "cd packages/database && bunx prisma generate && bunx prisma migrate deploy",
-    "db:push": "cd packages/database && bunx prisma format && bunx prisma generate && bunx prisma db push",
+    "db:generate": "bun run --cwd packages/database db:generate",
+    "db:migrate": "bun run --cwd packages/database db:migrate",
+    "db:push": "bun run --cwd packages/database db:push",
+    "db:studio": "bun run --cwd packages/database db:studio",
+    "migrate": "bun run db:generate && bun run db:migrate",
+    "migrate:deploy": "bun run db:migrate",
     "clean": "git clean -xdf node_modules",
     "release": "npm publish"
   },

@@ -1,7 +1,6 @@
 import {
   BookIcon,
   CurlyBracesIcon,
-  DatabaseIcon,
   GlobeIcon,
   LaptopIcon,
   MailIcon,
@@ -14,7 +13,6 @@ import AppImage from "./app.png";
 import DocsImage from "./docs.png";
 import EmailImage from "./email.png";
 import StorybookImage from "./storybook.png";
-import StudioImage from "./studio.png";
 import WebImage from "./web.png";
 
 const apps = [
@@ -57,14 +55,6 @@ const apps = [
     description:
       "Simple, beautiful out of the box and easy to maintain documentation. Pages are automatically generated from your markdown files.",
     image: DocsImage,
-  },
-  {
-    icon: DatabaseIcon,
-    name: "studio",
-    title: "Visual database editor",
-    description:
-      "Use Prisma to generate a type-safe client for your database, and Prisma Studio to visualize and edit it.",
-    image: StudioImage,
   },
   {
     icon: CurlyBracesIcon,

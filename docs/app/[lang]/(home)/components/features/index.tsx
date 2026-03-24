@@ -10,7 +10,6 @@ import Liveblocks from "./liveblocks.svg";
 import Lucide from "./lucide.svg";
 import Neon from "./neon.svg";
 import Posthog from "./posthog.svg";
-import Prisma from "./prisma.svg";
 import Radix from "./radix.svg";
 import React from "./react.svg";
 import ReactEmail from "./react-email.svg";
@@ -76,11 +75,6 @@ const rows = [
   },
   {
     row: [
-      {
-        label: "Prisma",
-        src: Prisma,
-        className: "[animation-delay:-10s] [animation-duration:40s]",
-      },
       {
         label: "Radix UI",
         src: Radix,

@@ -14,9 +14,9 @@ The `next-config` package is a configuration package for Next.js. It is used to 
 
 The package configures Next.js image optimization to support AVIF and WebP formats. It also sets up remote patterns to allow loading images from Clerk securely (i.e. profile images).
 
-## Prisma
+## Database Tooling
 
-For server-side builds, the package includes the Prisma plugin which helps handle Prisma in a Next.js monorepo setup correctly.
+The shared Next.js config is database-agnostic. After switching to Drizzle, no Prisma-specific build plugin is required for the monorepo.
 
 ## Rewrites
 

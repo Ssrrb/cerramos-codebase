@@ -1,5 +1,6 @@
 import { auth } from "@repo/auth/server";
-import { database } from "@repo/database";
+import { database, schema } from "@repo/database";
+import { ilike } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { Header } from "../components/header";
 
@@ -22,22 +23,21 @@ export const generateMetadata = async ({
 
 const SearchPage = async ({ searchParams }: SearchPageProperties) => {
   const { q } = await searchParams;
-  const pages = await database.page.findMany({
-    where: {
-      name: {
-        contains: q,
-      },
-    },
-  });
+
+  if (!q) {
+    redirect("/");
+  }
+
   const { orgId } = await auth();
 
   if (!orgId) {
     notFound();
   }
 
-  if (!q) {
-    redirect("/");
-  }
+  const pages = await database
+    .select()
+    .from(schema.page)
+    .where(ilike(schema.page.name, `%${q}%`));
 
   return (
     <>

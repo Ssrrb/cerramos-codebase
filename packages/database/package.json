@@ -1,33 +1,36 @@
 {
   "name": "@repo/database",
   "version": "0.0.0",
+  "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
-    "generate": "node ./scripts/generate.mjs",
-    "analyze": "bun run generate",
-    "build": "bun run generate",
+    "build": "bun run typecheck",
+    "analyze": "bun run typecheck",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "db:push": "drizzle-kit push --config=drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
+    "test": "NODE_ENV=test vitest run",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^3.3.0",
     "@neondatabase/serverless": "^1.0.2",
-    "@prisma/adapter-neon": "7.4.2",
-    "@prisma/client": "7.4.2",
-    "@prisma/client-runtime-utils": "^7.4.2",
     "@t3-oss/env-nextjs": "^0.13.10",
+    "drizzle-orm": "^0.45.1",
     "server-only": "^0.0.1",
     "undici": "^7.22.0",
-    "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "25.3.5",
-    "@types/ws": "^8.18.1",
     "bufferutil": "^4.1.0",
     "dotenv": "^16.5.0",
-    "prisma": "7.4.2",
-    "typescript": "^5.9.3"
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
   }
 }

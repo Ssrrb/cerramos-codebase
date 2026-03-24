@@ -1,5 +1,11 @@
-import { Toolbar as BaseHubToolbar } from "basehub/next-toolbar";
-import { keys } from "../keys";
+import { isCMSConfigured } from "..";
 
-export const Toolbar = () =>
-  keys().BASEHUB_TOKEN ? <BaseHubToolbar /> : null;
+export const Toolbar = async () => {
+  if (!isCMSConfigured) {
+    return null;
+  }
+
+  const { Toolbar: BaseHubToolbar } = await import("basehub/next-toolbar");
+
+  return <BaseHubToolbar />;
+};

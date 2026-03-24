@@ -5,8 +5,9 @@ import { keys } from "./keys";
 import "./basehub.config";
 
 const { BASEHUB_TOKEN } = keys();
+export const isCMSConfigured = Boolean(BASEHUB_TOKEN);
 
-const basehub = BASEHUB_TOKEN
+const basehub = isCMSConfigured
   ? basehubClient({ token: BASEHUB_TOKEN })
   : undefined;
 

@@ -59,14 +59,13 @@ Estas son las superficies desplegables del sistema.
 - `apps/email`: aplicación de vista previa de React Email.
 - `apps/docs`: aplicación de documentación.
 - `apps/storybook`: desarrollo de componentes de interfaz de usuario aislados.
-- `apps/studio`: wrapper de Prisma Studio para inspección de base de datos.
 
 ### `packages/`
 
 Estas son capacidades compartidas importadas como `@repo/*`.
 
 - `packages/auth`: autenticación e integración de identidad.
-- `packages/database`: esquema de Prisma, cliente generado y acceso a base de datos.
+- `packages/database`: esquema de Drizzle, migraciones SQL y acceso a base de datos sobre Neon.
 - `packages/payments`: superficie de integración del proveedor de pagos.
 - `packages/webhooks`: utilidades y temas compartidos de webhooks.
 - `packages/design-system`: primitivas y estilos de UI compartidos.
@@ -131,6 +130,7 @@ bun run test
 bun run check
 bun run fix
 bun run migrate
+bun run db:studio
 ```
 
 También puedes delimitar el trabajo a un único objetivo con los filtros de Turbo, por ejemplo:

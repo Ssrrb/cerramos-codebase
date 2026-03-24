@@ -73,14 +73,23 @@ Si no mejora al menos una de ellas de forma directa, no entra al MVP.
 ## Payments
 
 - El pago debe integrarse con proveedor externo; Cerramos no procesa dinero por cuenta propia.
+- La dirección actual del MVP es migrar desde Stripe hacia **Pagopar uPay** como procesadora principal.
 - El sistema debe crear una referencia de pago específica para el pedido en curso.
-- El checkout de pago debe mantenerse dentro del sitio salvo contingencias del proveedor.
+- El checkout de pago debe mantenerse dentro de la URL y la interfaz de Cerramos; no debe redirigir al comprador a un dominio externo en el flujo normal.
+- Si el proveedor exige un paso externo excepcional, ese desvío debe tratarse como contingencia y no como experiencia base.
 - Los datos sensibles de pago deben ser capturados solo por componentes certificados del proveedor.
 - Cerramos puede almacenar referencias, tokens no sensibles y metadatos del método.
 - El sistema debe actualizar el estado de pago por webhook, callback o conciliación.
 - `paid` no equivale a `confirmed`.
 - `funds_released = false` hasta que `order_confirmed = true`.
 - Si la tienda no confirma dentro de la ventana operativa, el sistema debe revertir, cancelar o reembolsar automáticamente según soporte del proveedor.
+
+### Referencias Pagopar
+
+- [Pagopar docs](/docs/pagopar-docs)
+- [API - Integración de medios de pagos](/docs/pagopar-docs/api-integracion-medios-pagos)
+- [Entornos y pase a Producción](/docs/pagopar-docs/entornos-pase-a-producción)
+- [Link de suscripción](/docs/pagopar-docs/link-suscripcion)
 
 ## Merchant operations
 

@@ -71,9 +71,12 @@ Si el pedido “vive” en mensajes, el producto se fragmenta.
 
 El módulo de pagos debe organizarse alrededor de un orquestador con adaptadores por proveedor.
 
+La dirección del producto no es mantener Stripe como experiencia principal. El objetivo es migrar a **Pagopar uPay** y conservar el checkout dentro de Cerramos, de modo que el comprador no abandone nuestra URL durante el flujo normal.
+
 ### Responsabilidades mínimas
 
 - crear la referencia o intención de pago
+- inicializar el componente embebido o la sesión de cobro de uPay dentro de la UI propia
 - normalizar estados del proveedor
 - verificar webhooks
 - asegurar idempotencia
@@ -86,6 +89,12 @@ El módulo de pagos debe organizarse alrededor de un orquestador con adaptadores
 - referencia externa
 - estado del pago
 - metadatos no sensibles
+
+### Restricción de experiencia
+
+- la integración principal debe ser embebida
+- el frontend de checkout sigue viviendo en Cerramos
+- un redirect externo solo se admite como fallback explícito del proveedor, no como contrato base
 
 ## Estados separados
 
@@ -126,3 +135,6 @@ La arquitectura del MVP debe impedir tres deformaciones comunes:
 - [Investigación de arquitectura](file:///Users/sebastian/Desktop/cerramos/docs/01_I+D/investigacion_arq.md)
 - [Aclaraciones Arquitectura MVP Cerramos](file:///Users/sebastian/Desktop/cerramos/docs/00_resumen/Aclaraciones%20Arquitectura%20MVP%20Cerramos.md)
 - [Guía de Arquitectura Backend](file:///Users/sebastian/Desktop/cerramos/docs/04_arquitectura/Gui%CC%81a%20de%20Arquitectura%20Backend_%20Pagos%20y%20Checkout.md)
+- [Pagopar docs](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/pagopar-docs/index.md)
+- [API - Integración de medios de pagos](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/pagopar-docs/api-integracion-medios-pagos.md)
+- [Entornos y pase a Producción](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/pagopar-docs/entornos-pase-a-producción.md)

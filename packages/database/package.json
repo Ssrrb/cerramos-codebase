@@ -4,7 +4,7 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
-    "generate": "prisma generate --no-hints --schema=./prisma/schema.prisma",
+    "generate": "node ./scripts/generate.mjs",
     "analyze": "bun run generate",
     "build": "bun run generate",
     "clean": "git clean -xdf .cache .turbo dist node_modules",

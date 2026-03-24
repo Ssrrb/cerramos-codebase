@@ -4,35 +4,37 @@ import { z } from "zod";
 export const keys = () =>
   createEnv({
     server: {
-      CLERK_SECRET_KEY: z.string().startsWith("sk_").optional(),
-      CLERK_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
+      AUTH_SESSION_SECRET: z.string().min(32).optional(),
+      AUTH_COOKIE_NAME: z.string().min(1).optional(),
+      AUTH_PASSWORD_PEPPER: z.string().min(16).optional(),
+      AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+      AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
+      AUTH_GOOGLE_CALLBACK_URL: z.url().optional(),
     },
     client: {
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z
-        .string()
-        .startsWith("pk_")
-        .optional(),
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: z.string().startsWith("/").optional(),
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().startsWith("/").optional(),
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL: z
+      NEXT_PUBLIC_AUTH_SIGN_IN_URL: z.string().startsWith("/").optional(),
+      NEXT_PUBLIC_AUTH_SIGN_UP_URL: z.string().startsWith("/").optional(),
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL: z
         .string()
         .startsWith("/")
         .optional(),
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL: z
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL: z
         .string()
         .startsWith("/")
         .optional(),
     },
     runtimeEnv: {
-      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-      CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL:
-        process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL,
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL:
-        process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL,
+      AUTH_SESSION_SECRET: process.env.AUTH_SESSION_SECRET,
+      AUTH_COOKIE_NAME: process.env.AUTH_COOKIE_NAME,
+      AUTH_PASSWORD_PEPPER: process.env.AUTH_PASSWORD_PEPPER,
+      AUTH_GOOGLE_CLIENT_ID: process.env.AUTH_GOOGLE_CLIENT_ID,
+      AUTH_GOOGLE_CLIENT_SECRET: process.env.AUTH_GOOGLE_CLIENT_SECRET,
+      AUTH_GOOGLE_CALLBACK_URL: process.env.AUTH_GOOGLE_CALLBACK_URL,
+      NEXT_PUBLIC_AUTH_SIGN_IN_URL: process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL,
+      NEXT_PUBLIC_AUTH_SIGN_UP_URL: process.env.NEXT_PUBLIC_AUTH_SIGN_UP_URL,
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL:
+        process.env.NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL,
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL:
+        process.env.NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL,
     },
   });

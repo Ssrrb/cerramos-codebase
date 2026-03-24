@@ -1,17 +1,67 @@
-# Geistdocs
+# Docs App
 
-A modern documentation template built with Next.js and [Fumadocs](https://fumadocs.dev). Designed for spinning up Vercel documentation sites quickly and consistently with built-in AI chat, GitHub discussions integration, and a beautiful UI.
+This workspace contains the Cerramos documentation site. It is the curated entry point for product documentation, operating notes, and imported reference material that still needs to remain accessible inside the repo.
 
-## Features
+## Stack
 
-- 📝 **MDX-powered documentation** - Write docs in MDX with full component support
-- 🤖 **AI-powered chat** - Built-in AI assistant that understands your documentation
-- 💬 **GitHub Discussions integration** - Allow users to provide feedback directly to GitHub
-- 🎨 **Modern UI** - Beautiful, accessible components built with Radix UI
-- 🔍 **Advanced search** - Fast, fuzzy search through all documentation
-- 🌙 **Dark mode** - Built-in theme switching
-- 📱 **Responsive** - Mobile-first design that works everywhere
-- ⚡ **Fast** - Built on Next.js 16 with App Router for optimal performance
-- 📰 **RSS** - Built-in RSS feed for your documentation
+- Next.js App Router
+- Fumadocs content pipeline
+- GeistDocs UI patterns and layout conventions
 
-[Read the docs](https://preview.geistdocs.com/docs) to get started.
+## Content Location
+
+All documentation content lives under `docs/content/docs`.
+
+- `.md` and `.mdx` files define the pages
+- folder structure becomes the docs URL structure
+- `meta.json` controls section titles, grouping, and sidebar order
+
+This repo currently mixes two kinds of content:
+
+- curated Cerramos docs written directly for the product and team
+- imported legacy reference material, including the `pagopar-docs` section
+
+## Local Development
+
+From the repo root:
+
+```bash
+bun dev --filter docs
+```
+
+From the `docs/` app directory:
+
+```bash
+bun dev
+```
+
+Useful app-level commands:
+
+```bash
+bun dev
+bun build
+bun start
+```
+
+After dependency changes, the docs app also runs `fumadocs-mdx` on postinstall to refresh generated content metadata.
+
+## How Navigation Works
+
+Fumadocs reads `docs/content/docs` as the source of truth.
+
+- page filenames determine slugs
+- folder names determine section paths
+- `meta.json` files define ordered navigation for a folder
+- page frontmatter defines page-level metadata such as `title`, `description`, `summary`, `type`, `related`, and similar fields
+
+If a section needs a curated landing page, add or update its `index.md` or `index.mdx` file inside the section directory.
+
+## Pagopar Legacy Material
+
+`docs/content/docs/pagopar-docs` contains imported Pagopar reference documents. These files are exposed through the same docs site, but they should be treated as legacy source material rather than as the canonical Cerramos product spec.
+
+The landing page for that section should stay curated:
+
+- preserve existing article slugs when possible
+- group links so the archive is easier to scan
+- avoid rewriting imported articles unless there is a deliberate normalization pass

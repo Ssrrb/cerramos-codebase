@@ -1,140 +1,148 @@
-# ▲ / next-forge
+# Cerramos en next-forge
 
-**Plantilla Turborepo de grado de producción para aplicaciones Next.js.**
+Bienvenido. Este repositorio es el monorepo de trabajo para **Cerramos**, construido sobre **next-forge**.
 
-<div>
-  <img src="https://img.shields.io/npm/dy/next-forge" alt="" />
-  <img src="https://img.shields.io/npm/v/next-forge" alt="" />
-  <img src="https://img.shields.io/github/license/vercel/next-forge" alt="" />
-</div>
+Cerramos no se está construyendo como un sistema de ecommerce genérico. El objetivo del producto es más acotado y útil: convertir un clic de WhatsApp o Instagram en un pedido estructurado con datos claros del comprador, estado de pago y control operativo por parte del comerciante.
 
-## Descripción general
+Esta base de código se encuentra actualmente **en refactorización**. El starter de next-forge nos da una base sólida de monorepo, pero la estructura de carpetas y los límites de los paquetes se están adaptando progresivamente para coincidir con el MVP de Cerramos.
 
-[next-forge](https://github.com/vercel/next-forge) es una plantilla [Turborepo](https://turborepo.com) de grado de producción para aplicaciones [Next.js](https://nextjs.org/). Está diseñada para ser un punto de partida completo para construir aplicaciones SaaS, proporcionando una base sólida y con opiniones establecidas que requiere una configuración mínima.
+## Por qué este repo se ve así
 
-Construido sobre una década de experiencia creando aplicaciones web, next-forge equilibra velocidad y calidad para ayudarte a lanzar productos completamente terminados más rápido.
+next-forge es un starter basado en Turborepo con múltiples aplicaciones desplegables en `apps/` y capacidades compartidas en `packages/`.
 
-### Filosofía
+Eso es importante para Cerramos porque necesitamos evolucionar en capas:
 
-next-forge se construye alrededor de cinco principios básicos:
+- flujos orientados al comprador
+- operaciones del comerciante
+- orquestación de pagos
+- capacidades de plataforma compartidas
 
-- **Rápido** — Rápido para construir, ejecutar, desplegar e iterar.
-- **Económico** — Gratis para empezar con servicios que escalan contigo.
-- **Con opiniones** — Herramientas integradas diseñadas para trabajar en conjunto.
-- **Moderno** — Las últimas características estables con un soporte comunitario saludable.
-- **Seguro** — Seguridad de tipos de extremo a extremo y una postura de seguridad robusta.
+En lugar de colapsar todo en una sola carpeta de aplicación, este repo mantiene separadas las superficies desplegables y los módulos reutilizables para que el producto pueda crecer sin perder claridad.
 
-## Demostración
+## Contexto de producto de Cerramos
 
-Experimenta next-forge en acción:
+Antes de cambiar la arquitectura o mover carpetas, lee estos documentos fuente:
 
-- [Web](https://demo.next-forge.com) — Sitio web de marketing
-- [App](https://app.demo.next-forge.com) — Aplicación principal
-- [Storybook](https://storybook.demo.next-forge.com) — Biblioteca de componentes
-- [API](https://api.demo.next-forge.com/health) — Verificación de estado de la API
+- [overview.mdx](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/product/overview.mdx)
+- [requirements.mdx](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/product/requirements.mdx)
+- [architecture.mdx](/Users/sebastian/Desktop/cerramos-codebase/docs/content/docs/product/architecture.mdx)
 
-## Características
+Esos documentos definen la intención actual del MVP:
 
-next-forge viene con las baterías incluidas:
+- un enlace de producto se resuelve en un comercio y una oferta vendible
+- un checkout crea un pedido con un `order_item`
+- se requiere inicio de sesión antes de cerrar el pedido
+- el estado del pedido y el estado del pago están separados
+- el panel del comerciante es la fuente de verdad operativa
+- el sistema debe mantenerse como un monolito modular, sin desviarse hacia microservicios prematuros
 
-### Aplicaciones
+## Estructura del monorepo
 
-- **Web** — Sitio de marketing construido con Tailwind CSS y TWBlocks
-- **App** — Aplicación principal con autenticación e integración de base de datos
-- **API** — API RESTful con verificaciones de estado y monitoreo
-- **Docs** — Sitio de documentación impulsado por Mintlify
-- **Email** — Plantillas de correo electrónico con React Email
-- **Storybook** — Entorno de desarrollo de componentes
+En el nivel superior, el repo sigue la división estándar de next-forge:
 
-### Paquetes
-
-- **Autenticación** — Impulsada por [Clerk](https://clerk.com)
-- **Base de datos** — ORM con seguridad de tipos y migraciones
-- **Sistema de diseño** — Biblioteca completa de componentes con modo oscuro
-- **Pagos** — Gestión de suscripciones a través de [Stripe](https://stripe.com)
-- **Correo electrónico** — Correos transaccionales a través de [Resend](https://resend.com)
-- **Analíticas** — Web ([Google Analytics](https://developers.google.com/analytics)) y de producto ([Posthog](https://posthog.com))
-- **Observabilidad** — Seguimiento de errores ([Sentry](https://sentry.io)), registros y monitoreo de tiempo de actividad ([BetterStack](https://betterstack.com))
-- **Seguridad** — Seguridad de la aplicación ([Arcjet](https://arcjet.com)), limitación de tasa y encabezados seguros
-- **CMS** — Gestión de contenido con seguridad de tipos para blogs y documentación
-- **SEO** — Gestión de metadatos, mapas de sitio y JSON-LD
-- **IA** — Utilidades de integración de IA
-- **Webhooks** — Manejo de webhooks entrantes y salientes
-- **Colaboración** — Funciones en tiempo real con avatares y cursores en vivo
-- **Feature Flags** — Gestión de banderas de características
-- **Cron** — Gestión de trabajos programados
-- **Almacenamiento** — Subida y gestión de archivos
-- **Internacionalización** — Soporte multilingüe
-- **Notificaciones** — Sistema de notificaciones en la aplicación
-
-## Empezando
-
-### Requisitos previos
-
-- Node.js 20+
-- [Bun](https://bun.sh) (o npm/yarn/pnpm)
-- [Stripe CLI](https://docs.stripe.com/stripe-cli) para pruebas locales de webhooks
-
-### Instalación
-
-Crea un nuevo proyecto next-forge:
-
-```sh
-npx next-forge@latest init
+```text
+.
+├── apps/
+├── packages/
+├── docs/
+├── turbo.json
+└── package.json
 ```
 
-### Configuración
+### `apps/`
 
-1. Configura tus variables de entorno
-2. Configura las cuentas de servicio requeridas (Clerk, Stripe, Resend, etc.)
-3. Ejecuta el servidor de desarrollo
+Estas son las superficies desplegables del sistema.
 
-Para instrucciones de configuración detalladas, lee la [documentación](https://www.next-forge.com/docs).
+- `apps/app`: la principal superficie de producto autenticada. Este es el hogar más probable para las operaciones de comerciantes y flujos de trabajo internos a medida que Cerramos evolucione.
+- `apps/web`: el sitio web de marketing público y presencia web localizada.
+- `apps/api`: rutas de API, webhooks, pruebas de salud (health checks) y puntos de entrada del backend que se benefician de estar aislados.
+- `apps/email`: aplicación de vista previa de React Email.
+- `apps/docs`: aplicación de documentación.
+- `apps/storybook`: desarrollo de componentes de interfaz de usuario aislados.
+- `apps/studio`: wrapper de Prisma Studio para inspección de base de datos.
 
-## Estructura
+### `packages/`
 
-next-forge utiliza una estructura monorepo gestionada por Turborepo:
+Estas son capacidades compartidas importadas como `@repo/*`.
 
+- `packages/auth`: autenticación e integración de identidad.
+- `packages/database`: esquema de Prisma, cliente generado y acceso a base de datos.
+- `packages/payments`: superficie de integración del proveedor de pagos.
+- `packages/webhooks`: utilidades y temas compartidos de webhooks.
+- `packages/design-system`: primitivas y estilos de UI compartidos.
+- `packages/notifications`: primitivas de notificación.
+- `packages/observability`: registro (logging), seguimiento de errores e instrumentación.
+- `packages/security`: protección de solicitudes y ayudantes de seguridad.
+- `packages/analytics`: integraciones de analítica.
+- `packages/storage`: ayudantes de almacenamiento de archivos.
+- `packages/email`: plantillas de correo electrónico y utilidades de envío.
+- `packages/internationalization`: soporte de localización.
+- `packages/feature-flags`: herramientas para feature flags.
+- `packages/collaboration`: soporte de colaboración en tiempo real heredado del starter.
+- `packages/cms`, `packages/seo`, `packages/next-config`, `packages/rate-limit`, `packages/typescript-config`, `packages/ai`: infraestructura y utilidades de plataforma compartidas heredadas de next-forge y adaptadas según sea necesario.
+
+## Cómo leer el repo durante la refactorización
+
+Algunas carpetas reflejan la plantilla original de next-forge más que el modelo de dominio final de Cerramos. Eso es de esperarse por ahora.
+
+Al navegar por la base de código, trátala en este orden:
+
+1. `docs/content/docs/product/`
+   Esta es la intención del producto canónico.
+2. `apps/`
+   Esto muestra las superficies operativas en tiempo real (runtime).
+3. `packages/`
+   Esto muestra las capacidades técnicas actuales y los límites de integración.
+
+Si la intención del producto y la estructura actual del código divergen, prefiere los documentos del producto como dirección y trata el código como trabajo en progreso.
+
+## Dirección de la refactorización
+
+La refactorización actual está moviendo el repo hacia módulos de Cerramos más claros, especialmente en torno a:
+
+- `auth`
+- `merchant`
+- `catalog`
+- `link`
+- `checkout`
+- `payment`
+- `webhook`
+- `delivery`
+- `audit`
+
+No todos esos módulos existen todavía como carpetas de primera clase. Algunas responsabilidades todavía están distribuidas en las aplicaciones y paquetes de la era del starter. La refactorización es el proceso de hacer explícitos esos límites sin romper el sistema en funcionamiento.
+
+## Suposiciones de trabajo para contribuidores
+
+- Mantén las convenciones de next-forge a menos que haya una razón clara específica de Cerramos para cambiarlas.
+- Prefiere refactorizaciones incrementales dentro de los límites de las aplicaciones y paquetes existentes.
+- No introduzcas lógica de carrito de múltiples productos en las rutas del MVP.
+- No fusiones el estado de pago y el estado de pedido en un único modelo de estado.
+- No trates las notificaciones de WhatsApp o correo electrónico como la fuente de verdad; las superficies de los productos internos deben poseer el estado operativo.
+
+## Comandos comunes
+
+Desde la raíz del repo:
+
+```bash
+bun run dev
+bun run build
+bun run test
+bun run check
+bun run fix
+bun run migrate
 ```
-next-forge/
-├── apps/           # Aplicaciones desplegables
-│   ├── web/        # Sitio web de marketing (puerto 3001)
-│   ├── app/        # Aplicación principal (puerto 3000)
-│   ├── api/        # Servidor API
-│   ├── docs/       # Documentación
-│   ├── email/      # Plantillas de correo
-│   └── storybook/  # Biblioteca de componentes
-└── packages/       # Paquetes compartidos
-    ├── design-system/
-    ├── database/
-    ├── auth/
-    └── ...
+
+También puedes delimitar el trabajo a un único objetivo con los filtros de Turbo, por ejemplo:
+
+```bash
+bun dev --filter app
+bun dev --filter web
+bun build --filter @repo/database
 ```
 
-Cada aplicación es independiente y se puede desplegar por separado. Los paquetes se comparten entre las aplicaciones para mantener la consistencia y la facilidad de mantenimiento.
+## Nota final
 
-## Documentación
+Este repositorio debe leerse como **Cerramos siendo moldeado sobre next-forge**, no como un clon prístino de una plantilla.
 
-La documentación completa está disponible en [next-forge.com/docs](https://www.next-forge.com/docs), incluyendo:
-
-- Guías de configuración detalladas
-- Documentación de los paquetes
-- Guías de migración para cambiar de proveedores
-- Instrucciones de despliegue
-- Ejemplos y recetas
-
-## Contribuyendo
-
-¡Agradecemos las contribuciones! Consulta la [guía de contribución](https://github.com/vercel/next-forge/blob/main/.github/CONTRIBUTING.md) para más detalles.
-
-## Colaboradores
-
-<a href="https://github.com/vercel/next-forge/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=vercel/next-forge" />
-</a>
-
-Hecho con [contrib.rocks](https://contrib.rocks).
-
-## Licencia
-
-MIT
+Si no estás seguro de dónde pertenece una nueva función, comienza desde los documentos del producto de Cerramos, identifica si es flujo de comprador, operaciones comerciales o infraestructura de plataforma, y luego elige el límite de aplicación o paquete más pequeño que mantenga clara esa responsabilidad.

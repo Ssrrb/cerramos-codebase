@@ -1,99 +1,40 @@
 import { analytics } from "@repo/analytics/server";
-import { clerkClient } from "@repo/auth/server";
 import { parseError } from "@repo/observability/error";
 import { log } from "@repo/observability/log";
-import type { Stripe } from "@repo/payments";
-import { stripe } from "@repo/payments";
+import { pagopar, parseWebhook, verifyWebhook } from "@repo/payments";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { env } from "@/env";
-
-const getUserFromCustomerId = async (customerId: string) => {
-  const clerk = await clerkClient();
-  const users = await clerk.users.getUserList();
-
-  const user = users.data.find(
-    (currentUser) => currentUser.privateMetadata.stripeCustomerId === customerId
-  );
-
-  return user;
-};
-
-const handleCheckoutSessionCompleted = async (
-  data: Stripe.Checkout.Session
-) => {
-  if (!data.customer) {
-    return;
-  }
-
-  const customerId =
-    typeof data.customer === "string" ? data.customer : data.customer.id;
-  const user = await getUserFromCustomerId(customerId);
-
-  if (!user) {
-    return;
-  }
-
-  analytics?.capture({
-    event: "User Subscribed",
-    distinctId: user.id,
-  });
-};
-
-const handleSubscriptionScheduleCanceled = async (
-  data: Stripe.SubscriptionSchedule
-) => {
-  if (!data.customer) {
-    return;
-  }
-
-  const customerId =
-    typeof data.customer === "string" ? data.customer : data.customer.id;
-  const user = await getUserFromCustomerId(customerId);
-
-  if (!user) {
-    return;
-  }
-
-  analytics?.capture({
-    event: "User Unsubscribed",
-    distinctId: user.id,
-  });
-};
 
 export const POST = async (request: Request): Promise<Response> => {
-  if (!(stripe && env.STRIPE_WEBHOOK_SECRET)) {
+  if (!pagopar) {
     return NextResponse.json({ message: "Not configured", ok: false });
   }
 
   try {
     const body = await request.text();
     const headerPayload = await headers();
-    const signature = headerPayload.get("stripe-signature");
+    const isVerified = await verifyWebhook(body, headerPayload);
 
-    if (!signature) {
-      throw new Error("missing stripe-signature header");
+    if (!isVerified) {
+      return NextResponse.json(
+        { message: "Invalid webhook signature", ok: false },
+        { status: 401 }
+      );
     }
 
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      env.STRIPE_WEBHOOK_SECRET
-    );
+    const payload = JSON.parse(body) as unknown;
+    const event = await parseWebhook(payload, headerPayload);
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
-      }
-      case "subscription_schedule.canceled": {
-        await handleSubscriptionScheduleCanceled(event.data.object);
-        break;
-      }
-      default: {
-        log.warn(`Unhandled event type ${event.type}`);
-      }
-    }
+    log.info("PagoPar webhook received", {
+      eventType: event.eventType,
+      externalEventId: event.externalEventId,
+      status: event.status,
+    });
+
+    analytics?.capture({
+      event: `Payment ${event.status}`,
+      distinctId: event.externalReference ?? "unknown-payment",
+    });
 
     await analytics?.shutdown();
 

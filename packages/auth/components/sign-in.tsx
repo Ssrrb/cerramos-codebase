@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { signIn } from "../client";
 
-export const SignIn = () => {
+interface SignInProps {
+  googleEnabled?: boolean;
+}
+
+export const SignIn = ({ googleEnabled = false }: SignInProps) => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +56,9 @@ export const SignIn = () => {
       <div className="space-y-1">
         <h1 className="text-xl font-semibold">Iniciar sesion</h1>
         <p className="text-sm text-muted-foreground">
-          Accede con email y contrasena o continua con Google.
+          {googleEnabled
+            ? "Accede con email y contrasena o continua con Google."
+            : "Accede con email y contrasena."}
         </p>
       </div>
       <form className="space-y-3" onSubmit={handleSubmit}>
@@ -89,14 +95,16 @@ export const SignIn = () => {
           {isPending ? "Ingresando..." : "Ingresar"}
         </button>
       </form>
-      <button
-        className="inline-flex h-10 w-full items-center justify-center rounded-md border px-4 text-sm disabled:opacity-50"
-        disabled={isPending}
-        onClick={handleGoogle}
-        type="button"
-      >
-        Continuar con Google
-      </button>
+      {googleEnabled ? (
+        <button
+          className="inline-flex h-10 w-full items-center justify-center rounded-md border px-4 text-sm disabled:opacity-50"
+          disabled={isPending}
+          onClick={handleGoogle}
+          type="button"
+        >
+          Continuar con Google
+        </button>
+      ) : null}
       <Link className="text-sm underline" href="/sign-up">
         Crear cuenta
       </Link>

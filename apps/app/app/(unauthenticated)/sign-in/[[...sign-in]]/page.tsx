@@ -1,3 +1,4 @@
+import { isGoogleAuthEnabled } from "@repo/auth/keys";
 import { createMetadata } from "@repo/seo/metadata";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
@@ -10,6 +11,6 @@ const SignIn = dynamic(() =>
 
 export const metadata: Metadata = createMetadata({ title, description });
 
-const SignInPage = () => <SignIn />;
+const SignInPage = () => <SignIn googleEnabled={isGoogleAuthEnabled()} />;
 
 export default SignInPage;

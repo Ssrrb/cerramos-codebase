@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { signIn, signUp } from "../client";
 
-export const SignUp = () => {
+interface SignUpProps {
+  googleEnabled?: boolean;
+}
+
+export const SignUp = ({ googleEnabled = false }: SignUpProps) => {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
@@ -132,14 +136,16 @@ export const SignUp = () => {
           {isPending ? "Creando cuenta..." : "Crear cuenta"}
         </button>
       </form>
-      <button
-        className="inline-flex h-10 w-full items-center justify-center rounded-md border px-4 text-sm disabled:opacity-50"
-        disabled={isPending}
-        onClick={handleGoogle}
-        type="button"
-      >
-        Continuar con Google
-      </button>
+      {googleEnabled ? (
+        <button
+          className="inline-flex h-10 w-full items-center justify-center rounded-md border px-4 text-sm disabled:opacity-50"
+          disabled={isPending}
+          onClick={handleGoogle}
+          type="button"
+        >
+          Continuar con Google
+        </button>
+      ) : null}
       <Link className="text-sm underline" href="/sign-in">
         Ya tengo cuenta
       </Link>

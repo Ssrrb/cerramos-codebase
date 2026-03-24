@@ -2,27 +2,37 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 const isDevelopment = process.env.NODE_ENV === "development";
+const emptyStringAsUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema);
 
 export const keys = () =>
   createEnv({
     server: {
       BETTER_AUTH_SECRET: z.string().min(32),
       BETTER_AUTH_URL: z.url(),
-      BETTER_AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
-      AUTH_GOOGLE_CLIENT_ID: z.string().min(1).optional(),
-      AUTH_GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+      BETTER_AUTH_COOKIE_DOMAIN: emptyStringAsUndefined(
+        z.string().min(1).optional()
+      ),
+      AUTH_GOOGLE_CLIENT_ID: emptyStringAsUndefined(
+        z.string().min(1).optional()
+      ),
+      AUTH_GOOGLE_CLIENT_SECRET: emptyStringAsUndefined(
+        z.string().min(1).optional()
+      ),
     },
     client: {
-      NEXT_PUBLIC_AUTH_SIGN_IN_URL: z.string().startsWith("/").optional(),
-      NEXT_PUBLIC_AUTH_SIGN_UP_URL: z.string().startsWith("/").optional(),
-      NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL: z
-        .string()
-        .startsWith("/")
-        .optional(),
-      NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL: z
-        .string()
-        .startsWith("/")
-        .optional(),
+      NEXT_PUBLIC_AUTH_SIGN_IN_URL: emptyStringAsUndefined(
+        z.string().startsWith("/").optional()
+      ),
+      NEXT_PUBLIC_AUTH_SIGN_UP_URL: emptyStringAsUndefined(
+        z.string().startsWith("/").optional()
+      ),
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL: emptyStringAsUndefined(
+        z.string().startsWith("/").optional()
+      ),
+      NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL: emptyStringAsUndefined(
+        z.string().startsWith("/").optional()
+      ),
     },
     runtimeEnv: {
       BETTER_AUTH_SECRET:
@@ -45,3 +55,11 @@ export const keys = () =>
         process.env.NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL,
     },
   });
+
+export const isGoogleAuthEnabled = () => {
+  const authKeys = keys();
+
+  return Boolean(
+    authKeys.AUTH_GOOGLE_CLIENT_ID && authKeys.AUTH_GOOGLE_CLIENT_SECRET
+  );
+};

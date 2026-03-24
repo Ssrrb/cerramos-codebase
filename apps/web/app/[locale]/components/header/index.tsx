@@ -2,19 +2,13 @@
 
 import { ModeToggle } from "@repo/design-system/components/mode-toggle";
 import { Button } from "@repo/design-system/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@repo/design-system/components/ui/navigation-menu";
 import type { Dictionary } from "@repo/internationalization";
-import { Menu, MoveRight, X } from "lucide-react";
+import { ChevronDown, Menu, MoveRight, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { env } from "@/env";
+import logoCerramos from "../../logo-cerramos.svg";
 import { LanguageSwitcher } from "./language-switcher";
 
 interface HeaderProps {
@@ -58,72 +52,66 @@ export const Header = ({ dictionary }: HeaderProps) => {
     <header className="sticky top-0 left-0 z-40 w-full border-b bg-background">
       <div className="container relative mx-auto flex min-h-20 flex-row items-center gap-4 lg:grid lg:grid-cols-3">
         <div className="hidden flex-row items-center justify-start gap-4 lg:flex">
-          <NavigationMenu className="flex items-start justify-start">
-            <NavigationMenuList className="flex flex-row justify-start gap-4">
-              {navigationItems.map((item) => (
-                <NavigationMenuItem key={item.title}>
-                  {item.href ? (
-                    <NavigationMenuLink asChild>
-                      <Button asChild variant="ghost">
-                        <Link href={item.href}>{item.title}</Link>
-                      </Button>
-                    </NavigationMenuLink>
-                  ) : (
-                    <>
-                      <NavigationMenuTrigger className="font-medium text-sm">
-                        {item.title}
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent className="!w-[450px] p-4">
-                        <div className="flex grid-cols-2 flex-col gap-4 lg:grid">
-                          <div className="flex h-full flex-col justify-between">
-                            <div className="flex flex-col">
-                              <p className="text-base">{item.title}</p>
-                              <p className="text-muted-foreground text-sm">
-                                {item.description}
-                              </p>
-                            </div>
-                            <Button asChild className="mt-10" size="sm">
-                              <Link href="/contact">
-                                {dictionary.web.global.primaryCta}
-                              </Link>
-                            </Button>
+          <nav className="flex items-start justify-start">
+            <div className="flex flex-row justify-start gap-4">
+              {navigationItems.map((item) =>
+                item.href ? (
+                  <Button asChild key={item.title} variant="ghost">
+                    <Link href={item.href}>{item.title}</Link>
+                  </Button>
+                ) : (
+                  <div className="group relative" key={item.title}>
+                    <Button
+                      className="font-medium text-sm"
+                      type="button"
+                      variant="ghost"
+                    >
+                      {item.title}
+                      <ChevronDown className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" />
+                    </Button>
+                    <div className="invisible absolute top-full left-0 z-50 mt-1 w-[450px] translate-y-1 rounded-md border bg-popover p-4 text-popover-foreground opacity-0 shadow-md transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex h-full flex-col justify-between">
+                          <div className="flex flex-col">
+                            <p className="text-base">{item.title}</p>
+                            <p className="text-muted-foreground text-sm">
+                              {item.description}
+                            </p>
                           </div>
-                          <div className="flex h-full flex-col justify-end text-sm">
-                            {item.items?.map((subItem) => (
-                              <NavigationMenuLink
-                                className="flex flex-row items-center justify-between rounded px-4 py-2 hover:bg-muted"
-                                href={subItem.href}
-                                key={subItem.href}
-                              >
-                                <span>{subItem.title}</span>
-                                <MoveRight className="h-4 w-4 text-muted-foreground" />
-                              </NavigationMenuLink>
-                            ))}
-                          </div>
+                          <Button asChild className="mt-10 w-fit" size="sm">
+                            <Link href="/contact">
+                              {dictionary.web.global.primaryCta}
+                            </Link>
+                          </Button>
                         </div>
-                      </NavigationMenuContent>
-                    </>
-                  )}
-                </NavigationMenuItem>
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+                        <div className="flex h-full flex-col justify-end text-sm">
+                          {item.items?.map((subItem) => (
+                            <Link
+                              className="flex flex-row items-center justify-between rounded px-4 py-2 hover:bg-muted"
+                              href={subItem.href}
+                              key={subItem.href}
+                            >
+                              <span>{subItem.title}</span>
+                              <MoveRight className="h-4 w-4 text-muted-foreground" />
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </nav>
         </div>
         <div className="flex items-center gap-2 lg:justify-center">
-          <svg
-            className="h-[18px] w-[18px] -translate-y-[0.5px] fill-current"
-            fill="none"
-            height="22"
-            viewBox="0 0 235 203"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <title>Vercel</title>
-            <path
-              d="M117.082 0L234.164 202.794H0L117.082 0Z"
-              fill="currentColor"
-            />
-          </svg>
-          <p className="whitespace-nowrap font-semibold">next-forge</p>
+          <Image
+            alt="Cerramos logo"
+            className="h-[18px] w-auto"
+            priority
+            src={logoCerramos}
+          />
+          <p className="whitespace-nowrap font-semibold">cerramos</p>
         </div>
         <div className="flex w-full justify-end gap-4">
           <Button asChild className="hidden md:inline" variant="ghost">

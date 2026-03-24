@@ -2,6 +2,7 @@
 
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +19,26 @@ const themes = [
 
 export const ModeToggle = () => {
   const { setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Button
+        aria-label="Toggle theme"
+        className="shrink-0 text-foreground"
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <SunIcon className="h-[1.2rem] w-[1.2rem]" />
+        <span className="sr-only">Toggle theme</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

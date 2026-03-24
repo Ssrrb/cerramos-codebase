@@ -9,6 +9,7 @@ import {
 } from "@repo/design-system/components/ui/dropdown-menu";
 import { Languages } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const languages = [
   { label: "🇬🇧 English", value: "en" },
@@ -23,6 +24,11 @@ export const LanguageSwitcher = () => {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const switchLanguage = (locale: string) => {
     const defaultLocale = "en";
@@ -42,6 +48,21 @@ export const LanguageSwitcher = () => {
 
     router.push(newPathname);
   };
+
+  if (!mounted) {
+    return (
+      <Button
+        aria-label="Switch language"
+        className="shrink-0 text-foreground"
+        size="icon"
+        type="button"
+        variant="ghost"
+      >
+        <Languages className="h-[1.2rem] w-[1.2rem]" />
+        <span className="sr-only">Switch language</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

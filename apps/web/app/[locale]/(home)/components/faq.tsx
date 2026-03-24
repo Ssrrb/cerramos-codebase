@@ -1,12 +1,6 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@repo/design-system/components/ui/accordion";
 import { Button } from "@repo/design-system/components/ui/button";
 import type { Dictionary } from "@repo/internationalization";
-import { PhoneCall } from "lucide-react";
+import { ChevronDown, PhoneCall } from "lucide-react";
 import Link from "next/link";
 
 interface FAQProps {
@@ -37,14 +31,20 @@ export const FAQ = ({ dictionary }: FAQProps) => (
             </div>
           </div>
         </div>
-        <Accordion className="w-full" collapsible type="single">
+        <div className="w-full">
           {dictionary.web.home.faq.items.map((item) => (
-            <AccordionItem key={item.question} value={item.question}>
-              <AccordionTrigger>{item.question}</AccordionTrigger>
-              <AccordionContent>{item.answer}</AccordionContent>
-            </AccordionItem>
+            <details
+              className="group border-b last:border-b-0"
+              key={item.question}
+            >
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-4 py-4 text-left text-sm font-medium">
+                <span>{item.question}</span>
+                <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+              </summary>
+              <div className="pb-4 text-sm">{item.answer}</div>
+            </details>
           ))}
-        </Accordion>
+        </div>
       </div>
     </div>
   </div>

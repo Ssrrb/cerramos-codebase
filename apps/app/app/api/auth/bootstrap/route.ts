@@ -49,6 +49,9 @@ export const POST = async (request: Request) => {
     );
   }
 
+  // Signing in authenticates the person; bootstrap attaches that person to a
+  // merchant workspace. The dashboard depends on this commerce link to load
+  // stats, products, clients, and product-linked payment flows.
   const slug = await findAvailableSlug(commerceName);
   const [commerce] = await database
     .insert(schema.commerce)

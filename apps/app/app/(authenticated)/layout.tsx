@@ -17,6 +17,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // This route group is the merchant dashboard. Rendering it requires more than
+  // a valid session: the user also needs an attached commerce so the UI can load
+  // commerce-scoped stats, products, clients, and payment-link workflows.
   const context = await requireCommerceContext();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";

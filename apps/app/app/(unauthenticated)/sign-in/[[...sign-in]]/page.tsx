@@ -34,6 +34,8 @@ const SignInPage = async ({ searchParams }: SignInPageProps) => {
     DEFAULT_AUTH_AFTER_SIGN_IN_URL;
   const session = await getSession();
 
+  // Keep auth redirects inside the dashboard app. After sign-in, users may still
+  // be routed through onboarding if they do not yet belong to a commerce.
   if (session) {
     redirect(callbackUrl);
   }

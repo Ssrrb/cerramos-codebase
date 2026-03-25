@@ -1,6 +1,13 @@
 "use client";
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const chartConfig = {
   total: {
@@ -24,23 +31,19 @@ const chartData = [
 
 const AppBarChart = () => {
   return (
-    <div className="">
-      <h1 className="text-lg font-medium mb-6">Ingresos</h1>
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <div>
+      <h1 className="dashboard-panel-title">Ingresos</h1>
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
         <BarChart accessibilityLayer data={chartData}>
           <CartesianGrid vertical={false} />
           <XAxis
+            axisLine={false}
             dataKey="month"
-            tickLine={false}
-            tickMargin={10}
-            axisLine={false}
             tickFormatter={(value) => value.slice(0, 3)}
-          />
-          <YAxis
             tickLine={false}
             tickMargin={10}
-            axisLine={false}
           />
+          <YAxis axisLine={false} tickLine={false} tickMargin={10} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar dataKey="total" fill="var(--color-total)" radius={4} />

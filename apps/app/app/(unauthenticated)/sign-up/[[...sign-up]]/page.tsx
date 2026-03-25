@@ -36,6 +36,8 @@ const SignUpPage = async ({ searchParams }: SignUpPageProps) => {
     DEFAULT_AUTH_AFTER_SIGN_IN_URL;
   const session = await getSession();
 
+  // If the user is already authenticated, skip the sign-up surface and send them
+  // back to their requested internal dashboard path.
   if (session) {
     redirect(callbackUrl);
   }

@@ -1,19 +1,13 @@
 "use client";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 const chartConfig = {
   desktop: {
@@ -37,23 +31,23 @@ const chartData = [
 
 const AppAreaChart = () => {
   return (
-    <div className="">
-      <h1 className="text-lg font-medium mb-6">Total Visitors</h1>
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <div>
+      <h1 className="dashboard-panel-title">Total Visitors</h1>
+      <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
         <AreaChart accessibilityLayer data={chartData}>
           <CartesianGrid vertical={false} />
           <XAxis
+            axisLine={false}
             dataKey="month"
+            tickFormatter={(value) => value.slice(0, 3)}
             tickLine={false}
             tickMargin={10}
-            axisLine={false}
-            tickFormatter={(value) => value.slice(0, 3)}
           />
-          <YAxis tickLine={false} tickMargin={10} axisLine={false} />
+          <YAxis axisLine={false} tickLine={false} tickMargin={10} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
           <defs>
-            <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="fillDesktop" x1="0" x2="0" y1="0" y2="1">
               <stop
                 offset="5%"
                 stopColor="var(--color-desktop)"
@@ -65,7 +59,7 @@ const AppAreaChart = () => {
                 stopOpacity={0.1}
               />
             </linearGradient>
-            <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="fillMobile" x1="0" x2="0" y1="0" y2="1">
               <stop
                 offset="5%"
                 stopColor="var(--color-mobile)"
@@ -80,19 +74,19 @@ const AppAreaChart = () => {
           </defs>
           <Area
             dataKey="mobile"
-            type="natural"
             fill="url(#fillMobile)"
             fillOpacity={0.4}
-            stroke="var(--color-mobile)"
             stackId="a"
+            stroke="var(--color-mobile)"
+            type="natural"
           />
           <Area
             dataKey="desktop"
-            type="natural"
             fill="url(#fillDesktop)"
             fillOpacity={0.4}
-            stroke="var(--color-desktop)"
             stackId="a"
+            stroke="var(--color-desktop)"
+            type="natural"
           />
         </AreaChart>
       </ChartContainer>

@@ -256,6 +256,28 @@ export const productLink = pgTable(
   ]
 );
 
+export const product = pgTable(
+  "Product",
+  {
+    id: cuidPrimaryKey(),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    shortDescription: text("shortDescription").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull(),
+    unitPrice: integer("unitPrice").notNull(),
+    currency: text("currency").notNull().default("PYG"),
+    sizes: text("sizes").array().notNull(),
+    colors: text("colors").array().notNull(),
+    images: jsonb("images").$type<Record<string, string>>().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("Product_commerceId_idx").on(table.commerceId)]
+);
+
 export const productVariantOption = pgTable(
   "ProductVariantOption",
   {

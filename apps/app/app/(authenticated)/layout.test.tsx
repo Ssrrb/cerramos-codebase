@@ -17,7 +17,7 @@ vi.mock("next/headers", () => ({
   cookies: cookiesMock,
 }));
 
-vi.mock("@/app/components/AppSidebar", () => ({
+vi.mock("@/app/components/app-sidebar", () => ({
   default: ({
     activeCommerce,
     user,
@@ -36,11 +36,17 @@ vi.mock("@/app/components/Navbar", () => ({
     activeCommerce,
   }: {
     activeCommerce: { name: string; slug: string };
-  }) => <div data-testid="navbar">{activeCommerce.name}:{activeCommerce.slug}</div>,
+  }) => (
+    <div data-testid="navbar">
+      {activeCommerce.name}:{activeCommerce.slug}
+    </div>
+  ),
 }));
 
 vi.mock("@/app/components/providers/ThemeProvider", () => ({
-  ThemeProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ThemeProvider: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock("@/app/components/ui/sidebar", () => ({
@@ -50,7 +56,11 @@ vi.mock("@/app/components/ui/sidebar", () => ({
   }: {
     children: ReactNode;
     defaultOpen?: boolean;
-  }) => <div data-testid="sidebar-provider">{String(defaultOpen)}:{children}</div>,
+  }) => (
+    <div data-testid="sidebar-provider">
+      {String(defaultOpen)}:{children}
+    </div>
+  ),
 }));
 
 beforeEach(() => {

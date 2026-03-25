@@ -8,9 +8,23 @@ export default defineConfig({
     environment: "jsdom",
   },
   resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "./"),
-      "@repo": path.resolve(import.meta.dirname, "../../packages"),
-    },
+    alias: [
+      {
+        find: /^@\/components\/(.*)$/,
+        replacement: `${path.resolve(import.meta.dirname, "./app/components")}/$1`,
+      },
+      {
+        find: /^@\/lib\/(.*)$/,
+        replacement: `${path.resolve(import.meta.dirname, "./lib")}/$1`,
+      },
+      {
+        find: /^@\/(.*)$/,
+        replacement: `${path.resolve(import.meta.dirname, "./")}/$1`,
+      },
+      {
+        find: "@repo",
+        replacement: path.resolve(import.meta.dirname, "../../packages"),
+      },
+    ],
   },
 });

@@ -2,7 +2,6 @@
 name: next-forge
 description: Use when Codex needs to install, configure, customize, debug, extend, or explain a next-forge codebase or starter. Covers questions about project setup, Turborepo architecture, app/package responsibilities, environment variables, provider swaps, Vercel deployment, and next-forge development workflows.
 ---
-
 # next-forge
 
 Use this skill as an operator's guide for next-forge. Keep the main skill lean, answer from memory when the request is simple, and load only the reference file that matches the user's question.
@@ -22,6 +21,7 @@ Use this skill as an operator's guide for next-forge. Keep the main skill lean, 
 
 - Treat next-forge as a modular Turborepo template with multiple apps under `apps/` and shared packages under `packages/`.
 - Assume PostgreSQL is the only required integration. Other providers are optional and should degrade gracefully when their env vars are absent.
+- In this repo, prefer the current workspace defaults over starter-era assumptions: Drizzle for the database layer, Better Auth for auth, and a PagoPar/uPay-oriented payments adapter.
 - Keep answers aligned with App Router conventions: server components by default, client components only where interactivity is needed.
 - Preserve the `@repo/<name>` package naming convention unless the user is explicitly reworking the workspace structure.
 - Prefer incremental changes inside the existing package boundaries instead of cross-cutting rewrites.
@@ -69,7 +69,7 @@ Use this skill as an operator's guide for next-forge. Keep the main skill lean, 
 ## Reference Map
 
 - `references/setup.md`
-  Use for installation, prerequisites, env vars, database bootstrap, Stripe CLI, and local development commands.
+  Use for installation, prerequisites, env vars, database bootstrap, auth/payment setup, and local development commands.
 - `references/architecture.md`
   Use for app/package layout, Turbo tasks, scripts, filtering, and build outputs.
 - `references/packages.md`

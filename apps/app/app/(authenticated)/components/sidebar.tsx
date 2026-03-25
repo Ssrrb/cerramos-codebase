@@ -9,13 +9,6 @@ import {
   CollapsibleTrigger,
 } from "@repo/design-system/components/ui/collapsible";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@repo/design-system/components/ui/dropdown-menu";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -36,22 +29,15 @@ import {
 import { cn } from "@repo/design-system/lib/utils";
 import { NotificationsTrigger } from "@repo/notifications/components/trigger";
 import {
-  AnchorIcon,
-  BookOpenIcon,
-  BotIcon,
+  BoxesIcon,
   ChevronRightIcon,
-  FolderIcon,
-  FrameIcon,
   LifeBuoyIcon,
-  MapIcon,
-  MoreHorizontalIcon,
-  PieChartIcon,
+  SearchIcon,
   SendIcon,
   Settings2Icon,
-  ShareIcon,
-  SquareTerminalIcon,
-  Trash2Icon,
+  WebhookIcon,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Search } from "./search";
@@ -61,102 +47,45 @@ interface GlobalSidebarProperties {
 }
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Productos",
-      url: "#",
-      icon: SquareTerminalIcon,
-      isActive: true,
+      url: "/",
+      icon: BoxesIcon,
       items: [
         {
-          title: "Pedidos",
-          url: "#",
+          title: "Catalogo",
+          url: "/",
         },
         {
-          title: "Ajustes",
-          url: "#",
+          title: "Buscar",
+          url: "/search?q=producto",
+        },
+        {
+          title: "Webhooks",
+          url: "/webhooks",
         },
       ],
     },
     {
-      title: "Pagos",
-      url: "#",
-      icon: BotIcon,
-      items: [
-        {
-          title: "Balance",
-          url: "#",
-        },
-        {
-          title: "Cuenta",
-          url: "#",
-        },
-        {
-          title: "Clientes",
-          url: "#",
-        },
-      ],
+      title: "Busqueda",
+      url: "/search?q=producto",
+      icon: SearchIcon,
     },
     {
-      title: "Documentacion",
-      url: "#",
-      icon: BookOpenIcon,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
+      title: "Configuracion",
+      url: "/webhooks",
       icon: Settings2Icon,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
     },
   ],
   navSecondary: [
     {
       title: "Webhooks",
       url: "/webhooks",
-      icon: AnchorIcon,
+      icon: WebhookIcon,
     },
     {
-      title: "Support",
+      title: "Ayuda",
       url: "#",
       icon: LifeBuoyIcon,
     },
@@ -166,38 +95,26 @@ const data = {
       icon: SendIcon,
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: FrameIcon,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChartIcon,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: MapIcon,
-    },
-  ],
 };
 
 export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
   const sidebar = useSidebar();
+  const pathname = usePathname();
+  const productsSectionActive =
+    pathname === "/" ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/webhooks");
 
   return (
     <>
-      <Sidebar variant="inset">
+      <Sidebar className="authenticated-sidebar-theme" variant="inset">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
               <div
                 className={cn(
-                  "h-[36px] overflow-hidden transition-all [&>div]:w-full",
-                  sidebar.open ? "" : "-mx-1"
+                  "authenticated-sidebar-switcher",
+                  !sidebar.open && "authenticated-sidebar-switcher-collapsed"
                 )}
               >
                 <OrganizationSwitcher
@@ -211,16 +128,26 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
         <Search />
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel>Comercio</SidebarGroupLabel>
             <SidebarMenu>
               {data.navMain.map((item) => (
                 <Collapsible
                   asChild
-                  defaultOpen={item.isActive}
+                  defaultOpen={
+                    item.title === "Productos" ? productsSectionActive : false
+                  }
                   key={item.title}
                 >
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={
+                        item.title === "Productos"
+                          ? productsSectionActive
+                          : pathname === item.url.split("?")[0]
+                      }
+                      tooltip={item.title}
+                    >
                       <Link href={item.url}>
                         <item.icon />
                         <span>{item.title}</span>
@@ -238,7 +165,12 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
                           <SidebarMenuSub>
                             {item.items?.map((subItem) => (
                               <SidebarMenuSubItem key={subItem.title}>
-                                <SidebarMenuSubButton asChild>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={
+                                    pathname === subItem.url.split("?")[0]
+                                  }
+                                >
                                   <Link href={subItem.url}>
                                     <span>{subItem.title}</span>
                                   </Link>
@@ -254,60 +186,15 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
               ))}
             </SidebarMenu>
           </SidebarGroup>
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel>Projects</SidebarGroupLabel>
-            <SidebarMenu>
-              {data.projects.map((item) => (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover>
-                        <MoreHorizontalIcon />
-                        <span className="sr-only">More</span>
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-48"
-                      side="bottom"
-                    >
-                      <DropdownMenuItem>
-                        <FolderIcon className="text-muted-foreground" />
-                        <span>View Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <ShareIcon className="text-muted-foreground" />
-                        <span>Share Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Trash2Icon className="text-muted-foreground" />
-                        <span>Delete Project</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <MoreHorizontalIcon />
-                  <span>More</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
           <SidebarGroup className="mt-auto">
             <SidebarGroupContent>
               <SidebarMenu>
                 {data.navSecondary.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url.split("?")[0]}
+                    >
                       <Link href={item.url}>
                         <item.icon />
                         <span>{item.title}</span>

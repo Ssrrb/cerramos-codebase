@@ -1,37 +1,19 @@
-import { ModeToggle } from "@repo/design-system/components/mode-toggle";
-import { CommandIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { AuthChrome } from "./components/auth-chrome";
 
 interface AuthLayoutProps {
   readonly children: ReactNode;
 }
 
 const AuthLayout = ({ children }: AuthLayoutProps) => (
-  <div className="container relative grid h-dvh flex-col items-center justify-center lg:max-w-none lg:grid-cols-2 lg:px-0">
-    <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
-      <div className="absolute inset-0 bg-muted" />
-      <div className="relative z-20 flex items-center font-medium text-lg text-primary">
-        <CommandIcon className="mr-2 h-6 w-6" />
-        Acme Inc
-      </div>
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
-      </div>
-      <div className="relative z-20 mt-auto text-primary">
-        <blockquote className="space-y-2">
-          <p className="text-lg">
-            &ldquo;This library has saved me countless hours of work and helped
-            me deliver stunning designs to my clients faster than ever
-            before.&rdquo;
-          </p>
-          <footer className="text-sm">Sofia Davis</footer>
-        </blockquote>
-      </div>
-    </div>
-    <div className="lg:p-8">
-      <div className="mx-auto flex w-full max-w-[400px] flex-col justify-center space-y-6">
+  <div className="relative min-h-dvh overflow-hidden bg-[oklch(0.989_0.002_286)] text-foreground dark:bg-[oklch(0.132_0.005_286)]">
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,oklch(0.76_0.02_270_/_0.12),transparent_36%),linear-gradient(180deg,transparent_0%,oklch(0.967_0.004_286)_100%)] dark:bg-[radial-gradient(circle_at_top,oklch(0.72_0.02_280_/_0.1),transparent_28%),linear-gradient(180deg,transparent_0%,oklch(0.12_0.004_286)_100%)]" />
+    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,transparent_0,transparent_calc(100%-1px),oklch(0.87_0.003_286_/_0.35)_calc(100%-1px)),linear-gradient(to_bottom,transparent_0,transparent_calc(100%-1px),oklch(0.87_0.003_286_/_0.35)_calc(100%-1px))] bg-[size:32px_32px] opacity-40 dark:bg-[linear-gradient(to_right,transparent_0,transparent_calc(100%-1px),oklch(0.36_0.004_286_/_0.3)_calc(100%-1px)),linear-gradient(to_bottom,transparent_0,transparent_calc(100%-1px),oklch(0.36_0.004_286_/_0.3)_calc(100%-1px))] dark:opacity-30" />
+    <div className="relative flex min-h-dvh flex-col">
+      <AuthChrome />
+      <main className="flex flex-1 items-center justify-center px-4 pb-10 pt-2 sm:px-6 sm:pb-12">
         {children}
-      </div>
+      </main>
     </div>
   </div>
 );

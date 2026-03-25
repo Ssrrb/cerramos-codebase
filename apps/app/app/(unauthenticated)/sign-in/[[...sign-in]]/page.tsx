@@ -1,16 +1,26 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
 import { createMetadata } from "@repo/seo/metadata";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import { SignInForm } from "../../components/sign-in-form";
 
-const title = "Welcome back";
-const description = "Enter your details to sign in.";
-const SignIn = dynamic(() =>
-  import("@repo/auth/components/sign-in").then((mod) => mod.SignIn)
-);
-
+const title = "Iniciar sesion";
+const description = "Accede a tu panel de Cerramos y retoma tus pedidos.";
 export const metadata: Metadata = createMetadata({ title, description });
 
-const SignInPage = () => <SignIn googleEnabled={isGoogleAuthEnabled()} />;
+const webUrl = process.env.NEXT_PUBLIC_WEB_URL;
+const privacyUrl = webUrl
+  ? new URL("/legal/privacy", webUrl).toString()
+  : undefined;
+const termsUrl = webUrl
+  ? new URL("/legal/terms", webUrl).toString()
+  : undefined;
+
+const SignInPage = () => (
+  <SignInForm
+    googleEnabled={isGoogleAuthEnabled()}
+    privacyUrl={privacyUrl}
+    termsUrl={termsUrl}
+  />
+);
 
 export default SignInPage;

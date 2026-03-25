@@ -1,39 +1,11 @@
 import type { Metadata } from "next";
-import { requireSession } from "@repo/auth/server";
-import { Geist, Geist_Mono, Open_Sans, Gelasio, Roboto_Mono} from "next/font/google";
+import { requireCommerceContext } from "@repo/auth/server";
 import "./globals.css";
 import AppSidebar from "@/app/components/AppSidebar";
 import Navbar from "@/app/components/Navbar";
 import { ThemeProvider } from "@/app/components/providers/ThemeProvider";
 import { SidebarProvider } from "@/app/components/ui/sidebar";
 import { cookies } from "next/headers";
-
-
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const fontSans = Open_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-
-const fontSerif = Gelasio({
-  subsets: ["latin"],
-  variable: "--font-serif",
-});
-
-const fontMono = Roboto_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-});
 
 export const metadata: Metadata = {
   title: "Cerramos.com",
@@ -45,34 +17,31 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await requireSession();
+  const context = await requireCommerceContext();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar
-              user={{
-                email: session.user.email,
-                image: session.user.image,
-                name: session.user.name,
-              }}
-            />
-            <main className="w-full">
-              <Navbar />
-              <div className="px-4">{children}</div>
-            </main>
-          </SidebarProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar
+          activeCommerce={context.commerce}
+          user={{
+            email: context.user.email,
+            image: context.user.image,
+            name: context.user.name,
+          }}
+        />
+        <main className="w-full">
+          <Navbar activeCommerce={context.commerce} />
+          <div className="px-4">{children}</div>
+        </main>
+      </SidebarProvider>
+    </ThemeProvider>
   );
 }

@@ -15,6 +15,13 @@
       "when": 1774376314249,
       "tag": "0001_better_auth_cutover",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774462431445,
+      "tag": "0002_gorgeous_william_stryker",
+      "breakpoints": true
     }
   ]
 }

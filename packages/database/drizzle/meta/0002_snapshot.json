@@ -1,6 +1,6 @@
 {
-  "id": "03306535-5919-4a74-ad04-c4a677d9e3e9",
-  "prevId": "d01ddbc4-0341-4203-a524-5a019de1cbcf",
+  "id": "74620956-b901-4538-a37c-e108244f3a76",
+  "prevId": "03306535-5919-4a74-ad04-c4a677d9e3e9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1740,7 +1740,7 @@
           "name": "name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "emailVerified": {
           "name": "emailVerified",

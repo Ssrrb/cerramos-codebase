@@ -1,3 +1,4 @@
+import type { ActiveCommerce } from "@repo/auth/utils";
 import {
   Home,
   Inbox,
@@ -65,10 +66,11 @@ const items = [
 ];
 
 interface AppSidebarProps {
+  activeCommerce: Pick<ActiveCommerce, "id" | "name" | "role" | "slug">;
   user: SidebarAccountUser;
 }
 
-const AppSidebar = ({ user }: AppSidebarProps) => {
+const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="py-4">
@@ -77,7 +79,12 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
             <SidebarMenuButton asChild>
               <Link href="/">
                 <Image src="/logo.svg" alt="logo" width={20} height={20} />
-                <span>Lama Dev</span>
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{activeCommerce.name}</div>
+                  <div className="truncate text-muted-foreground text-xs">
+                    /{activeCommerce.slug}
+                  </div>
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -222,7 +229,7 @@ const AppSidebar = ({ user }: AppSidebarProps) => {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarAccountMenu user={user} />
+          <SidebarAccountMenu activeCommerce={activeCommerce} user={user} />
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

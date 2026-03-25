@@ -1,6 +1,7 @@
 "use client";
 
 import { signOut } from "@repo/auth/client";
+import type { ActiveCommerce } from "@repo/auth/utils";
 import { ChevronUp, LogOut, User2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -21,10 +22,11 @@ export interface SidebarAccountUser {
 }
 
 interface SidebarAccountMenuProps {
+  activeCommerce: Pick<ActiveCommerce, "name" | "role" | "slug">;
   user: SidebarAccountUser;
 }
 
-const SidebarAccountMenu = ({ user }: SidebarAccountMenuProps) => {
+const SidebarAccountMenu = ({ activeCommerce, user }: SidebarAccountMenuProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const displayName = user.name?.trim() || user.email;
@@ -46,7 +48,7 @@ const SidebarAccountMenu = ({ user }: SidebarAccountMenuProps) => {
             <div className="min-w-0 text-left">
               <div className="truncate font-medium">{displayName}</div>
               <div className="truncate text-muted-foreground text-xs">
-                {user.email}
+                {activeCommerce.name}
               </div>
             </div>
             <ChevronUp className="ml-auto" />
@@ -57,6 +59,9 @@ const SidebarAccountMenu = ({ user }: SidebarAccountMenuProps) => {
             <span className="truncate font-medium">{displayName}</span>
             <span className="truncate font-normal text-muted-foreground text-xs">
               {user.email}
+            </span>
+            <span className="truncate font-normal text-muted-foreground text-xs">
+              {activeCommerce.name} / {activeCommerce.slug}
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

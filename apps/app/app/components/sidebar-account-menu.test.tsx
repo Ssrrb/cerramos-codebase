@@ -96,17 +96,29 @@ describe("sidebar account menu", () => {
   test("renders the session user's name and email", () => {
     render(
       <SidebarAccountMenu
+        activeCommerce={{
+          name: "Tienda Centro",
+          role: "merchant_admin",
+          slug: "tienda-centro",
+        }}
         user={{ email: "owner@example.com", name: "Sebastian" }}
       />
     );
 
     expect(screen.getAllByText("Sebastian")).toHaveLength(2);
-    expect(screen.getAllByText("owner@example.com")).toHaveLength(2);
+    expect(screen.getByText("owner@example.com")).toBeDefined();
+    expect(screen.getByText("Tienda Centro")).toBeDefined();
+    expect(screen.getByText("Tienda Centro / tienda-centro")).toBeDefined();
   });
 
   test("signs out and redirects to sign-in", async () => {
     render(
       <SidebarAccountMenu
+        activeCommerce={{
+          name: "Tienda Centro",
+          role: "merchant_admin",
+          slug: "tienda-centro",
+        }}
         user={{ email: "owner@example.com", name: "Sebastian" }}
       />
     );

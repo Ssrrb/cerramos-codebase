@@ -1,12 +1,17 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 
-const { isGoogleAuthEnabledMock } = vi.hoisted(() => ({
+const { getSessionMock, isGoogleAuthEnabledMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
   isGoogleAuthEnabledMock: vi.fn(),
 }));
 
 vi.mock("@repo/auth/keys", () => ({
   isGoogleAuthEnabled: isGoogleAuthEnabledMock,
+}));
+
+vi.mock("@repo/auth/server", () => ({
+  getSession: getSessionMock,
 }));
 
 vi.mock("../app/(unauthenticated)/components/sign-in-form", () => ({
@@ -17,10 +22,11 @@ vi.mock("../app/(unauthenticated)/components/sign-in-form", () => ({
 
 import Page from "../app/(unauthenticated)/sign-in/[[...sign-in]]/page";
 
-test("Sign In Page", () => {
+test("Sign In Page", async () => {
   isGoogleAuthEnabledMock.mockReturnValue(false);
+  getSessionMock.mockResolvedValue(null);
 
-  render(<Page />);
+  render(await Page({}));
 
   expect(screen.getByText("sign-in-form:false")).toBeDefined();
 });

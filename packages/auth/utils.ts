@@ -5,7 +5,28 @@ export interface SessionUserLike {
   id: string;
   image?: string | null;
   name?: string | null;
-  role?: string | null;
+  role?: AppUserRole | null;
+}
+
+export type AppUserRole = "buyer" | "merchant_admin" | "operator";
+
+export interface ActiveCommerce {
+  id: string;
+  name: string;
+  role: AppUserRole;
+  slug: string;
+}
+
+export interface AuthenticatedAppContext {
+  commerce: ActiveCommerce;
+  orgId: string;
+  user: {
+    email: string;
+    id: string;
+    image?: string | null;
+    name?: string | null;
+    role: AppUserRole;
+  };
 }
 
 export interface AuthUser {

@@ -100,6 +100,9 @@ const paymentBadgeClass =
 const fieldClassName =
   "h-11 rounded-xl border-border/70 bg-background/70 shadow-none transition-colors focus-visible:border-primary focus-visible:ring-primary/20";
 
+const panelClassName =
+  "rounded-[1.5rem] border border-border/70 bg-card shadow-sm";
+
 const imageClassName =
   "h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]";
 
@@ -153,7 +156,12 @@ const FilterChip = ({
 );
 
 const ProductCard = ({ product }: { product: ProductCatalogItem }) => (
-  <article className="group flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+  <article
+    className={cn(
+      panelClassName,
+      "group flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md"
+    )}
+  >
     <div className="relative aspect-[4/3] overflow-hidden border-border/60 border-b bg-muted">
       {renderProductArtwork(product)}
       <div className="absolute inset-0 bg-gradient-to-t from-background/78 via-background/10 to-transparent" />
@@ -217,7 +225,12 @@ const ProductCard = ({ product }: { product: ProductCatalogItem }) => (
 );
 
 const ProductRow = ({ product }: { product: ProductCatalogItem }) => (
-  <article className="group grid gap-4 overflow-hidden rounded-[1.5rem] border border-border/70 bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md md:grid-cols-[13rem_minmax(0,1fr)_auto] md:items-center">
+  <article
+    className={cn(
+      panelClassName,
+      "group grid gap-4 overflow-hidden p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-md md:grid-cols-[13rem_minmax(0,1fr)_auto] md:items-center"
+    )}
+  >
     <div className="relative aspect-[16/11] overflow-hidden rounded-[1rem] border border-border/60 bg-muted">
       {renderProductArtwork(product)}
       <div className="absolute inset-0 bg-gradient-to-t from-background/68 via-background/5 to-transparent" />
@@ -307,72 +320,19 @@ const FilterToolbar = ({
       : `${filteredProductsCount} de ${totalProductsCount} productos`;
 
   return (
-    <section className="rounded-[1.5rem] border border-border/70 bg-card p-3 shadow-sm">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="relative min-w-0 flex-1">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Buscar productos"
-            className={cn(fieldClassName, "pl-11")}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Buscar productos, links o variantes"
-            value={searchValue}
-          />
-        </div>
+    <section className={cn(panelClassName, "p-4")}>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-1">
+            <p className="font-semibold text-base text-foreground tracking-tight">
+              Explora y filtra tu catálogo
+            </p>
+            <p className="text-muted-foreground text-sm leading-6">
+              Encuentra rápido qué compartir, qué requiere cobro previo y qué
+              necesita atención.
+            </p>
+          </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[30rem] xl:grid-cols-3">
-          <Select
-            onValueChange={(value) =>
-              setStatusFilter(value as "all" | ProductCatalogItem["status"])
-            }
-            value={statusFilter}
-          >
-            <SelectTrigger className={cn(fieldClassName, "w-full")}>
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="active">Activo</SelectItem>
-              <SelectItem value="draft">Borrador</SelectItem>
-              <SelectItem value="inactive">Inactivo</SelectItem>
-              <SelectItem value="expired">Vencido</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            onValueChange={(value) => setPaymentFilter(value as PaymentFilter)}
-            value={paymentFilter}
-          >
-            <SelectTrigger className={cn(fieldClassName, "w-full")}>
-              <SelectValue placeholder="Cobro" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todo el cobro</SelectItem>
-              <SelectItem value="required">Cobro requerido</SelectItem>
-              <SelectItem value="optional">Cobro al confirmar</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            onValueChange={(value) =>
-              setFulfillmentFilter(value as FulfillmentFilter)
-            }
-            value={fulfillmentFilter}
-          >
-            <SelectTrigger className={cn(fieldClassName, "w-full")}>
-              <SelectValue placeholder="Entrega" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toda la entrega</SelectItem>
-              <SelectItem value="both">Retiro y entrega</SelectItem>
-              <SelectItem value="delivery">Solo entrega</SelectItem>
-              <SelectItem value="pickup">Solo retiro</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 xl:justify-end">
-          <p className="text-muted-foreground text-sm">{summary}</p>
           <div className="inline-flex items-center rounded-xl border border-border/70 bg-muted/60 p-1">
             <Button
               aria-label="Vista de cuadrícula"
@@ -404,6 +364,87 @@ const FilterToolbar = ({
             >
               <LayoutListIcon className="size-4" />
             </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:items-start">
+          <div className="relative min-w-0">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Buscar productos"
+              className={cn(fieldClassName, "pl-11")}
+              onChange={(event) => setSearchValue(event.target.value)}
+              placeholder="Buscar productos, links o variantes"
+              value={searchValue}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <Select
+              onValueChange={(value) =>
+                setStatusFilter(value as "all" | ProductCatalogItem["status"])
+              }
+              value={statusFilter}
+            >
+              <SelectTrigger className={cn(fieldClassName, "w-full")}>
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="active">Activo</SelectItem>
+                <SelectItem value="draft">Borrador</SelectItem>
+                <SelectItem value="inactive">Inactivo</SelectItem>
+                <SelectItem value="expired">Vencido</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              onValueChange={(value) => setPaymentFilter(value as PaymentFilter)}
+              value={paymentFilter}
+            >
+              <SelectTrigger className={cn(fieldClassName, "w-full")}>
+                <SelectValue placeholder="Cobro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo el cobro</SelectItem>
+                <SelectItem value="required">Cobro requerido</SelectItem>
+                <SelectItem value="optional">Cobro al confirmar</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              onValueChange={(value) =>
+                setFulfillmentFilter(value as FulfillmentFilter)
+              }
+              value={fulfillmentFilter}
+            >
+              <SelectTrigger className={cn(fieldClassName, "w-full")}>
+                <SelectValue placeholder="Entrega" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toda la entrega</SelectItem>
+                <SelectItem value="both">Retiro y entrega</SelectItem>
+                <SelectItem value="delivery">Solo entrega</SelectItem>
+                <SelectItem value="pickup">Solo retiro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 border-border/60 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-sm">{summary}</p>
+          <div className="flex flex-wrap gap-2">
+            <FilterChip className="bg-primary/10 text-primary">
+              {statusFilter === "all" ? "Todos los estados" : "Estado filtrado"}
+            </FilterChip>
+            <FilterChip>
+              {paymentFilter === "all" ? "Cobro mixto" : "Cobro segmentado"}
+            </FilterChip>
+            <FilterChip>
+              {fulfillmentFilter === "all"
+                ? "Entrega flexible"
+                : "Entrega filtrada"}
+            </FilterChip>
           </div>
         </div>
       </div>
@@ -676,7 +717,7 @@ const AddProductSheet = ({
                 disabled={isPending}
                 type="submit"
               >
-                {isPending ? "Guardando..." : "Agregar producto"}
+                {isPending ? "Guardando..." : "Crear producto"}
               </Button>
             </SheetFooter>
           </form>
@@ -769,49 +810,71 @@ export const ProductsCatalog = ({
 
   return (
     <>
-      <Header page="Products" pages={["Commerce"]}>
+      <Header page="Catálogo" pages={["Comercio"]}>
         <Button
           className="mr-4 hidden h-11 rounded-xl bg-primary px-4 text-primary-foreground shadow-none hover:bg-primary/90 md:inline-flex"
           onClick={() => setIsAddProductSheetOpen(true)}
           type="button"
         >
           <PackagePlusIcon className="size-4" />
-          Add Product
+          Crear producto
         </Button>
       </Header>
 
-      <div className="flex flex-1 flex-col gap-6 p-4 pt-0">
-        <section className="rounded-[1.75rem] border border-border/70 bg-card px-6 py-6 shadow-sm">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge
-                className="rounded-full bg-primary/12 px-3 py-1 font-semibold text-[0.7rem] text-primary uppercase tracking-[0.18em] shadow-none"
-                variant="secondary"
-              >
-                Merchant catalog
-              </Badge>
-              <div className="space-y-2">
-                <h1 className="font-semibold text-3xl text-foreground tracking-tight md:text-4xl">
-                  Products
-                </h1>
-                <p className="max-w-2xl text-muted-foreground text-sm leading-7 md:text-base">
-                  Gestiona los links que compartes en WhatsApp e Instagram con
-                  una vista operativa, clara y lista para convertir consultas en
-                  pedidos.
-                </p>
+      <div className="min-w-0 flex flex-1 flex-col gap-6 p-4 pt-0">
+        <section className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-sm">
+          <div className="border-border/60 border-b px-6 py-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl space-y-4">
+                <Badge
+                  className="rounded-full bg-primary/12 px-3 py-1 font-semibold text-[0.7rem] text-primary uppercase tracking-[0.18em] shadow-none"
+                  variant="secondary"
+                >
+                  Catálogo comercial
+                </Badge>
+                <div className="space-y-3">
+                  <h1 className="font-semibold text-3xl text-foreground tracking-tight md:text-4xl">
+                    Productos listos para compartir
+                  </h1>
+                  <p className="max-w-2xl text-muted-foreground text-sm leading-7 md:text-base">
+                    Organiza tus links vendibles en una sola vista, detecta qué
+                    requiere atención y comparte más rápido desde WhatsApp o
+                    Instagram.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.25rem] border border-border/70 bg-background/70 px-4 py-3">
+                  <p className="font-medium text-foreground text-sm">
+                    Operación clara
+                  </p>
+                  <p className="mt-1 text-muted-foreground text-sm leading-6">
+                    Filtra por estado, cobro y entrega sin salir del catálogo.
+                  </p>
+                </div>
+                <div className="rounded-[1.25rem] border border-border/70 bg-primary/8 px-4 py-3">
+                  <p className="font-medium text-foreground text-sm">
+                    Venta más rápida
+                  </p>
+                  <p className="mt-1 text-muted-foreground text-sm leading-6">
+                    Crea un nuevo producto y compártelo con un flujo listo para
+                    cerrar pedidos.
+                  </p>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3 md:hidden">
-              <Button
-                className="h-11 flex-1 rounded-xl bg-primary text-primary-foreground shadow-none hover:bg-primary/90"
-                onClick={() => setIsAddProductSheetOpen(true)}
-                type="button"
-              >
-                <PackagePlusIcon className="size-4" />
-                Add Product
-              </Button>
-            </div>
+          <div className="flex items-center gap-3 px-6 py-4 md:hidden">
+            <Button
+              className="h-11 flex-1 rounded-xl bg-primary text-primary-foreground shadow-none hover:bg-primary/90"
+              onClick={() => setIsAddProductSheetOpen(true)}
+              type="button"
+            >
+              <PackagePlusIcon className="size-4" />
+              Crear producto
+            </Button>
           </div>
         </section>
 

@@ -7,7 +7,7 @@ import { getProductsCatalogData } from "./products-catalog.server";
 
 export const metadata: Metadata = {
   description: "Gestiona tu catálogo de productos y links vendibles.",
-  title: "Products | Cerramos",
+  title: "Catálogo | Cerramos",
 };
 
 const App = async () => {

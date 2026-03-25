@@ -122,7 +122,7 @@ describe("ProductsCatalog", () => {
   test("opens the add product sheet", () => {
     renderCatalog();
 
-    fireEvent.click(screen.getAllByText("Add Product")[0]);
+    fireEvent.click(screen.getAllByText("Crear producto")[0]);
 
     expect(screen.getByText("Nuevo producto")).toBeDefined();
   });

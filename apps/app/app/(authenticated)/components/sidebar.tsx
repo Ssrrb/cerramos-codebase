@@ -21,6 +21,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
@@ -34,19 +35,18 @@ import {
   LifeBuoyIcon,
   SearchIcon,
   SendIcon,
-  Settings2Icon,
   WebhookIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Search } from "./search";
 
 interface GlobalSidebarProperties {
   readonly children: ReactNode;
 }
 
-const data = {
+const commerceNavigation = {
   navMain: [
     {
       title: "Productos",
@@ -54,7 +54,7 @@ const data = {
       icon: BoxesIcon,
       items: [
         {
-          title: "Catalogo",
+          title: "Catálogo",
           url: "/",
         },
         {
@@ -68,31 +68,14 @@ const data = {
       ],
     },
     {
-      title: "Busqueda",
+      title: "Búsqueda",
       url: "/search?q=producto",
       icon: SearchIcon,
     },
     {
-      title: "Configuracion",
-      url: "/webhooks",
-      icon: Settings2Icon,
-    },
-  ],
-  navSecondary: [
-    {
       title: "Webhooks",
       url: "/webhooks",
       icon: WebhookIcon,
-    },
-    {
-      title: "Ayuda",
-      url: "#",
-      icon: LifeBuoyIcon,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: SendIcon,
     },
   ],
 };
@@ -104,10 +87,28 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
     pathname === "/" ||
     pathname.startsWith("/search") ||
     pathname.startsWith("/webhooks");
+  const [productsSectionOpen, setProductsSectionOpen] =
+    useState(productsSectionActive);
+
+  useEffect(() => {
+    if (productsSectionActive) {
+      setProductsSectionOpen(true);
+    }
+  }, [productsSectionActive]);
+
+  useEffect(() => {
+    if (!sidebar.isMobile && productsSectionActive && !sidebar.open) {
+      sidebar.setOpen(true);
+    }
+  }, [productsSectionActive, sidebar]);
 
   return (
     <>
-      <Sidebar className="authenticated-sidebar-theme" variant="inset">
+      <Sidebar
+        className="authenticated-sidebar-theme"
+        collapsible="icon"
+        variant="inset"
+      >
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -130,13 +131,16 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
           <SidebarGroup>
             <SidebarGroupLabel>Comercio</SidebarGroupLabel>
             <SidebarMenu>
-              {data.navMain.map((item) => (
+              {commerceNavigation.navMain.map((item) => (
                 <Collapsible
                   asChild
-                  defaultOpen={
-                    item.title === "Productos" ? productsSectionActive : false
-                  }
                   key={item.title}
+                  onOpenChange={
+                    item.title === "Productos" ? setProductsSectionOpen : undefined
+                  }
+                  open={
+                    item.title === "Productos" ? productsSectionOpen : undefined
+                  }
                 >
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -187,21 +191,25 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
             </SidebarMenu>
           </SidebarGroup>
           <SidebarGroup className="mt-auto">
+            <SidebarGroupLabel>Soporte</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {data.navSecondary.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.url.split("?")[0]}
-                    >
-                      <Link href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Ayuda">
+                    <Link href="/webhooks">
+                      <LifeBuoyIcon />
+                      <span>Ayuda</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Feedback">
+                    <Link href="/search?q=feedback">
+                      <SendIcon />
+                      <span>Feedback</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -235,8 +243,9 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="min-w-0">{children}</SidebarInset>
     </>
   );
 };

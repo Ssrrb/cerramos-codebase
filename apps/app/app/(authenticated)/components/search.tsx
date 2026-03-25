@@ -9,9 +9,10 @@ export const Search = () => (
         <SearchIcon className="text-muted-foreground" size={16} />
       </div>
       <Input
+        aria-label="Buscar en comercio"
         className="h-auto bg-background py-1.5 pr-3 pl-8 text-xs"
         name="q"
-        placeholder="Search"
+        placeholder="Buscar en comercio"
         type="text"
       />
       <Button

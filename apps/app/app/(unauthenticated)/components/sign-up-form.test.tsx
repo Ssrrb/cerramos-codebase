@@ -71,12 +71,9 @@ describe("sign-up form", () => {
     render(<SignUpForm googleEnabled={false} />);
 
     expect(screen.queryByLabelText("Tu nombre")).toBeNull();
-
-    fireEvent.change(screen.getByLabelText("Nombre del comercio"), {
-      target: { value: "Tienda Centro" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
+    expect(screen.getByLabelText("Nombre del comercio")).toBeDefined();
     expect(screen.getByLabelText("Tu nombre")).toBeDefined();
     expect(screen.getByLabelText("Email de trabajo")).toBeDefined();
     expect(screen.getByLabelText("Contrasena")).toBeDefined();
@@ -86,13 +83,18 @@ describe("sign-up form", () => {
     const { rerender } = render(<SignUpForm googleEnabled={false} />);
 
     expect(
-      screen.queryByRole("button", { name: "Continue with Google" })
+      screen.queryByRole("button", { name: "Continuar con Google" })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      screen.queryByRole("button", { name: "Continuar con Google" })
     ).toBeNull();
 
     rerender(<SignUpForm googleEnabled />);
 
     expect(
-      screen.getByRole("button", { name: "Continue with Google" })
+      screen.getByRole("button", { name: "Continuar con Google" })
     ).toBeDefined();
   });
 
@@ -104,11 +106,11 @@ describe("sign-up form", () => {
 
     render(<SignUpForm googleEnabled={false} />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
     fireEvent.change(screen.getByLabelText("Nombre del comercio"), {
       target: { value: "Tienda Centro" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-
     fireEvent.change(screen.getByLabelText("Tu nombre"), {
       target: { value: "Sebastian" },
     });

@@ -68,46 +68,42 @@ const data = {
   },
   navMain: [
     {
-      title: "Playground",
+      title: "Productos",
       url: "#",
       icon: SquareTerminalIcon,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "Pedidos",
           url: "#",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
+          title: "Ajustes",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Pagos",
       url: "#",
       icon: BotIcon,
       items: [
         {
-          title: "Genesis",
+          title: "Balance",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "Cuenta",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "Clientes",
           url: "#",
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "Documentacion",
       url: "#",
       icon: BookOpenIcon,
       items: [

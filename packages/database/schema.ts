@@ -17,7 +17,8 @@ const createdAt = (name = "createdAt") =>
   timestamp(name, { mode: "date", precision: 3 }).notNull().defaultNow();
 const updatedAt = (name = "updatedAt") =>
   timestamp(name, { mode: "date", precision: 3 }).notNull().defaultNow();
-const cuidPrimaryKey = (name = "id") => text(name).primaryKey().$defaultFn(cuid);
+const cuidPrimaryKey = (name = "id") =>
+  text(name).primaryKey().$defaultFn(cuid);
 
 export const commerceTrustStateEnum = pgEnum("CommerceTrustState", [
   "pending_review",
@@ -81,10 +82,10 @@ export const paymentMethodTypeEnum = pgEnum("PaymentMethodType", [
   "other",
 ]);
 
-export const customerIdentityProviderEnum = pgEnum(
-  "CustomerIdentityProvider",
-  ["password", "google"]
-);
+export const customerIdentityProviderEnum = pgEnum("CustomerIdentityProvider", [
+  "password",
+  "google",
+]);
 
 export const appUserRoleEnum = pgEnum("AppUserRole", [
   "buyer",
@@ -267,7 +268,9 @@ export const productVariantOption = pgTable(
     additionalPrice: integer("additionalPrice").notNull().default(0),
     isDefault: boolean("isDefault").notNull().default(false),
   },
-  (table) => [index("ProductVariantOption_productLinkId_idx").on(table.productLinkId)]
+  (table) => [
+    index("ProductVariantOption_productLinkId_idx").on(table.productLinkId),
+  ]
 );
 
 export const customerIdentity = pgTable(
@@ -408,7 +411,8 @@ export const paymentIntent = pgTable(
     status: paymentStatusEnum("status").notNull().default("pending"),
     riskState: paymentRiskStateEnum("riskState").notNull().default("pending"),
     fundsReleased: boolean("fundsReleased").notNull().default(false),
-    providerMetadata: jsonb("providerMetadata").$type<Record<string, unknown>>(),
+    providerMetadata:
+      jsonb("providerMetadata").$type<Record<string, unknown>>(),
     expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -420,9 +424,12 @@ export const paymentEvent = pgTable(
   "PaymentEvent",
   {
     id: cuidPrimaryKey(),
-    paymentIntentId: text("paymentIntentId").references(() => paymentIntent.id, {
-      onDelete: "set null",
-    }),
+    paymentIntentId: text("paymentIntentId").references(
+      () => paymentIntent.id,
+      {
+        onDelete: "set null",
+      }
+    ),
     provider: paymentProviderNameEnum("provider").notNull(),
     externalEventId: text("externalEventId"),
     eventType: text("eventType").notNull(),

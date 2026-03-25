@@ -5,7 +5,28 @@ export interface SessionUserLike {
   id: string;
   image?: string | null;
   name?: string | null;
-  role?: string | null;
+  role?: AppUserRole | null;
+}
+
+export type AppUserRole = "buyer" | "merchant_admin" | "operator";
+
+export interface ActiveCommerce {
+  id: string;
+  name: string;
+  role: AppUserRole;
+  slug: string;
+}
+
+export interface AuthenticatedAppContext {
+  commerce: ActiveCommerce;
+  orgId: string;
+  user: {
+    email: string;
+    id: string;
+    image?: string | null;
+    name?: string | null;
+    role: AppUserRole;
+  };
 }
 
 export interface AuthUser {
@@ -31,6 +52,8 @@ export interface OrganizationMembership {
 
 export const AUTH_COOKIE_PREFIX = "cerramos-auth";
 export const DEFAULT_AUTH_SIGN_IN_URL = "/sign-in";
+export const DEFAULT_AUTH_AFTER_SIGN_IN_URL = "/";
+const WHITESPACE_REGEX = /\s+/;
 
 export const buildTrustedOrigins = (
   values: Array<string | undefined>
@@ -59,9 +82,7 @@ export const getCrossSubDomainCookieOptions = (domain?: string) => {
   } as const;
 };
 
-export const mapSessionUserToAuthUser = (
-  user: SessionUserLike
-): AuthUser => ({
+export const mapSessionUserToAuthUser = (user: SessionUserLike): AuthUser => ({
   emailAddresses: [{ emailAddress: user.email }],
   fullName: user.name ?? null,
   id: user.id,
@@ -76,7 +97,7 @@ export const mapSessionUserToAuthUser = (
 export const toMembership = (
   user: Pick<SessionUserLike, "email" | "id" | "image" | "name">
 ): OrganizationMembership => {
-  const [firstName, ...rest] = (user.name ?? "").trim().split(/\s+/);
+  const [firstName, ...rest] = (user.name ?? "").trim().split(WHITESPACE_REGEX);
   const lastName = rest.join(" ").trim();
 
   return {
@@ -101,4 +122,34 @@ export const slugifyCommerceName = (value: string): string => {
     .replaceAll(/^-+|-+$/g, "");
 
   return normalized || "commerce";
+};
+
+export const normalizeReturnTo = (value?: string | null): string | null => {
+  if (!(value && value.startsWith("/")) || value.startsWith("//")) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value, "http://localhost");
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+};
+
+export const buildAuthRedirectUrl = (
+  pathname: string,
+  returnTo?: string | null
+): string => {
+  const safeReturnTo = normalizeReturnTo(returnTo);
+
+  if (!safeReturnTo) {
+    return pathname;
+  }
+
+  const url = new URL(pathname, "http://localhost");
+  url.searchParams.set("returnTo", safeReturnTo);
+
+  return `${url.pathname}${url.search}`;
 };

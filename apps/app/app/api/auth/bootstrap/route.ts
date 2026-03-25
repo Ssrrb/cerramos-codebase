@@ -36,11 +36,9 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ commerceId: session.user.commerceId });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | {
-        commerceName?: unknown;
-      }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    commerceName?: unknown;
+  } | null;
   const commerceName =
     typeof body?.commerceName === "string" ? body.commerceName.trim() : "";
 
@@ -51,6 +49,9 @@ export const POST = async (request: Request) => {
     );
   }
 
+  // Signing in authenticates the person; bootstrap attaches that person to a
+  // merchant workspace. The dashboard depends on this commerce link to load
+  // stats, products, clients, and product-linked payment flows.
   const slug = await findAvailableSlug(commerceName);
   const [commerce] = await database
     .insert(schema.commerce)

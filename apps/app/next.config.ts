@@ -6,6 +6,11 @@ import { env } from "@/env";
 
 let nextConfig: NextConfig = withToolbar(withLogging(config));
 
+nextConfig.images?.remotePatterns?.push({
+  protocol: "https",
+  hostname: "images.pexels.com",
+});
+
 if (env.VERCEL) {
   nextConfig = withSentry(nextConfig);
 }

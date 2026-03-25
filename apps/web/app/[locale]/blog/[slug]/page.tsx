@@ -47,7 +47,9 @@ export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
   return posts.map(({ _slug }) => ({ slug: _slug }));
 };
 
-const renderPost = (page: NonNullable<Awaited<ReturnType<typeof blog.getPost>>>) => (
+const renderPost = (
+  page: NonNullable<Awaited<ReturnType<typeof blog.getPost>>>
+) => (
   <>
     <JsonLd
       code={{
@@ -97,10 +99,7 @@ const renderPost = (page: NonNullable<Awaited<ReturnType<typeof blog.getPost>>>)
               <Body
                 components={{
                   pre: ({ code, language }) => (
-                    <CodeBlock
-                      snippets={[{ code, language }]}
-                      theme="vesper"
-                    />
+                    <CodeBlock snippets={[{ code, language }]} theme="vesper" />
                   ),
                 }}
                 content={page.body.json.content}

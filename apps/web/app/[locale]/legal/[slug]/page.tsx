@@ -37,7 +37,9 @@ export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
   return posts.map(({ _slug }) => ({ slug: _slug }));
 };
 
-const renderPage = (page: NonNullable<Awaited<ReturnType<typeof legal.getPost>>>) => (
+const renderPage = (
+  page: NonNullable<Awaited<ReturnType<typeof legal.getPost>>>
+) => (
   <div className="container max-w-5xl py-16">
     <Link
       className="mb-4 inline-flex items-center gap-1 text-muted-foreground text-sm focus:underline focus:outline-none"

@@ -54,8 +54,8 @@ export const SignIn = ({ googleEnabled = false }: SignInProps) => {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-xl border bg-card p-6 shadow-sm">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold">Iniciar sesion</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="font-semibold text-xl">Iniciar sesion</h1>
+        <p className="text-muted-foreground text-sm">
           {googleEnabled
             ? "Accede con email y contrasena o continua con Google."
             : "Accede con email y contrasena."}

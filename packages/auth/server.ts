@@ -1,28 +1,35 @@
 import "server-only";
 
 import { database, schema } from "@repo/database";
-import { asc, eq, inArray } from "drizzle-orm";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSessionCookie } from "better-auth/cookies";
 import { nextCookies } from "better-auth/next-js";
-import { cache } from "react";
+import { asc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { keys } from "./keys";
 import {
   AUTH_COOKIE_PREFIX,
+  type ActiveCommerce,
+  type AuthenticatedAppContext,
+  type AuthUser,
   buildTrustedOrigins,
   DEFAULT_AUTH_SIGN_IN_URL,
   getCrossSubDomainCookieOptions,
   mapSessionUserToAuthUser,
-  toMembership,
-  type AuthUser,
   type OrganizationMembership,
   type SessionUserLike,
+  toMembership,
 } from "./utils";
 
-export type { AuthUser, OrganizationMembership } from "./utils";
+export type {
+  ActiveCommerce,
+  AuthenticatedAppContext,
+  AuthUser,
+  OrganizationMembership,
+} from "./utils";
 
 export interface AuthContext {
   orgId: string | null;
@@ -41,6 +48,7 @@ const trustedOrigins = buildTrustedOrigins([
 const crossSubDomainCookies = getCrossSubDomainCookieOptions(
   authKeys.BETTER_AUTH_COOKIE_DOMAIN
 );
+const ONBOARDING_URL = "/onboarding";
 
 export const betterAuthServer = betterAuth({
   advanced: {
@@ -100,7 +108,9 @@ export const betterAuthServer = betterAuth({
   },
 });
 
-type SessionResult = Awaited<ReturnType<typeof betterAuthServer.api.getSession>>;
+type SessionResult = Awaited<
+  ReturnType<typeof betterAuthServer.api.getSession>
+>;
 
 const getSignInUrl = () =>
   authKeys.NEXT_PUBLIC_AUTH_SIGN_IN_URL ?? DEFAULT_AUTH_SIGN_IN_URL;
@@ -131,6 +141,73 @@ export const requireSession = async () => {
   }
 
   return session;
+};
+
+export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null> => {
+  const session = await getSessionState();
+
+  if (!(session?.user.id && session.user.commerceId)) {
+    return null;
+  }
+
+  const [activeCommerce] = await database
+    .select({
+      id: schema.commerce.id,
+      name: schema.commerce.name,
+      role: schema.user.role,
+      slug: schema.commerce.slug,
+    })
+    .from(schema.user)
+    .innerJoin(schema.commerce, eq(schema.user.commerceId, schema.commerce.id))
+    .where(eq(schema.user.id, session.user.id))
+    .limit(1);
+
+  if (!activeCommerce) {
+    return null;
+  }
+
+  return activeCommerce;
+});
+
+export const getAuthenticatedAppContext = cache(
+  async (): Promise<AuthenticatedAppContext | null> => {
+    const [activeCommerce, session] = await Promise.all([
+      getCurrentCommerce(),
+      getSessionState(),
+    ]);
+
+    if (!(activeCommerce && session)) {
+      return null;
+    }
+
+    return {
+      commerce: activeCommerce,
+      orgId: activeCommerce.id,
+      user: {
+        email: session.user.email,
+        id: session.user.id,
+        image: session.user.image,
+        name: session.user.name,
+        role: activeCommerce.role,
+      },
+    };
+  }
+);
+
+export const requireCommerceContext = async (): Promise<AuthenticatedAppContext> => {
+  const session = await requireSession();
+
+  if (!session.user.commerceId) {
+    redirect(ONBOARDING_URL);
+  }
+
+  const context = await getAuthenticatedAppContext();
+
+  if (!context) {
+    redirect(ONBOARDING_URL);
+  }
+
+  return context;
 };
 
 export const auth = async (): Promise<AuthContext> => {

@@ -27,7 +27,9 @@ export const OrganizationSwitcher = ({
   return (
     <Link
       className="flex h-9 w-full items-center rounded-md border px-3 text-sm"
-      href={user?.commerceId ? afterSelectOrganizationUrl ?? "/" : "/onboarding"}
+      href={
+        user?.commerceId ? (afterSelectOrganizationUrl ?? "/") : "/onboarding"
+      }
     >
       {user?.commerceId ? "Mi comercio" : "Configurar comercio"}
     </Link>
@@ -47,7 +49,10 @@ export const UserButton = ({
 
   if (!user) {
     return (
-      <Link className="flex h-9 w-full items-center rounded-md px-3 text-sm" href="/sign-in">
+      <Link
+        className="flex h-9 w-full items-center rounded-md px-3 text-sm"
+        href="/sign-in"
+      >
         {showName ? "Iniciar sesion" : "Cuenta"}
       </Link>
     );
@@ -65,7 +70,7 @@ export const UserButton = ({
     <div className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
       <div className="min-w-0">
         <div className="truncate font-medium">
-          {showName ? user.name ?? user.email : "Cuenta"}
+          {showName ? (user.name ?? user.email) : "Cuenta"}
         </div>
         {showName && (
           <div className="truncate text-muted-foreground text-xs">

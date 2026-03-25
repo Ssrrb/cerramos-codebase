@@ -1,57 +1,32 @@
-import { auth } from "@repo/auth/server";
-import { database, schema } from "@repo/database";
-import type { Metadata } from "next";
-import dynamic from "next/dynamic";
-import { redirect } from "next/navigation";
-import { env } from "@/env";
-import { AvatarStack } from "./components/avatar-stack";
-import { Cursors } from "./components/cursors";
-import { Header } from "./components/header";
+import AppAreaChart from "@/app/components/AppAreaChart";
+import AppBarChart from "@/app/components/AppBarChart";
+import AppPieChart from "@/app/components/AppPieChart";
+import CardList from "@/app/components/CardList";
+import TodoList from "@/app/components/TodoList";
 
-const title = "Acme Inc";
-const description = "My application.";
-
-const CollaborationProvider = dynamic(() =>
-  import("./components/collaboration-provider").then(
-    (mod) => mod.CollaborationProvider
-  )
-);
-
-export const metadata: Metadata = {
-  title,
-  description,
-};
-
-const App = async () => {
-  const pages = await database.select().from(schema.page);
-  const { orgId } = await auth();
-
-  if (!orgId) {
-    redirect("/onboarding");
-  }
-
+const Homepage = () => {
   return (
-    <>
-      <Header page="Data Fetching" pages={["Building Your Application"]}>
-        {env.LIVEBLOCKS_SECRET && (
-          <CollaborationProvider orgId={orgId}>
-            <AvatarStack />
-            <Cursors />
-          </CollaborationProvider>
-        )}
-      </Header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-          {pages.map((page) => (
-            <div className="aspect-video rounded-xl bg-muted/50" key={page.id}>
-              {page.name}
-            </div>
-          ))}
-        </div>
-        <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+    <div className="dashboard-grid grid grid-cols-1 pb-6 lg:grid-cols-2 2xl:grid-cols-4">
+      <div className="dashboard-panel lg:col-span-2 xl:col-span-1 2xl:col-span-2">
+        <AppBarChart />
       </div>
-    </>
+      <div className="dashboard-panel">
+        <CardList title="Movimientos" />
+      </div>
+      <div className="dashboard-panel">
+        <AppPieChart />
+      </div>
+      <div className="dashboard-panel">
+        <TodoList />
+      </div>
+      <div className="dashboard-panel lg:col-span-2 xl:col-span-1 2xl:col-span-2">
+        <AppAreaChart />
+      </div>
+      <div className="dashboard-panel">
+        <CardList title="Productos" />
+      </div>
+    </div>
   );
 };
 
-export default App;
+export default Homepage;

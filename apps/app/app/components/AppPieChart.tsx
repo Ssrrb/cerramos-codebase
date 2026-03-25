@@ -50,7 +50,7 @@ const AppPieChart = () => {
   
   return (
     <div className="">
-      <h1 className="text-lg font-medium mb-6">Browser Usage</h1>
+      <h1 className="text-lg font-medium mb-6">Visitantes </h1>
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square max-h-[250px]"

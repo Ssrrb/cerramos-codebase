@@ -12,12 +12,12 @@ interface SignUpProps {
 const planOptions = [
   {
     badge: "Pro",
-    description: "I'm working on commercial projects",
+    description: "Trabajo en proyectos comerciales",
     value: "business",
   },
   {
     badge: "Hobby",
-    description: "I'm working on personal projects",
+    description: "Trabajo en proyectos personales",
     value: "personal",
   },
 ] as const;

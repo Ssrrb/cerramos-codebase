@@ -11,7 +11,7 @@ const Homepage = () => {
         <AppBarChart />
       </div>
       <div className="bg-primary-foreground p-4 rounded-lg">
-        <CardList title="Latest Transactions" />
+        <CardList title="Movimientos" />
       </div>
       <div className="bg-primary-foreground p-4 rounded-lg">
         <AppPieChart />
@@ -21,7 +21,7 @@ const Homepage = () => {
         <AppAreaChart />
       </div>
       <div className="bg-primary-foreground p-4 rounded-lg">
-        <CardList title="Popular Products" />
+        <CardList title="Productos" />
       </div>
     </div>
   );

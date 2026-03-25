@@ -7,30 +7,49 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const { pushMock, refreshMock, signInEmailMock, signInSocialMock } = vi.hoisted(
-  () => ({
-    pushMock: vi.fn(),
-    refreshMock: vi.fn(),
-    signInEmailMock: vi.fn(),
-    signInSocialMock: vi.fn(),
-  })
-);
+vi.mock("next/navigation", () => {
+  const push = vi.fn();
+  const refresh = vi.fn();
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock,
-    refresh: refreshMock,
-  }),
-}));
+  return {
+    __mocks: { push, refresh },
+    useRouter: () => ({
+      push,
+      refresh,
+    }),
+  };
+});
 
-vi.mock("@repo/auth/client", () => ({
-  signIn: {
-    email: signInEmailMock,
-    social: signInSocialMock,
-  },
-}));
+vi.mock("@repo/auth/client", () => {
+  const signInEmail = vi.fn();
+  const signInSocial = vi.fn();
 
+  return {
+    __mocks: { signInEmail, signInSocial },
+    signIn: {
+      email: signInEmail,
+      social: signInSocial,
+    },
+  };
+});
+
+import * as authClientModule from "@repo/auth/client";
+import * as nextNavigationModule from "next/navigation";
 import { SignInForm } from "./sign-in-form";
+
+const navigationMocks = (nextNavigationModule as typeof nextNavigationModule & {
+  __mocks: {
+    push: ReturnType<typeof vi.fn>;
+    refresh: ReturnType<typeof vi.fn>;
+  };
+}).__mocks;
+
+const authClientMocks = (authClientModule as typeof authClientModule & {
+  __mocks: {
+    signInEmail: ReturnType<typeof vi.fn>;
+    signInSocial: ReturnType<typeof vi.fn>;
+  };
+}).__mocks;
 
 describe("sign-in form", () => {
   afterEach(() => {
@@ -38,12 +57,15 @@ describe("sign-in form", () => {
   });
 
   beforeEach(() => {
-    pushMock.mockReset();
-    refreshMock.mockReset();
-    signInEmailMock.mockReset();
-    signInSocialMock.mockReset();
-    signInEmailMock.mockResolvedValue({ data: { url: "/" }, error: null });
-    signInSocialMock.mockResolvedValue({ error: null });
+    navigationMocks.push.mockReset();
+    navigationMocks.refresh.mockReset();
+    authClientMocks.signInEmail.mockReset();
+    authClientMocks.signInSocial.mockReset();
+    authClientMocks.signInEmail.mockResolvedValue({
+      data: { url: "/" },
+      error: null,
+    });
+    authClientMocks.signInSocial.mockResolvedValue({ error: null });
   });
 
   test("reveals password only after continuing with email", () => {
@@ -59,7 +81,7 @@ describe("sign-in form", () => {
     );
 
     expect(screen.getByPlaceholderText("Password")).toBeDefined();
-    expect(signInEmailMock).not.toHaveBeenCalled();
+    expect(authClientMocks.signInEmail).not.toHaveBeenCalled();
   });
 
   test("shows Google only when enabled", () => {
@@ -77,12 +99,17 @@ describe("sign-in form", () => {
   });
 
   test("renders inline error when email sign-in fails", async () => {
-    signInEmailMock.mockResolvedValue({
+    authClientMocks.signInEmail.mockResolvedValue({
       data: null,
       error: { message: "Credenciales invalidas" },
     });
 
-    render(<SignInForm googleEnabled={false} />);
+    render(
+      <SignInForm
+        callbackUrl="/clientes/123?tab=orders"
+        googleEnabled={false}
+      />
+    );
 
     fireEvent.change(screen.getByPlaceholderText("Email Address"), {
       target: { value: "owner@example.com" },
@@ -99,11 +126,67 @@ describe("sign-in form", () => {
       expect(screen.getByText("Credenciales invalidas")).toBeDefined()
     );
 
-    expect(signInEmailMock).toHaveBeenCalledWith({
-      callbackURL: "/",
+    expect(authClientMocks.signInEmail).toHaveBeenCalledWith({
+      callbackURL: "/clientes/123?tab=orders",
       email: "owner@example.com",
       password: "bad-password",
     });
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(navigationMocks.push).not.toHaveBeenCalled();
+  });
+
+  test("falls back to the authenticated home when no callback url is provided", async () => {
+    render(<SignInForm googleEnabled={false} />);
+
+    fireEvent.change(screen.getByPlaceholderText("Email Address"), {
+      target: { value: "owner@example.com" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Email" })
+    );
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "supersecret" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log In" }));
+
+    await waitFor(() =>
+      expect(authClientMocks.signInEmail).toHaveBeenCalledWith({
+        callbackURL: "/",
+        email: "owner@example.com",
+        password: "supersecret",
+      })
+    );
+    expect(navigationMocks.push).toHaveBeenCalledWith("/");
+  });
+
+  test("pushes the resolved callback destination after email sign-in", async () => {
+    authClientMocks.signInEmail.mockResolvedValue({
+      data: { url: "/clientes/123?tab=orders" },
+      error: null,
+    });
+
+    render(
+      <SignInForm
+        callbackUrl="/clientes/123?tab=orders"
+        googleEnabled={false}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Email Address"), {
+      target: { value: "owner@example.com" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Email" })
+    );
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "supersecret" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log In" }));
+
+    await waitFor(() =>
+      expect(navigationMocks.push).toHaveBeenCalledWith(
+        "/clientes/123?tab=orders"
+      )
+    );
+    expect(navigationMocks.refresh).toHaveBeenCalled();
   });
 });

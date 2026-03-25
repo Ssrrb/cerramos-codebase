@@ -2,6 +2,10 @@
 
 import { signIn } from "@repo/auth/client";
 import {
+  buildAuthRedirectUrl,
+  DEFAULT_AUTH_AFTER_SIGN_IN_URL,
+} from "@repo/auth/utils";
+import {
   Alert,
   AlertDescription,
 } from "@repo/design-system/components/ui/alert";
@@ -16,6 +20,7 @@ import { useState, useTransition } from "react";
 import { AuthLegalLinks } from "./auth-legal-links";
 
 interface SignInFormProps {
+  callbackUrl?: string;
   googleEnabled?: boolean;
   privacyUrl?: string;
   termsUrl?: string;
@@ -46,6 +51,7 @@ const panelButtonClass =
   "h-11 rounded-xl border border-border/70 bg-background/70 px-4 text-[15px] shadow-sm transition-all duration-200 ease-out hover:border-foreground/25 hover:bg-background/90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-[oklch(0.16_0.004_286)] dark:hover:bg-[oklch(0.19_0.004_286)]";
 
 export const SignInForm = ({
+  callbackUrl = DEFAULT_AUTH_AFTER_SIGN_IN_URL,
   googleEnabled = false,
   privacyUrl,
   termsUrl,
@@ -59,6 +65,17 @@ export const SignInForm = ({
     null
   );
   const [isPending, startTransition] = useTransition();
+  const isEmailPending = isPending && pendingAction === "email";
+  const isGooglePending = isPending && pendingAction === "google";
+  const isPasswordStep = step === "password";
+
+  let submitLabel = "Continue with Email";
+
+  if (isEmailPending) {
+    submitLabel = "Signing in...";
+  } else if (isPasswordStep) {
+    submitLabel = "Log In";
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -73,7 +90,7 @@ export const SignInForm = ({
     startTransition(async () => {
       try {
         const { data, error } = await signIn.email({
-          callbackURL: "/",
+          callbackURL: callbackUrl,
           email,
           password,
         });
@@ -84,7 +101,7 @@ export const SignInForm = ({
           return;
         }
 
-        router.push(data?.url ?? "/");
+        router.push(data?.url ?? callbackUrl);
         router.refresh();
       } catch {
         setError("No se pudo iniciar sesion. Intenta de nuevo.");
@@ -100,8 +117,8 @@ export const SignInForm = ({
     startTransition(async () => {
       try {
         const { error } = await signIn.social({
-          callbackURL: "/",
-          newUserCallbackURL: "/onboarding",
+          callbackURL: callbackUrl,
+          newUserCallbackURL: callbackUrl,
           provider: "google",
         });
 
@@ -115,10 +132,6 @@ export const SignInForm = ({
       }
     });
   };
-
-  const isEmailPending = isPending && pendingAction === "email";
-  const isGooglePending = isPending && pendingAction === "google";
-  const isPasswordStep = step === "password";
 
   return (
     <div className="mx-auto flex w-full max-w-[22rem] flex-col items-center">
@@ -193,11 +206,7 @@ export const SignInForm = ({
             disabled={isPending}
             type="submit"
           >
-            {isEmailPending
-              ? "Signing in..."
-              : isPasswordStep
-                ? "Log In"
-                : "Continue with Email"}
+            {submitLabel}
           </Button>
         </form>
         <div className="space-y-3">
@@ -229,7 +238,7 @@ export const SignInForm = ({
               Don&apos;t have an account?{" "}
               <Link
                 className="font-medium text-foreground transition-colors hover:text-primary"
-                href="/sign-up"
+                href={buildAuthRedirectUrl("/sign-up", callbackUrl)}
               >
                 Sign Up
               </Link>

@@ -15,7 +15,7 @@ const TodoList = () => {
   const [open, setOpen] = useState(false);
   return (
     <div className="">
-      <h1 className="text-lg font-medium mb-6">Todo List</h1>
+      <h1 className="text-lg font-medium mb-6">Pendientes</h1>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button className="w-full">

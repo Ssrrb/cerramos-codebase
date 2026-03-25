@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireSession } from "@repo/auth/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppSidebar from "@/app/components/AppSidebar";
@@ -27,10 +28,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await requireSession();
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-  const cookieStore = await cookies()
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -43,7 +44,13 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar />
+            <AppSidebar
+              user={{
+                email: session.user.email,
+                image: session.user.image,
+                name: session.user.name,
+              }}
+            />
             <main className="w-full">
               <Navbar />
               <div className="px-4">{children}</div>

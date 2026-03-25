@@ -125,7 +125,7 @@ const CardList = ({ title }: { title: string }) => {
     <div className="">
       <h1 className="text-lg font-medium mb-6">{title}</h1>
       <div className="flex flex-col gap-2">
-        {title === "Popular Products"
+        {title === "Productos"
           ? popularProducts.map((item) => (
               <Card
                 key={item.id}

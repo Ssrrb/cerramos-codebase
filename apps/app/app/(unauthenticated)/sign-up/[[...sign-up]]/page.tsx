@@ -1,6 +1,12 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
+import { getSession } from "@repo/auth/server";
+import {
+  DEFAULT_AUTH_AFTER_SIGN_IN_URL,
+  normalizeReturnTo,
+} from "@repo/auth/utils";
 import { createMetadata } from "@repo/seo/metadata";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { SignUpForm } from "../../components/sign-up-form";
 
 const title = "Crear cuenta";
@@ -17,13 +23,32 @@ const termsUrl = webUrl
   ? new URL("/legal/terms", webUrl).toString()
   : undefined;
 
-const SignUpPage = () => (
-  <SignUpForm
-    googleEnabled={isGoogleAuthEnabled()}
-    privacyUrl={privacyUrl}
-    supportUrl={supportUrl}
-    termsUrl={termsUrl}
-  />
-);
+interface SignUpPageProps {
+  searchParams?: Promise<{
+    returnTo?: string;
+  }>;
+}
+
+const SignUpPage = async ({ searchParams }: SignUpPageProps) => {
+  const resolvedSearchParams = await searchParams;
+  const callbackUrl =
+    normalizeReturnTo(resolvedSearchParams?.returnTo) ??
+    DEFAULT_AUTH_AFTER_SIGN_IN_URL;
+  const session = await getSession();
+
+  if (session) {
+    redirect(callbackUrl);
+  }
+
+  return (
+    <SignUpForm
+      callbackUrl={callbackUrl}
+      googleEnabled={isGoogleAuthEnabled()}
+      privacyUrl={privacyUrl}
+      supportUrl={supportUrl}
+      termsUrl={termsUrl}
+    />
+  );
+};
 
 export default SignUpPage;

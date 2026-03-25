@@ -2,16 +2,16 @@
 
 import { signIn, signUp } from "@repo/auth/client";
 import {
+  buildAuthRedirectUrl,
+  DEFAULT_AUTH_AFTER_SIGN_IN_URL,
+} from "@repo/auth/utils";
+import {
   Alert,
   AlertDescription,
 } from "@repo/design-system/components/ui/alert";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Input } from "@repo/design-system/components/ui/input";
 import { Label } from "@repo/design-system/components/ui/label";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@repo/design-system/components/ui/radio-group";
 import { cn } from "@repo/design-system/lib/utils";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { useState, useTransition } from "react";
 import { AuthLegalLinks } from "./auth-legal-links";
 
 interface SignUpFormProps {
+  callbackUrl?: string;
   googleEnabled?: boolean;
   privacyUrl?: string;
   supportUrl?: string;
@@ -29,12 +30,12 @@ interface SignUpFormProps {
 const usageOptions = [
   {
     badge: "Pro",
-    description: "I'm working on commercial projects",
+    description: "Trabajo en proyectos comerciales",
     value: "business",
   },
   {
     badge: "Hobby",
-    description: "I'm working on personal projects",
+    description: "Trabajo en proyectos personales",
     value: "explore",
   },
 ] as const;
@@ -45,6 +46,7 @@ const inputClassName =
   "h-11 rounded-xl border-border bg-background px-3.5 text-sm shadow-none placeholder:text-muted-foreground/70 focus-visible:border-foreground/20 focus-visible:ring-2 focus-visible:ring-foreground/10";
 
 export const SignUpForm = ({
+  callbackUrl = DEFAULT_AUTH_AFTER_SIGN_IN_URL,
   googleEnabled = false,
   privacyUrl,
   supportUrl,
@@ -76,7 +78,7 @@ export const SignUpForm = ({
     startTransition(async () => {
       try {
         const { error } = await signUp.email({
-          callbackURL: "/",
+          callbackURL: callbackUrl,
           email,
           name,
           password,
@@ -109,7 +111,7 @@ export const SignUpForm = ({
           return;
         }
 
-        router.push("/");
+        router.push(callbackUrl);
         router.refresh();
       } catch {
         setError("No se pudo crear la cuenta. Intenta de nuevo.");
@@ -125,8 +127,8 @@ export const SignUpForm = ({
     startTransition(async () => {
       try {
         const { error } = await signIn.social({
-          callbackURL: "/",
-          newUserCallbackURL: "/onboarding",
+          callbackURL: callbackUrl,
+          newUserCallbackURL: callbackUrl,
           provider: "google",
           requestSignUp: true,
         });
@@ -266,7 +268,7 @@ export const SignUpForm = ({
                 Already have an account?{" "}
                 <Link
                   className="font-medium text-foreground transition-colors hover:text-primary"
-                  href="/sign-in"
+                  href={buildAuthRedirectUrl("/sign-in", callbackUrl)}
                 >
                   Log In
                 </Link>
@@ -277,9 +279,9 @@ export const SignUpForm = ({
           <div className="px-6 py-8 sm:px-10 sm:py-10">
             <div className="mx-auto max-w-[32.5rem]">
               <h1 className="text-center font-semibold text-[2.65rem] text-foreground leading-[1.02] tracking-[-0.07em] sm:text-[4rem]">
-                Your first deploy
+                Tu primera venta
                 <br />
-                is just a sign-up away.
+                está a solo un registro.
               </h1>
 
               <form className="mt-12 space-y-6" onSubmit={handleSubmit}>
@@ -287,11 +289,7 @@ export const SignUpForm = ({
                   <Label className="font-medium text-muted-foreground text-sm">
                     Plan Type
                   </Label>
-                  <RadioGroup
-                    className="gap-0 overflow-hidden rounded-xl border border-border/80"
-                    onValueChange={(value) => setUsage(value as UsageValue)}
-                    value={usage}
-                  >
+                  <div className="overflow-hidden rounded-xl border border-border/80">
                     {usageOptions.map((option, index) => (
                       <label
                         className={cn(
@@ -300,8 +298,12 @@ export const SignUpForm = ({
                         )}
                         key={option.value}
                       >
-                        <RadioGroupItem
-                          className="border-input"
+                        <input
+                          checked={usage === option.value}
+                          className="size-4 appearance-none rounded-full border border-input bg-background bg-clip-content p-[3px] align-middle shadow-xs transition-[border-color,background-color,box-shadow] checked:border-primary checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          name="usage"
+                          onChange={() => setUsage(option.value)}
+                          type="radio"
                           value={option.value}
                         />
                         <span className="min-w-0 flex-1 text-[15px] text-foreground/85">
@@ -312,7 +314,7 @@ export const SignUpForm = ({
                         </span>
                       </label>
                     ))}
-                  </RadioGroup>
+                  </div>
                 </div>
 
                 <Button

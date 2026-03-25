@@ -820,64 +820,6 @@ export const ProductsCatalog = ({
           Crear producto
         </Button>
       </Header>
-
-      <div className="min-w-0 flex flex-1 flex-col gap-6 p-4 pt-0">
-        <section className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-card shadow-sm">
-          <div className="border-border/60 border-b px-6 py-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl space-y-4">
-                <Badge
-                  className="rounded-full bg-primary/12 px-3 py-1 font-semibold text-[0.7rem] text-primary uppercase tracking-[0.18em] shadow-none"
-                  variant="secondary"
-                >
-                  Catálogo comercial
-                </Badge>
-                <div className="space-y-3">
-                  <h1 className="font-semibold text-3xl text-foreground tracking-tight md:text-4xl">
-                    Productos listos para compartir
-                  </h1>
-                  <p className="max-w-2xl text-muted-foreground text-sm leading-7 md:text-base">
-                    Organiza tus links vendibles en una sola vista, detecta qué
-                    requiere atención y comparte más rápido desde WhatsApp o
-                    Instagram.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.25rem] border border-border/70 bg-background/70 px-4 py-3">
-                  <p className="font-medium text-foreground text-sm">
-                    Operación clara
-                  </p>
-                  <p className="mt-1 text-muted-foreground text-sm leading-6">
-                    Filtra por estado, cobro y entrega sin salir del catálogo.
-                  </p>
-                </div>
-                <div className="rounded-[1.25rem] border border-border/70 bg-primary/8 px-4 py-3">
-                  <p className="font-medium text-foreground text-sm">
-                    Venta más rápida
-                  </p>
-                  <p className="mt-1 text-muted-foreground text-sm leading-6">
-                    Crea un nuevo producto y compártelo con un flujo listo para
-                    cerrar pedidos.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 px-6 py-4 md:hidden">
-            <Button
-              className="h-11 flex-1 rounded-xl bg-primary text-primary-foreground shadow-none hover:bg-primary/90"
-              onClick={() => setIsAddProductSheetOpen(true)}
-              type="button"
-            >
-              <PackagePlusIcon className="size-4" />
-              Crear producto
-            </Button>
-          </div>
-        </section>
-
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric) => {
             const MetricIcon = metricIcons[metric.id];
@@ -929,7 +871,6 @@ export const ProductsCatalog = ({
         />
 
         {catalogContent}
-      </div>
 
       <AddProductSheet
         createProductLinkAction={createProductLinkAction}

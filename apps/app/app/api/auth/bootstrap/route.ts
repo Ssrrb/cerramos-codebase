@@ -36,11 +36,9 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ commerceId: session.user.commerceId });
   }
 
-  const body = (await request.json().catch(() => null)) as
-    | {
-        commerceName?: unknown;
-      }
-    | null;
+  const body = (await request.json().catch(() => null)) as {
+    commerceName?: unknown;
+  } | null;
   const commerceName =
     typeof body?.commerceName === "string" ? body.commerceName.trim() : "";
 

@@ -1,25 +1,25 @@
 import "server-only";
 
 import { database, schema } from "@repo/database";
-import { asc, eq, inArray } from "drizzle-orm";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSessionCookie } from "better-auth/cookies";
 import { nextCookies } from "better-auth/next-js";
-import { cache } from "react";
+import { asc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { keys } from "./keys";
 import {
   AUTH_COOKIE_PREFIX,
+  type AuthUser,
   buildTrustedOrigins,
   DEFAULT_AUTH_SIGN_IN_URL,
   getCrossSubDomainCookieOptions,
   mapSessionUserToAuthUser,
-  toMembership,
-  type AuthUser,
   type OrganizationMembership,
   type SessionUserLike,
+  toMembership,
 } from "./utils";
 
 export type { AuthUser, OrganizationMembership } from "./utils";
@@ -100,7 +100,9 @@ export const betterAuthServer = betterAuth({
   },
 });
 
-type SessionResult = Awaited<ReturnType<typeof betterAuthServer.api.getSession>>;
+type SessionResult = Awaited<
+  ReturnType<typeof betterAuthServer.api.getSession>
+>;
 
 const getSignInUrl = () =>
   authKeys.NEXT_PUBLIC_AUTH_SIGN_IN_URL ?? DEFAULT_AUTH_SIGN_IN_URL;

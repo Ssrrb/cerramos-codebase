@@ -29,11 +29,7 @@ const renderPosts = (
   emptyMessage: string
 ) => {
   if (!posts.length) {
-    return (
-      <p className="text-base text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
+    return <p className="text-base text-muted-foreground">{emptyMessage}</p>;
   }
 
   return posts.map((post, index) => (
@@ -61,9 +57,7 @@ const renderPosts = (
         </p>
       </div>
       <div className="flex flex-col gap-2">
-        <h3 className="max-w-3xl text-4xl tracking-tight">
-          {post._title}
-        </h3>
+        <h3 className="max-w-3xl text-4xl tracking-tight">{post._title}</h3>
         <p className="max-w-3xl text-base text-muted-foreground">
           {post.description}
         </p>

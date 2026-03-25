@@ -59,9 +59,7 @@ export const getCrossSubDomainCookieOptions = (domain?: string) => {
   } as const;
 };
 
-export const mapSessionUserToAuthUser = (
-  user: SessionUserLike
-): AuthUser => ({
+export const mapSessionUserToAuthUser = (user: SessionUserLike): AuthUser => ({
   emailAddresses: [{ emailAddress: user.email }],
   fullName: user.name ?? null,
   id: user.id,

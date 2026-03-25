@@ -112,26 +112,18 @@
         "AppUser_commerceId_Commerce_id_fk": {
           "name": "AppUser_commerceId_Commerce_id_fk",
           "tableFrom": "AppUser",
-          "columnsFrom": [
-            "commerceId"
-          ],
+          "columnsFrom": ["commerceId"],
           "tableTo": "Commerce",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "AppUser_customerId_Customer_id_fk": {
           "name": "AppUser_customerId_Customer_id_fk",
           "tableFrom": "AppUser",
-          "columnsFrom": [
-            "customerId"
-          ],
+          "columnsFrom": ["customerId"],
           "tableTo": "Customer",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -220,13 +212,9 @@
         "AuthSession_userId_AppUser_id_fk": {
           "name": "AuthSession_userId_AppUser_id_fk",
           "tableFrom": "AuthSession",
-          "columnsFrom": [
-            "userId"
-          ],
+          "columnsFrom": ["userId"],
           "tableTo": "AppUser",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -463,13 +451,9 @@
         "CustomerConsent_customerId_Customer_id_fk": {
           "name": "CustomerConsent_customerId_Customer_id_fk",
           "tableFrom": "CustomerConsent",
-          "columnsFrom": [
-            "customerId"
-          ],
+          "columnsFrom": ["customerId"],
           "tableTo": "Customer",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -565,13 +549,9 @@
         "CustomerIdentity_customerId_Customer_id_fk": {
           "name": "CustomerIdentity_customerId_Customer_id_fk",
           "tableFrom": "CustomerIdentity",
-          "columnsFrom": [
-            "customerId"
-          ],
+          "columnsFrom": ["customerId"],
           "tableTo": "Customer",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -689,13 +669,9 @@
         "DeliveryInfo_customerId_Customer_id_fk": {
           "name": "DeliveryInfo_customerId_Customer_id_fk",
           "tableFrom": "DeliveryInfo",
-          "columnsFrom": [
-            "customerId"
-          ],
+          "columnsFrom": ["customerId"],
           "tableTo": "Customer",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -778,13 +754,9 @@
         "OAuthAccount_userId_AppUser_id_fk": {
           "name": "OAuthAccount_userId_AppUser_id_fk",
           "tableFrom": "OAuthAccount",
-          "columnsFrom": [
-            "userId"
-          ],
+          "columnsFrom": ["userId"],
           "tableTo": "AppUser",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -983,52 +955,36 @@
         "Order_commerceId_Commerce_id_fk": {
           "name": "Order_commerceId_Commerce_id_fk",
           "tableFrom": "Order",
-          "columnsFrom": [
-            "commerceId"
-          ],
+          "columnsFrom": ["commerceId"],
           "tableTo": "Commerce",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "Order_productLinkId_ProductLink_id_fk": {
           "name": "Order_productLinkId_ProductLink_id_fk",
           "tableFrom": "Order",
-          "columnsFrom": [
-            "productLinkId"
-          ],
+          "columnsFrom": ["productLinkId"],
           "tableTo": "ProductLink",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "Order_customerId_Customer_id_fk": {
           "name": "Order_customerId_Customer_id_fk",
           "tableFrom": "Order",
-          "columnsFrom": [
-            "customerId"
-          ],
+          "columnsFrom": ["customerId"],
           "tableTo": "Customer",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         },
         "Order_deliveryInfoId_DeliveryInfo_id_fk": {
           "name": "Order_deliveryInfoId_DeliveryInfo_id_fk",
           "tableFrom": "Order",
-          "columnsFrom": [
-            "deliveryInfoId"
-          ],
+          "columnsFrom": ["deliveryInfoId"],
           "tableTo": "DeliveryInfo",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -1130,26 +1086,18 @@
         "OrderItem_orderId_Order_id_fk": {
           "name": "OrderItem_orderId_Order_id_fk",
           "tableFrom": "OrderItem",
-          "columnsFrom": [
-            "orderId"
-          ],
+          "columnsFrom": ["orderId"],
           "tableTo": "Order",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "OrderItem_productLinkId_ProductLink_id_fk": {
           "name": "OrderItem_productLinkId_ProductLink_id_fk",
           "tableFrom": "OrderItem",
-          "columnsFrom": [
-            "productLinkId"
-          ],
+          "columnsFrom": ["productLinkId"],
           "tableTo": "ProductLink",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "restrict"
         }
@@ -1237,13 +1185,9 @@
         "OrderStatusHistory_orderId_Order_id_fk": {
           "name": "OrderStatusHistory_orderId_Order_id_fk",
           "tableFrom": "OrderStatusHistory",
-          "columnsFrom": [
-            "orderId"
-          ],
+          "columnsFrom": ["orderId"],
           "tableTo": "Order",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1398,13 +1342,9 @@
         "PaymentEvent_paymentIntentId_PaymentIntent_id_fk": {
           "name": "PaymentEvent_paymentIntentId_PaymentIntent_id_fk",
           "tableFrom": "PaymentEvent",
-          "columnsFrom": [
-            "paymentIntentId"
-          ],
+          "columnsFrom": ["paymentIntentId"],
           "tableTo": "PaymentIntent",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -1536,13 +1476,9 @@
         "PaymentIntent_orderId_Order_id_fk": {
           "name": "PaymentIntent_orderId_Order_id_fk",
           "tableFrom": "PaymentIntent",
-          "columnsFrom": [
-            "orderId"
-          ],
+          "columnsFrom": ["orderId"],
           "tableTo": "Order",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1692,13 +1628,9 @@
         "ProductLink_commerceId_Commerce_id_fk": {
           "name": "ProductLink_commerceId_Commerce_id_fk",
           "tableFrom": "ProductLink",
-          "columnsFrom": [
-            "commerceId"
-          ],
+          "columnsFrom": ["commerceId"],
           "tableTo": "Commerce",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1773,13 +1705,9 @@
         "ProductVariantOption_productLinkId_ProductLink_id_fk": {
           "name": "ProductVariantOption_productLinkId_ProductLink_id_fk",
           "tableFrom": "ProductVariantOption",
-          "columnsFrom": [
-            "productLinkId"
-          ],
+          "columnsFrom": ["productLinkId"],
           "tableTo": "ProductLink",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1795,11 +1723,7 @@
     "public.AppUserRole": {
       "name": "AppUserRole",
       "schema": "public",
-      "values": [
-        "buyer",
-        "merchant_admin",
-        "operator"
-      ]
+      "values": ["buyer", "merchant_admin", "operator"]
     },
     "public.CommerceTrustState": {
       "name": "CommerceTrustState",
@@ -1815,26 +1739,17 @@
     "public.CustomerIdentityProvider": {
       "name": "CustomerIdentityProvider",
       "schema": "public",
-      "values": [
-        "password",
-        "google"
-      ]
+      "values": ["password", "google"]
     },
     "public.DeliveryMode": {
       "name": "DeliveryMode",
       "schema": "public",
-      "values": [
-        "delivery",
-        "pickup"
-      ]
+      "values": ["delivery", "pickup"]
     },
     "public.FulfillmentType": {
       "name": "FulfillmentType",
       "schema": "public",
-      "values": [
-        "delivery",
-        "pickup"
-      ]
+      "values": ["delivery", "pickup"]
     },
     "public.OrderStatus": {
       "name": "OrderStatus",
@@ -1862,10 +1777,7 @@
     "public.PaymentProviderName": {
       "name": "PaymentProviderName",
       "schema": "public",
-      "values": [
-        "pagopar_upay",
-        "manual"
-      ]
+      "values": ["pagopar_upay", "manual"]
     },
     "public.PaymentRiskState": {
       "name": "PaymentRiskState",
@@ -1894,12 +1806,7 @@
     "public.ProductLinkStatus": {
       "name": "ProductLinkStatus",
       "schema": "public",
-      "values": [
-        "draft",
-        "active",
-        "inactive",
-        "expired"
-      ]
+      "values": ["draft", "active", "inactive", "expired"]
     }
   },
   "schemas": {},

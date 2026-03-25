@@ -11,7 +11,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => (
     <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,transparent_0,transparent_calc(100%-1px),oklch(0.87_0.003_286_/_0.35)_calc(100%-1px)),linear-gradient(to_bottom,transparent_0,transparent_calc(100%-1px),oklch(0.87_0.003_286_/_0.35)_calc(100%-1px))] bg-[size:32px_32px] opacity-40 dark:bg-[linear-gradient(to_right,transparent_0,transparent_calc(100%-1px),oklch(0.36_0.004_286_/_0.3)_calc(100%-1px)),linear-gradient(to_bottom,transparent_0,transparent_calc(100%-1px),oklch(0.36_0.004_286_/_0.3)_calc(100%-1px))] dark:opacity-30" />
     <div className="relative flex min-h-dvh flex-col">
       <AuthChrome />
-      <main className="flex flex-1 items-center justify-center px-4 pb-10 pt-2 sm:px-6 sm:pb-12">
+      <main className="flex flex-1 items-center justify-center px-4 pt-2 pb-10 sm:px-6 sm:pb-12">
         {children}
       </main>
     </div>

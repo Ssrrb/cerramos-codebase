@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
+      "@/components/*": ["./app/components/*"],
       "@repo/*": ["../../packages/*"]
     }
   },

@@ -37,7 +37,7 @@ export const FAQ = ({ dictionary }: FAQProps) => (
               className="group border-b last:border-b-0"
               key={item.question}
             >
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-4 py-4 text-left text-sm font-medium">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-4 py-4 text-left font-medium text-sm">
                 <span>{item.question}</span>
                 <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
               </summary>

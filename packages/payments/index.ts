@@ -15,18 +15,21 @@ export interface NormalizedPaymentEvent {
   eventType: string;
   externalEventId?: string;
   externalReference?: string;
-  status: PaymentStatus;
   payload: unknown;
+  status: PaymentStatus;
 }
 
 export interface PaymentProviderAdapter {
-  createCheckoutSession(order: object): Promise<object>;
   authorize(order: object, payload: object): Promise<object>;
   cancel(paymentId: string): Promise<object>;
-  refund(paymentId: string, amount?: number): Promise<object>;
-  parseWebhook(payload: unknown, headers: Headers): Promise<NormalizedPaymentEvent>;
-  verifyWebhook(payload: string, headers: Headers): Promise<boolean>;
+  createCheckoutSession(order: object): Promise<object>;
   normalizeStatus(input: unknown): PaymentStatus;
+  parseWebhook(
+    payload: unknown,
+    headers: Headers
+  ): Promise<NormalizedPaymentEvent>;
+  refund(paymentId: string, amount?: number): Promise<object>;
+  verifyWebhook(payload: string, headers: Headers): Promise<boolean>;
 }
 
 const config = keys();

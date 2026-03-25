@@ -1,31 +1,30 @@
-import { auth } from "@repo/auth/server";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { createProductLinkAction } from "./actions/product-links";
-import { ProductsCatalog } from "./components/products-catalog";
-import { getProductsCatalogData } from "./products-catalog.server";
+import AppAreaChart from "@/app/components/AppAreaChart";
+import AppBarChart from "@/app/components/AppBarChart";
+import AppPieChart from "@/app/components/AppPieChart";
+import CardList from "@/app/components/CardList";
+import TodoList from "@/app/components/TodoList";
 
-export const metadata: Metadata = {
-  description: "Gestiona tu catálogo de productos y links vendibles.",
-  title: "Catálogo | Cerramos",
-};
-
-const App = async () => {
-  const { orgId } = await auth();
-
-  if (!orgId) {
-    redirect("/onboarding");
-  }
-
-  const { metrics, products } = await getProductsCatalogData(orgId);
-
+const Homepage = () => {
   return (
-    <ProductsCatalog
-      createProductLinkAction={createProductLinkAction}
-      metrics={metrics}
-      products={products}
-    />
+    <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4">
+      <div className="bg-primary-foreground p-4 rounded-lg lg:col-span-2 xl:col-span-1 2xl:col-span-2">
+        <AppBarChart />
+      </div>
+      <div className="bg-primary-foreground p-4 rounded-lg">
+        <CardList title="Latest Transactions" />
+      </div>
+      <div className="bg-primary-foreground p-4 rounded-lg">
+        <AppPieChart />
+      </div>
+      <div className="bg-primary-foreground p-4 rounded-lg"><TodoList/></div>
+      <div className="bg-primary-foreground p-4 rounded-lg lg:col-span-2 xl:col-span-1 2xl:col-span-2">
+        <AppAreaChart />
+      </div>
+      <div className="bg-primary-foreground p-4 rounded-lg">
+        <CardList title="Popular Products" />
+      </div>
+    </div>
   );
 };
 
-export default App;
+export default Homepage;

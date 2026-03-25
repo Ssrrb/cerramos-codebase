@@ -25,15 +25,16 @@ const planOptions = [
 const inputClassName =
   "flex h-11 w-full rounded-xl border border-border bg-background px-3.5 text-sm shadow-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/10";
 
-export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) => {
+export const SignUp = ({
+  googleEnabled: _googleEnabled = false,
+}: SignUpProps) => {
   const router = useRouter();
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [plan, setPlan] = useState<(typeof planOptions)[number]["value"]>(
-    "business"
-  );
+  const [plan, setPlan] =
+    useState<(typeof planOptions)[number]["value"]>("business");
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<"setup" | "account">("setup");
   const [isPending, startTransition] = useTransition();
@@ -90,7 +91,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
       {step === "setup" ? (
         <div className="px-6 py-8 sm:px-10 sm:py-10">
           <div className="mx-auto max-w-[32.5rem]">
-            <h1 className="text-center font-semibold text-[2.65rem] leading-[1.02] tracking-[-0.07em] text-foreground sm:text-[4rem]">
+            <h1 className="text-center font-semibold text-[2.65rem] text-foreground leading-[1.02] tracking-[-0.07em] sm:text-[4rem]">
               Your first deploy
               <br />
               is just a sign-up away.
@@ -98,14 +99,14 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
 
             <form className="mt-12 space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-3">
-                <p className="text-muted-foreground text-sm font-medium">
+                <p className="font-medium text-muted-foreground text-sm">
                   Plan Type
                 </p>
                 <div className="overflow-hidden rounded-xl border border-border/80">
                   {planOptions.map((option, index) => (
                     <label
                       className={`flex cursor-pointer items-center gap-3 bg-background px-4 py-4 text-left transition-colors hover:bg-muted/30 ${
-                        index === 0 ? "" : "border-t border-border/80"
+                        index === 0 ? "" : "border-border/80 border-t"
                       }`}
                       key={option.value}
                     >
@@ -120,7 +121,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
                       <span className="min-w-0 flex-1 text-[15px] text-foreground/85">
                         {option.description}
                       </span>
-                      <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground/80">
+                      <span className="rounded-full bg-muted px-3 py-1 font-medium text-foreground/80 text-xs">
                         {option.badge}
                       </span>
                     </label>
@@ -129,7 +130,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
               </div>
 
               <button
-                className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-foreground px-4 text-base font-medium text-background transition-colors hover:bg-foreground/92 disabled:opacity-50"
+                className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-foreground px-4 font-medium text-background text-base transition-colors hover:bg-foreground/92 disabled:opacity-50"
                 disabled={isPending}
                 type="submit"
               >
@@ -146,7 +147,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
         <div className="px-6 py-8 sm:px-10 sm:py-10">
           <div className="mx-auto max-w-[32.5rem]">
             <div className="space-y-2 text-center">
-              <h1 className="font-semibold text-[2rem] leading-tight tracking-[-0.05em] text-foreground sm:text-[2.6rem]">
+              <h1 className="font-semibold text-[2rem] text-foreground leading-tight tracking-[-0.05em] sm:text-[2.6rem]">
                 Create your account
               </h1>
               <p className="text-muted-foreground text-sm">
@@ -202,7 +203,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
                 </p>
               ) : null}
               <button
-                className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-foreground px-4 text-base font-medium text-background transition-colors hover:bg-foreground/92 disabled:opacity-50"
+                className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-foreground px-4 font-medium text-background text-base transition-colors hover:bg-foreground/92 disabled:opacity-50"
                 disabled={isPending}
                 type="submit"
               >
@@ -223,7 +224,7 @@ export const SignUp = ({ googleEnabled: _googleEnabled = false }: SignUpProps) =
         </div>
       )}
 
-      <div className="border-t border-[oklch(0.55_0.11_304_/_0.22)] bg-[oklch(0.77_0.12_304_/_0.16)] px-6 py-4 text-center dark:bg-[oklch(0.34_0.08_304_/_0.48)]">
+      <div className="border-[oklch(0.55_0.11_304_/_0.22)] border-t bg-[oklch(0.77_0.12_304_/_0.16)] px-6 py-4 text-center dark:bg-[oklch(0.34_0.08_304_/_0.48)]">
         <Link
           className="text-[13px] text-[oklch(0.36_0.07_304)] transition-colors hover:text-[oklch(0.32_0.08_304)] dark:text-[oklch(0.83_0.05_304)] dark:hover:text-white"
           href="/sign-in"

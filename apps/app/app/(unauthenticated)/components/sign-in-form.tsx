@@ -124,7 +124,7 @@ export const SignInForm = ({
     <div className="mx-auto flex w-full max-w-[22rem] flex-col items-center">
       <div className="w-full space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="font-semibold text-3xl tracking-[-0.05em] text-foreground sm:text-[2.15rem]">
+          <h1 className="font-semibold text-3xl text-foreground tracking-[-0.05em] sm:text-[2.15rem]">
             Log in to Cerramos
           </h1>
           <p className="mx-auto max-w-[20rem] text-muted-foreground text-sm leading-6">
@@ -186,7 +186,7 @@ export const SignInForm = ({
           ) : null}
           <Button
             className={cn(
-              "h-11 w-full rounded-xl border px-4 text-[15px] font-medium shadow-sm transition-all duration-200 ease-out",
+              "h-11 w-full rounded-xl border px-4 font-medium text-[15px] shadow-sm transition-all duration-200 ease-out",
               "border-black/5 bg-foreground text-background hover:bg-foreground/92",
               "dark:border-white/5 dark:bg-[oklch(0.95_0.002_286)] dark:text-[oklch(0.16_0.004_286)] dark:hover:bg-white"
             )}
@@ -205,7 +205,7 @@ export const SignInForm = ({
             <>
               <div className="flex items-center gap-3 py-1">
                 <Separator className="flex-1 bg-border/60" />
-                <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground/75">
+                <span className="text-[11px] text-muted-foreground/75 uppercase tracking-[0.2em]">
                   or
                 </span>
                 <Separator className="flex-1 bg-border/60" />

@@ -149,68 +149,11 @@ export const SignUpForm = ({
   return (
     <div className="mx-auto w-full max-w-[46rem]">
       <div className="overflow-hidden rounded-[1.5rem] border border-border/80 bg-background shadow-[0_32px_90px_-56px_color-mix(in_oklab,var(--foreground)_45%,transparent)]">
-        {!isAccountStep ? (
-          <div className="px-6 py-8 sm:px-10 sm:py-10">
-            <div className="mx-auto max-w-[32.5rem]">
-              <h1 className="text-center font-semibold text-[2.65rem] leading-[1.02] tracking-[-0.07em] text-foreground sm:text-[4rem]">
-                Your first deploy
-                <br />
-                is just a sign-up away.
-              </h1>
-
-              <form className="mt-12 space-y-6" onSubmit={handleSubmit}>
-                <div className="space-y-3">
-                  <Label className="text-muted-foreground text-sm font-medium">
-                    Plan Type
-                  </Label>
-                  <RadioGroup
-                    className="gap-0 overflow-hidden rounded-xl border border-border/80"
-                    onValueChange={(value) => setUsage(value as UsageValue)}
-                    value={usage}
-                  >
-                    {usageOptions.map((option, index) => (
-                      <label
-                        className={cn(
-                          "flex cursor-pointer items-center gap-3 bg-background px-4 py-4 text-left transition-colors hover:bg-muted/30",
-                          index === 0 ? "" : "border-t border-border/80"
-                        )}
-                        key={option.value}
-                      >
-                        <RadioGroupItem className="border-input" value={option.value} />
-                        <span className="min-w-0 flex-1 text-[15px] text-foreground/85">
-                          {option.description}
-                        </span>
-                        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground/80">
-                          {option.badge}
-                        </span>
-                      </label>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                <Button
-                  className="h-12 w-full rounded-xl bg-foreground text-base font-medium text-background shadow-none hover:bg-foreground/92"
-                  disabled={isPending}
-                  type="submit"
-                >
-                  Continue
-                </Button>
-              </form>
-
-              <div className="mt-26 space-y-4 text-center">
-                <p className="text-muted-foreground text-sm leading-6">
-                  By joining, you agree to our Terms of Service and Privacy
-                  Policy
-                </p>
-                <AuthLegalLinks privacyUrl={privacyUrl} termsUrl={termsUrl} />
-              </div>
-            </div>
-          </div>
-        ) : (
+        {isAccountStep ? (
           <div className="px-6 py-8 sm:px-10 sm:py-10">
             <div className="mx-auto max-w-[32.5rem]">
               <div className="space-y-2 text-center">
-                <h1 className="font-semibold text-[2rem] leading-tight tracking-[-0.05em] text-foreground sm:text-[2.6rem]">
+                <h1 className="font-semibold text-[2rem] text-foreground leading-tight tracking-[-0.05em] sm:text-[2.6rem]">
                   Create your account
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -289,7 +232,7 @@ export const SignUpForm = ({
 
                 {googleEnabled ? (
                   <Button
-                    className="h-11 w-full rounded-xl border border-border bg-background text-sm font-medium text-foreground shadow-none hover:bg-muted/30"
+                    className="h-11 w-full rounded-xl border border-border bg-background font-medium text-foreground text-sm shadow-none hover:bg-muted/30"
                     disabled={isPending}
                     onClick={handleGoogle}
                     type="button"
@@ -302,7 +245,7 @@ export const SignUpForm = ({
                 ) : null}
 
                 <Button
-                  className="h-12 w-full rounded-xl bg-foreground text-base font-medium text-background shadow-none hover:bg-foreground/92"
+                  className="h-12 w-full rounded-xl bg-foreground font-medium text-background text-base shadow-none hover:bg-foreground/92"
                   disabled={isPending}
                   type="submit"
                 >
@@ -330,9 +273,69 @@ export const SignUpForm = ({
               </p>
             </div>
           </div>
+        ) : (
+          <div className="px-6 py-8 sm:px-10 sm:py-10">
+            <div className="mx-auto max-w-[32.5rem]">
+              <h1 className="text-center font-semibold text-[2.65rem] text-foreground leading-[1.02] tracking-[-0.07em] sm:text-[4rem]">
+                Your first deploy
+                <br />
+                is just a sign-up away.
+              </h1>
+
+              <form className="mt-12 space-y-6" onSubmit={handleSubmit}>
+                <div className="space-y-3">
+                  <Label className="font-medium text-muted-foreground text-sm">
+                    Plan Type
+                  </Label>
+                  <RadioGroup
+                    className="gap-0 overflow-hidden rounded-xl border border-border/80"
+                    onValueChange={(value) => setUsage(value as UsageValue)}
+                    value={usage}
+                  >
+                    {usageOptions.map((option, index) => (
+                      <label
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 bg-background px-4 py-4 text-left transition-colors hover:bg-muted/30",
+                          index === 0 ? "" : "border-border/80 border-t"
+                        )}
+                        key={option.value}
+                      >
+                        <RadioGroupItem
+                          className="border-input"
+                          value={option.value}
+                        />
+                        <span className="min-w-0 flex-1 text-[15px] text-foreground/85">
+                          {option.description}
+                        </span>
+                        <span className="rounded-full bg-muted px-3 py-1 font-medium text-foreground/80 text-xs">
+                          {option.badge}
+                        </span>
+                      </label>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <Button
+                  className="h-12 w-full rounded-xl bg-foreground font-medium text-background text-base shadow-none hover:bg-foreground/92"
+                  disabled={isPending}
+                  type="submit"
+                >
+                  Continue
+                </Button>
+              </form>
+
+              <div className="mt-26 space-y-4 text-center">
+                <p className="text-muted-foreground text-sm leading-6">
+                  By joining, you agree to our Terms of Service and Privacy
+                  Policy
+                </p>
+                <AuthLegalLinks privacyUrl={privacyUrl} termsUrl={termsUrl} />
+              </div>
+            </div>
+          </div>
         )}
 
-        <div className="border-t border-[oklch(0.55_0.11_304_/_0.22)] bg-[oklch(0.77_0.12_304_/_0.16)] px-6 py-4 sm:px-10 dark:bg-[oklch(0.34_0.08_304_/_0.48)]">
+        <div className="border-[oklch(0.55_0.11_304_/_0.22)] border-t bg-[oklch(0.77_0.12_304_/_0.16)] px-6 py-4 sm:px-10 dark:bg-[oklch(0.34_0.08_304_/_0.48)]">
           {supportUrl ? (
             <Link
               className="flex items-center justify-center gap-2 text-center text-[13px] text-[oklch(0.36_0.07_304)] transition-colors hover:text-[oklch(0.32_0.08_304)] dark:text-[oklch(0.83_0.05_304)] dark:hover:text-white"
@@ -341,7 +344,9 @@ export const SignUpForm = ({
               target="_blank"
             >
               <span>Have a complex company use case?</span>
-              <span className="font-medium">Get Enterprise grade assistance</span>
+              <span className="font-medium">
+                Get Enterprise grade assistance
+              </span>
               <ArrowRight className="size-3.5" />
             </Link>
           ) : (

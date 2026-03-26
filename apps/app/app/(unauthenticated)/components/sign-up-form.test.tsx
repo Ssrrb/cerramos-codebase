@@ -73,7 +73,7 @@ describe("sign-up form", () => {
     expect(screen.queryByLabelText("Tu nombre")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    expect(screen.getByLabelText("Nombre del comercio")).toBeDefined();
+    expect(screen.queryByLabelText("Nombre del comercio")).toBeNull();
     expect(screen.getByLabelText("Tu nombre")).toBeDefined();
     expect(screen.getByLabelText("Email de trabajo")).toBeDefined();
     expect(screen.getByLabelText("Contrasena")).toBeDefined();
@@ -98,19 +98,11 @@ describe("sign-up form", () => {
     ).toBeDefined();
   });
 
-  test("renders bootstrap failure inline after account submission", async () => {
-    fetchMock.mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: "No se pudo crear el comercio." }),
-    });
-
+  test("routes email sign-up into onboarding", async () => {
     render(<SignUpForm googleEnabled={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    fireEvent.change(screen.getByLabelText("Nombre del comercio"), {
-      target: { value: "Tienda Centro" },
-    });
     fireEvent.change(screen.getByLabelText("Tu nombre"), {
       target: { value: "Sebastian" },
     });
@@ -123,7 +115,7 @@ describe("sign-up form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Account" }));
 
     await waitFor(() =>
-      expect(screen.getByText("No se pudo crear el comercio.")).toBeDefined()
+      expect(pushMock).toHaveBeenCalledWith("/onboarding")
     );
 
     expect(signUpEmailMock).toHaveBeenCalledWith({
@@ -132,13 +124,7 @@ describe("sign-up form", () => {
       name: "Sebastian",
       password: "supersecret",
     });
-    expect(fetchMock).toHaveBeenCalledWith("/api/auth/bootstrap", {
-      body: JSON.stringify({ commerceName: "Tienda Centro" }),
-      headers: {
-        "content-type": "application/json",
-      },
-      method: "POST",
-    });
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(refreshMock).toHaveBeenCalled();
   });
 });

@@ -1,14 +1,15 @@
-import { requireSession } from "@repo/auth/server";
+import { getAuthenticatedAppContext, requireSession } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 import CommerceOnboardingForm from "./commerce-onboarding-form";
 
 const OnboardingPage = async () => {
   const session = await requireSession();
+  const context = await getAuthenticatedAppContext();
 
   // Onboarding only exists for signed-in users who still need a commerce record.
   // Once a commerce is attached, the authenticated dashboard can resolve
   // merchant-scoped data and this page is no longer relevant.
-  if (session.user.commerceId) {
+  if (context) {
     redirect("/");
   }
 

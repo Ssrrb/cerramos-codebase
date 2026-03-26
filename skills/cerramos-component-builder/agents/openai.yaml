@@ -1,0 +1,5 @@
+interface:
+  display_name: "Cerramos Component Builder"
+  short_description: "Build shared UI workflows for Cerramos."
+  default_prompt: "Use $cerramos-component-builder to break an interface into atomic elements, build shared design-system components, add Storybook coverage, and wire the final page with matching schema and API changes."
+

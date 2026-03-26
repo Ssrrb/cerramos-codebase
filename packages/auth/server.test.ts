@@ -159,7 +159,46 @@ describe("auth server commerce context", () => {
     });
   });
 
-  test("redirects to onboarding when the session has no commerce id", async () => {
+  test("uses the database commerce link when the session commerce id is stale", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: null,
+        email: "owner@example.com",
+        id: "user_1",
+        image: "https://example.com/avatar.png",
+        name: "Sebastian",
+      },
+    });
+    limitMock.mockResolvedValue([
+      {
+        id: "commerce_1",
+        name: "Tienda Centro",
+        role: "merchant_admin",
+        slug: "tienda-centro",
+      },
+    ]);
+
+    const { requireCommerceContext } = await import("./server");
+
+    await expect(requireCommerceContext()).resolves.toEqual({
+      commerce: {
+        id: "commerce_1",
+        name: "Tienda Centro",
+        role: "merchant_admin",
+        slug: "tienda-centro",
+      },
+      orgId: "commerce_1",
+      user: {
+        email: "owner@example.com",
+        id: "user_1",
+        image: "https://example.com/avatar.png",
+        name: "Sebastian",
+        role: "merchant_admin",
+      },
+    });
+  });
+
+  test("redirects to onboarding when no linked commerce can be resolved", async () => {
     getSessionMock.mockResolvedValue({
       user: {
         commerceId: null,
@@ -169,11 +208,11 @@ describe("auth server commerce context", () => {
         name: "Sebastian",
       },
     });
+    limitMock.mockResolvedValue([]);
 
     const { requireCommerceContext } = await import("./server");
 
     await expect(requireCommerceContext()).rejects.toThrow("redirect:/onboarding");
-    expect(selectMock).not.toHaveBeenCalled();
   });
 
   test("redirects to onboarding when the commerce record cannot be loaded", async () => {

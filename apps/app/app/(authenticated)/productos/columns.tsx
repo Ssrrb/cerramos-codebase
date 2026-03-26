@@ -3,27 +3,28 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/app/components/ui/button";
+import { Badge } from "@repo/design-system/components/ui/badge";
+import { Button } from "@repo/design-system/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+} from "@repo/design-system/components/ui/dropdown-menu";
 import {
-  formatProductPrice,
+  formatDeliveryIncludedLabel,
+  formatProductStatusLabel,
   type ProductTableRow,
-  resolvePrimaryProductImage,
 } from "@/lib/products";
 
 export const columns: ColumnDef<ProductTableRow>[] = [
   {
     accessorKey: "image",
-    header: "Image",
+    header: "Imagen",
     cell: ({ row }) => {
       const product = row.original;
-      const imageSrc = resolvePrimaryProductImage(product);
+      const imageSrc = product.image;
 
       if (!imageSrc) {
         return (
@@ -49,25 +50,42 @@ export const columns: ColumnDef<ProductTableRow>[] = [
   },
   {
     accessorKey: "name",
-    header: "Name",
+    header: "Nombre",
   },
   {
-    accessorKey: "unitPrice",
+    accessorKey: "status",
     header: ({ column }) => {
       return (
         <Button
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           variant="ghost"
         >
-          Precio
+          Estado
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
-    cell: ({ row }) => formatProductPrice(row.original.unitPrice),
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === "active" ? "default" : "secondary"}>
+        {formatProductStatusLabel(row.original.status)}
+      </Badge>
+    ),
   },
   {
-    accessorKey: "shortDescription",
+    accessorKey: "stock",
+    header: "Stock",
+  },
+  {
+    accessorKey: "category",
+    header: "Categoria",
+  },
+  {
+    accessorKey: "deliveryIncluded",
+    header: "Delivery",
+    cell: ({ row }) => formatDeliveryIncludedLabel(row.original.deliveryIncluded),
+  },
+  {
+    accessorKey: "description",
     header: "Descripcion",
   },
   {

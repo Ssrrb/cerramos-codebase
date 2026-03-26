@@ -2,9 +2,9 @@
 
 import { Plus } from "lucide-react";
 import type React from "react";
+import { Button } from "@repo/design-system/components/ui/button";
+import { Sheet, SheetTrigger } from "@repo/design-system/components/ui/sheet";
 import AddProduct from "../../components/add-product";
-import { Button } from "../../components/ui/button";
-import { Sheet, SheetTrigger } from "../../components/ui/sheet";
 
 interface NewProductSheetButtonProps {
   children: string;

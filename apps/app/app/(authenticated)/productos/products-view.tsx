@@ -31,6 +31,10 @@ export const ProductsView = ({ products }: ProductsViewProps) => {
               <h2 className="font-medium text-2xl text-foreground">
                 Todavia no tienes productos
               </h2>
+              <p className="text-muted-foreground text-sm">
+                Crea tu primer producto desde aqui para empezar a organizar tu
+                catalogo.
+              </p>
             </div>
             <NewProductSheetButton size="lg">
               Agregar producto

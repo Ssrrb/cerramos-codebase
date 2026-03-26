@@ -35,6 +35,12 @@ export const productLinkStatusEnum = pgEnum("ProductLinkStatus", [
   "expired",
 ]);
 
+export const productStatusEnum = pgEnum("ProductStatus", [
+  "draft",
+  "active",
+  "inactive",
+]);
+
 export const fulfillmentTypeEnum = pgEnum("FulfillmentType", [
   "delivery",
   "pickup",
@@ -264,14 +270,12 @@ export const product = pgTable(
       .notNull()
       .references(() => commerce.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    shortDescription: text("shortDescription").notNull(),
     description: text("description").notNull(),
     category: text("category").notNull(),
-    unitPrice: integer("unitPrice").notNull(),
-    currency: text("currency").notNull().default("PYG"),
-    sizes: text("sizes").array().notNull(),
-    colors: text("colors").array().notNull(),
-    images: jsonb("images").$type<Record<string, string>>().notNull(),
+    status: productStatusEnum("status").notNull().default("draft"),
+    stock: integer("stock").notNull().default(0),
+    deliveryIncluded: boolean("deliveryIncluded").notNull().default(false),
+    image: text("image").notNull().default(""),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

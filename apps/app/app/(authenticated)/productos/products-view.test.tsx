@@ -3,6 +3,16 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
 
+vi.mock("next/image", () => ({
+  default: ({
+    alt,
+    src,
+  }: {
+    alt: string;
+    src: string;
+  }) => <img alt={alt} src={src} />,
+}));
+
 vi.mock("./new-product-sheet-button", () => ({
   NewProductSheetButton: ({ children }: { children: ReactNode }) => (
     <button type="button">{children}</button>
@@ -18,21 +28,24 @@ vi.mock("./data-table", () => ({
     data,
   }: {
     data: Array<{
+      category: string;
+      deliveryIncluded: boolean;
+      image: string;
       name: string;
-      shortDescription: string;
-      unitPrice: number;
-      images: Record<string, string>;
+      status: string;
+      stock: number;
     }>;
   }) => {
-    const firstImage = Object.values(data[0]?.images ?? {})[0];
+    const firstImage = data[0]?.image;
 
     return (
       <div>
         {data.map((product) => (
           <div key={product.name}>
             <span>{product.name}</span>
-            <span>{product.shortDescription}</span>
-            <span>{`Gs. ${product.unitPrice.toLocaleString("es-PY")}`}</span>
+            <span>{product.category}</span>
+            <span>{product.status}</span>
+            <span>{product.stock}</span>
             {firstImage ? (
               <Image
                 alt={product.name}
@@ -69,28 +82,24 @@ describe("ProductsView", () => {
       <ProductsView
         products={[
           {
-            category: "T-shirts",
-            colors: ["blue", "black"],
+            category: "Electrodomesticos",
+            deliveryIncluded: true,
             description: "Descripcion extensa",
             id: "product_1",
-            images: {
-              black: "/productos/camiseta-negra.png",
-              blue: "/productos/camiseta-azul.png",
-            },
-            name: "Camiseta Cerramos",
-            shortDescription: "Camiseta premium",
-            sizes: ["m", "l"],
-            unitPrice: 149_000,
+            image: "/productos/licuadora.png",
+            name: "Licuadora Cerramos",
+            status: "active",
+            stock: 14,
           },
         ]}
       />
     );
 
-    expect(screen.getByText("Camiseta Cerramos")).toBeDefined();
-    expect(screen.getByText("Camiseta premium")).toBeDefined();
-    expect(screen.getByText("Gs. 149.000")).toBeDefined();
-    expect(screen.getByAltText("Camiseta Cerramos").getAttribute("src")).toBe(
-      "/productos/camiseta-azul.png"
+    expect(screen.getByText("Licuadora Cerramos")).toBeDefined();
+    expect(screen.getByText("Electrodomesticos")).toBeDefined();
+    expect(screen.getByText("active")).toBeDefined();
+    expect(screen.getByAltText("Licuadora Cerramos").getAttribute("src")).toBe(
+      "/productos/licuadora.png"
     );
   });
 });

@@ -39,9 +39,11 @@ vi.mock("@repo/database", () => ({
   schema: {
     commerce: {
       id: "commerce.id",
+      name: "commerce.name",
       slug: "commerce.slug",
     },
     user: {
+      commerceId: "user.commerceId",
       id: "user.id",
     },
   },
@@ -85,6 +87,41 @@ describe("auth bootstrap route", () => {
     }));
   });
 
+  test("returns the existing commerce when the user is already linked", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: null,
+        id: "user_1",
+      },
+    });
+    selectLimitMock
+      .mockResolvedValueOnce([{ commerceId: "commerce_1" }])
+      .mockResolvedValueOnce([
+        {
+          id: "commerce_1",
+          slug: "tienda-centro",
+        },
+      ]);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/auth/bootstrap", {
+        body: JSON.stringify({ commerceName: "Ignored" }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      })
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      commerceId: "commerce_1",
+      slug: "tienda-centro",
+    });
+    expect(insertMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
   test("creates a commerce and assigns it to the current user", async () => {
     getSessionMock.mockResolvedValue({
       user: {
@@ -92,7 +129,9 @@ describe("auth bootstrap route", () => {
         id: "user_1",
       },
     });
-    selectLimitMock.mockResolvedValue([]);
+    selectLimitMock
+      .mockResolvedValueOnce([{ commerceId: null }])
+      .mockResolvedValueOnce([]);
     insertReturningMock.mockResolvedValue([
       {
         id: "commerce_1",

@@ -8,14 +8,13 @@ const ProductsPage = async () => {
   const products = await database
     .select({
       category: schema.product.category,
-      colors: schema.product.colors,
+      deliveryIncluded: schema.product.deliveryIncluded,
       description: schema.product.description,
       id: schema.product.id,
-      images: schema.product.images,
+      image: schema.product.image,
       name: schema.product.name,
-      shortDescription: schema.product.shortDescription,
-      sizes: schema.product.sizes,
-      unitPrice: schema.product.unitPrice,
+      status: schema.product.status,
+      stock: schema.product.stock,
     })
     .from(schema.product)
     .where(eq(schema.product.commerceId, context.commerce.id))

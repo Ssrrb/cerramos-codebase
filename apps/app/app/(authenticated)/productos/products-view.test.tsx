@@ -1,9 +1,57 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import Image from "next/image";
+import type { ReactNode } from "react";
+import { describe, expect, test, vi } from "vitest";
+
+vi.mock("./new-product-sheet-button", () => ({
+  NewProductSheetButton: ({ children }: { children: ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
+}));
+
+vi.mock("./columns", () => ({
+  columns: [],
+}));
+
+vi.mock("./data-table", () => ({
+  DataTable: ({
+    data,
+  }: {
+    data: Array<{
+      name: string;
+      shortDescription: string;
+      unitPrice: number;
+      images: Record<string, string>;
+    }>;
+  }) => {
+    const firstImage = Object.values(data[0]?.images ?? {})[0];
+
+    return (
+      <div>
+        {data.map((product) => (
+          <div key={product.name}>
+            <span>{product.name}</span>
+            <span>{product.shortDescription}</span>
+            <span>{`Gs. ${product.unitPrice.toLocaleString("es-PY")}`}</span>
+            {firstImage ? (
+              <Image
+                alt={product.name}
+                height={80}
+                src={firstImage}
+                width={80}
+              />
+            ) : null}
+          </div>
+        ))}
+      </div>
+    );
+  },
+}));
+
 import { ProductsView } from "./products-view";
 
-const emptyStateDescriptionPattern =
-  /Agrega tu primer producto desde la barra lateral/i;
+const emptyStateDescriptionPattern = /Crea tu primer producto desde aqui/i;
+const addProductButtonPattern = /Agregar producto/i;
 
 describe("ProductsView", () => {
   test("shows an empty state when there are no products", () => {
@@ -11,6 +59,9 @@ describe("ProductsView", () => {
 
     expect(screen.getByText("Todavia no tienes productos")).toBeDefined();
     expect(screen.getByText(emptyStateDescriptionPattern)).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: addProductButtonPattern })
+    ).toBeDefined();
   });
 
   test("renders db-backed products in the table", () => {

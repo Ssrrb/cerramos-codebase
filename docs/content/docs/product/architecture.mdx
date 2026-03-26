@@ -14,17 +14,21 @@ Eso cambia la prioridad:
 - luego continuidad del pago
 - después operación del comercio
 
-## Forma recomendada
+## Modelo de implementación
 
-El MVP debe implementarse como un **monolito modular**:
+La dirección arquitectónica de Cerramos debe evolucionar hacia **servicios con límites claros y ownership explícito por dominio**.
+
+Ese es el modelo operativo objetivo. No obliga a separar despliegues o bases de datos desde el primer día.
+
+Para el MVP, la implementación inicial puede permanecer dentro de un **monorepo con PostgreSQL compartido**, siempre que los límites se respeten en código, contratos internos y APIs.
 
 - frontend en Next.js
 - backend dedicado en TypeScript
-- PostgreSQL como núcleo transaccional
+- PostgreSQL como núcleo transaccional inicial
 - Redis para estados efímeros, throttling e idempotencia
 - procesamiento asíncrono para webhooks, conciliación y expiraciones
 
-No hay razón para partirlo en microservicios en esta etapa.
+La prioridad no es extraer microservicios de forma prematura. La prioridad es evitar que checkout, pagos y operación del comercio se mezclen sin límites.
 
 ## Módulos dominantes
 
@@ -38,7 +42,7 @@ No hay razón para partirlo en microservicios en esta etapa.
 - `delivery`
 - `audit`
 
-La razón no es orden cosmético. Es evitar que pagos, checkout y operación terminen mezclados en una sola capa sin límites.
+La razón no es orden cosmético. Es preparar límites de servicio reales aunque la primera versión siga corriendo dentro de un mismo repositorio y una base compartida.
 
 ## Modelo de compra
 
@@ -51,21 +55,33 @@ Esta restricción mantiene pequeño el sistema de precios, validación y estados
 
 ## Identidad y buyer flow
 
-- el login es obligatorio antes del cierre del pedido
-- Google y Apple son los caminos de identidad recurrente
+- el checkout puede operar con comprador invitado o autenticado según política del comercio y reglas de la sesión
+- Google y Apple son los caminos principales de identidad recurrente
+- el login mejora recurrencia, reutilización de datos y calidad de identidad, pero no debe ser una barrera universal para crear pedidos
 - la persistencia de datos requiere consentimiento
 
 La identidad no se trata como una capa decorativa. Se trata como parte del control de calidad del pedido.
 
 ## Operación del comercio
 
-El panel interno es la fuente de verdad.
+El panel interno es la **interfaz operativa canónica**, no un contenedor único de toda la verdad del sistema.
 
 - email y WhatsApp pueden alertar
-- solo el panel define el estado operativo
+- alerts, chats y notificaciones no deben convertirse en interfaz operativa
+- el panel coordina y expone la verdad de cada dominio para que el comercio pueda actuar con claridad
 - el historial de cambios debe ser auditable
 
 Si el pedido “vive” en mensajes, el producto se fragmenta.
+
+## Ownership por dominio
+
+Cada dominio debe conservar su propia verdad operativa:
+
+- `order` es dueño del estado del pedido
+- `payment` es dueño del estado del pago
+- `merchant` es dueño de configuración, políticas y capacidades del comercio
+
+El panel del comercio debe surfacer y coordinar esa verdad. No debe colapsarla dentro de un subsistema único.
 
 ## Payments architecture
 
@@ -104,6 +120,12 @@ La plataforma debe modelar dos máquinas distintas:
 - estado del pago
 
 Un pedido pagado todavía puede estar pendiente de confirmación operativa. Esa separación es obligatoria para no prometer algo que el comercio aún no aceptó.
+
+## Separación pública y operativa
+
+El tráfico público de checkout y la operación interna del comercio deben aislarse por límites de servicio y API.
+
+Esa separación importa desde el MVP, pero no exige extracción inmediata a deployables independientes. Puede resolverse primero con boundaries explícitos dentro del monorepo y del esquema transaccional compartido.
 
 ## Entidades mínimas
 

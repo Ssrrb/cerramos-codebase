@@ -63,7 +63,7 @@ const applyServerFieldErrors = (
     });
   }
 };
-
+//TODO: Enhance the form it feels overwhelmingto the user to load the products, also add states, the capcity to delete and edit.
 const AddProduct = () => {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
@@ -198,12 +198,12 @@ const AddProduct = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Stock</FormLabel>
                       <FormControl>
                         <Textarea {...field} />
                       </FormControl>
                       <FormDescription>
-                        Enter the description of the product.
+                        Enter the stock of the product.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

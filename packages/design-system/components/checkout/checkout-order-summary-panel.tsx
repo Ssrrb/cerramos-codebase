@@ -1,0 +1,191 @@
+import { AspectRatio } from "@repo/design-system/components/ui/aspect-ratio";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@repo/design-system/components/ui/drawer";
+import { Separator } from "@repo/design-system/components/ui/separator";
+import { cn } from "@repo/design-system/lib/utils";
+import { ReceiptTextIcon } from "lucide-react";
+import type { CheckoutOrderSummary, CheckoutProductSummary } from "./types";
+
+interface CheckoutSummaryContentProps {
+  orderSummary: CheckoutOrderSummary;
+  product: CheckoutProductSummary;
+}
+
+function CheckoutSummaryContent({
+  orderSummary,
+  product,
+}: CheckoutSummaryContentProps) {
+  return (
+    <div className="rounded-[1.75rem] border border-border/70 bg-background p-5 shadow-xs">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-muted-foreground text-xs uppercase tracking-[0.22em]">
+            Resumen
+          </p>
+          <h2 className="mt-2 font-semibold text-foreground text-xl tracking-[-0.02em]">
+            {orderSummary.title ?? "Tu pedido"}
+          </h2>
+        </div>
+        <div className="rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-muted-foreground text-xs">
+          {orderSummary.badgeLabel ?? "Compra protegida"}
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-start gap-4">
+        <div className="w-20 shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-muted/35">
+          <AspectRatio ratio={1}>
+            {/* biome-ignore lint/performance/noImgElement: shared design-system preview uses a plain image source string. */}
+            <img
+              alt={product.name}
+              className="size-full object-cover"
+              height={80}
+              src={product.imageUrl}
+              width={80}
+            />
+          </AspectRatio>
+        </div>
+        <div className="min-w-0">
+          <p className="line-clamp-2 font-medium text-foreground text-sm">
+            {product.name}
+          </p>
+          <p className="mt-1 line-clamp-4 text-muted-foreground text-sm leading-relaxed">
+            {product.description}
+          </p>
+        </div>
+      </div>
+
+      <Separator className="my-5" />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span className="font-medium text-foreground">
+            {orderSummary.subtotalLabel}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Envío</span>
+          <span className="font-medium text-foreground">
+            {orderSummary.shippingLabel}
+          </span>
+        </div>
+        {orderSummary.rows?.map((row) => (
+          <div
+            className="flex items-center justify-between gap-3 text-sm"
+            key={row.label}
+          >
+            <span className="text-muted-foreground">{row.label}</span>
+            <span
+              className={cn(
+                "font-medium text-foreground",
+                row.emphasis ? "text-base" : null
+              )}
+            >
+              {row.value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <Separator className="my-5" />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-medium text-foreground">Total</span>
+        <span className="font-semibold text-foreground text-xl tracking-[-0.02em]">
+          {orderSummary.totalLabel}
+        </span>
+      </div>
+
+      {orderSummary.helperText ? (
+        <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
+          {orderSummary.helperText}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+interface CheckoutOrderSummaryPanelProps {
+  className?: string;
+  orderSummary: CheckoutOrderSummary;
+  product: CheckoutProductSummary;
+}
+
+function CheckoutOrderSummaryPanel({
+  className,
+  orderSummary,
+  product,
+}: CheckoutOrderSummaryPanelProps) {
+  return (
+    <aside className={cn("hidden lg:block", className)}>
+      <div className="sticky top-6">
+        <CheckoutSummaryContent orderSummary={orderSummary} product={product} />
+      </div>
+    </aside>
+  );
+}
+
+interface CheckoutMobileSummaryBarProps {
+  className?: string;
+  orderSummary: CheckoutOrderSummary;
+  product: CheckoutProductSummary;
+}
+
+function CheckoutMobileSummaryBar({
+  className,
+  orderSummary,
+  product,
+}: CheckoutMobileSummaryBarProps) {
+  return (
+    <Drawer>
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur lg:hidden",
+          className
+        )}
+      >
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-muted-foreground text-xs uppercase tracking-[0.2em]">
+              Total
+            </p>
+            <p className="truncate font-semibold text-foreground text-lg tracking-[-0.02em]">
+              {orderSummary.totalLabel}
+            </p>
+          </div>
+          <DrawerTrigger asChild>
+            <button
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-foreground px-4 font-medium text-background text-sm shadow-sm transition-colors hover:bg-foreground/90"
+              type="button"
+            >
+              <ReceiptTextIcon className="size-4" />
+              Ver resumen
+            </button>
+          </DrawerTrigger>
+        </div>
+      </div>
+      <DrawerContent className="max-h-[85vh] rounded-t-[1.75rem]">
+        <DrawerHeader className="px-4 pt-4 text-left">
+          <DrawerTitle>Resumen del pedido</DrawerTitle>
+          <DrawerDescription>
+            Revisá el producto y el total sin salir del checkout.
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-4 pb-6">
+          <CheckoutSummaryContent
+            orderSummary={orderSummary}
+            product={product}
+          />
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+export { CheckoutMobileSummaryBar, CheckoutOrderSummaryPanel };

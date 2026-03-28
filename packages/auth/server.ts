@@ -146,10 +146,13 @@ export const requireSession = async () => {
 export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null> => {
   const session = await getSessionState();
 
-  if (!(session?.user.id && session.user.commerceId)) {
+  if (!session?.user.id) {
     return null;
   }
 
+  // Better Auth caches the session cookie payload, so commerceId can be stale
+  // immediately after onboarding completes. Resolve membership from the
+  // database by user id and treat the linked commerce as the source of truth.
   const [activeCommerce] = await database
     .select({
       id: schema.commerce.id,
@@ -195,11 +198,7 @@ export const getAuthenticatedAppContext = cache(
 );
 
 export const requireCommerceContext = async (): Promise<AuthenticatedAppContext> => {
-  const session = await requireSession();
-
-  if (!session.user.commerceId) {
-    redirect(ONBOARDING_URL);
-  }
+  await requireSession();
 
   const context = await getAuthenticatedAppContext();
 

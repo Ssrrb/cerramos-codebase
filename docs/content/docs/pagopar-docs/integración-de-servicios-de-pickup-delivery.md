@@ -501,7 +501,7 @@ Observación:   Como puede observarse, Pagopar retorna lo mismo que se envió, p
 | metodo_mobi.opciones.costo | Valor en guaraníes del costo que define MOBI del producto con la categoría, peso y dimensiones especificadas, teniendo en cuenta la ciudad del pickup y entrega | 15000 |
 | metodo_mobi.opciones.tiempo_entrega | Tiempo (en horas) en que MOBI se compromete a entregar el producto, teniendo en cuenta el pickup y entrega de las ciudades definidas del comprador y vendedor. | 24 |
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Para que retorne la opción de envío de MOBI, al momento de calcular el flete, se debe agregar en raíz del JSON el campo forma_pago y el campo comprador.coordenadas debe estar definido.
+> ℹ️ Para que retorne la opción de envío de MOBI, al momento de calcular el flete, se debe agregar en raíz del JSON el campo forma_pago y el campo comprador.coordenadas debe estar definido.
 
 Datos de ejemplo que Pagopar retornaría en caso de error:
 ```
@@ -912,7 +912,7 @@ Datos de ejemplo que Pagopar retornaría en caso de éxito:
 }
 ```
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Al momento de elegir un medio de envío, tener en cuenta que en caso de tener más de un producto que tiene la misma dirección de pickup y además de elegir la misma opción de envío, se retornará el total del costo sumado en la primera opción de envío y luego el costo será 0 Gs. ya que agrupado en la primera opción, por tratarse de solo un servicio de pickup/envío y no dos por serparado.
+> ℹ️ Al momento de elegir un medio de envío, tener en cuenta que en caso de tener más de un producto que tiene la misma dirección de pickup y además de elegir la misma opción de envío, se retornará el total del costo sumado en la primera opción de envío y luego el costo será 0 Gs. ya que agrupado en la primera opción, por tratarse de solo un servicio de pickup/envío y no dos por serparado.
 
 ## Paso #5 - Crear pedido
 
@@ -1112,4 +1112,4 @@ Se debe enviar la respuesta del paso anterior al endpoint de [Iniciar Transacci�
 }
 ```
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Se obtendrá el hash de pedido en caso de éxito, el flujo de compra debe integrarse según la documentación de [integración de medios de pagos.](https://soporte.pagopar.com/portal/es/kb/articles/api-integracion-medios-pagos#Paso_1_El_comercio_crea_un_pedido_en_Pagopar).
+> ℹ️ Se obtendrá el hash de pedido en caso de éxito, el flujo de compra debe integrarse según la documentación de [integración de medios de pagos.](https://soporte.pagopar.com/portal/es/kb/articles/api-integracion-medios-pagos#Paso_1_El_comercio_crea_un_pedido_en_Pagopar).

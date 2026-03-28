@@ -53,7 +53,6 @@ export const SignUpForm = ({
   termsUrl,
 }: SignUpFormProps) => {
   const router = useRouter();
-  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -90,28 +89,9 @@ export const SignUpForm = ({
           return;
         }
 
-        const bootstrapResponse = await fetch("/api/auth/bootstrap", {
-          body: JSON.stringify({ commerceName: businessName }),
-          headers: {
-            "content-type": "application/json",
-          },
-          method: "POST",
-        });
-
-        if (!bootstrapResponse.ok) {
-          const payload = (await bootstrapResponse
-            .json()
-            .catch(() => null)) as { error?: string } | null;
-
-          setError(
-            payload?.error ??
-              "La cuenta se creo, pero no se pudo crear el comercio."
-          );
-          setPendingAction(null);
-          return;
-        }
-
-        router.push(callbackUrl);
+        // Onboarding will later expand into business verification and
+        // email-confirmation steps, so account creation intentionally stops here.
+        router.push("/onboarding");
         router.refresh();
       } catch {
         setError("No se pudo crear la cuenta. Intenta de nuevo.");
@@ -128,7 +108,7 @@ export const SignUpForm = ({
       try {
         const { error } = await signIn.social({
           callbackURL: callbackUrl,
-          newUserCallbackURL: callbackUrl,
+          newUserCallbackURL: "/onboarding",
           provider: "google",
           requestSignUp: true,
         });
@@ -159,26 +139,11 @@ export const SignUpForm = ({
                   Create your account
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  Finish your sign-up to start using Cerramos.
+                  Finish your sign-up to continue into onboarding.
                 </p>
               </div>
 
               <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <Label htmlFor="businessName">Nombre del comercio</Label>
-                  <Input
-                    autoComplete="organization"
-                    className={inputClassName}
-                    id="businessName"
-                    name="businessName"
-                    onChange={(event) => setBusinessName(event.target.value)}
-                    placeholder="Ej. Tienda Centro"
-                    required
-                    type="text"
-                    value={businessName}
-                  />
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="name">Tu nombre</Label>
                   <Input

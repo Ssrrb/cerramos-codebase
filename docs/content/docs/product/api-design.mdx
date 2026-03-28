@@ -32,8 +32,11 @@ Debe contener como mínimo:
 - cantidad y variante válidas
 - subtotal y total
 - métodos de pago habilitados
-- requisitos de identidad
+- política de identidad de la sesión
 - ventana de expiración aplicable
+- si el comprador puede operar como invitado o debe autenticarse
+
+La sesión de checkout puede soportar flujo invitado o autenticado. La política concreta depende de reglas de producto y configuración del comercio.
 
 ### `order`
 
@@ -43,7 +46,8 @@ Debe contener como mínimo:
 
 - `merchant_id`
 - `product_link_id`
-- `buyer_identity_id`
+- `buyer_identity_id` cuando exista identidad autenticada
+- snapshot de datos del comprador requerido para operar el pedido, incluso en flujo invitado
 - `order_status`
 - `payment_status`
 - `fulfillment_type`
@@ -80,6 +84,8 @@ Las acciones mínimas del panel son:
 
 No se incluyen flujos de multiusuario ni permisos por rol en MVP.
 
+El panel del comercio es la interfaz operativa canónica para accionar sobre pedidos y revisar contexto, pero no reemplaza el ownership de estado de cada dominio.
+
 ## Recursos de pago
 
 ### `payment_intent`
@@ -93,6 +99,8 @@ Debe separar:
 - método de pago
 - monto
 - estado interno normalizado
+
+`payment_intent` y `order` deben mantener ownership independiente de estado aunque se relacionen en un mismo flujo de checkout.
 
 ### `payment_event`
 
@@ -158,8 +166,20 @@ La meta es una sola: cambiar de proveedor sin reescribir el corazón del product
 
 - El frontend no calcula montos finales.
 - El frontend no decide qué métodos de pago están habilitados.
+- El frontend no decide si la sesión exige identidad o permite checkout invitado.
 - No puede crearse un nuevo `payment_intent` sobre un pedido `expired` o `cancelled`.
 - `paid` nunca fuerza por sí solo la transición a `confirmed`.
+
+## Boundaries de implementación
+
+La API debe reflejar ownership por dominio aunque la primera implementación viva dentro del mismo monorepo y una base PostgreSQL compartida.
+
+- `checkout` coordina la sesión pública y la creación del pedido
+- `orders` expone y gobierna estado operativo del pedido
+- `payments` expone y gobierna estado de cobro y conciliación
+- `merchant` expone configuración, políticas y capacidades del comercio
+
+Estos límites describen servicios acotados. No exigen despliegues separados o bases independientes en el MVP.
 
 ## Source material
 

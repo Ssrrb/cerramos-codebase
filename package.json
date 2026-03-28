@@ -27,6 +27,7 @@
     "bump-deps": "bunx npm-check-updates --deep -u && bun install",
     "bump-ui": "bunx shadcn@latest add --all --overwrite -c packages/design-system",
     "db:generate": "bun run --cwd packages/database db:generate",
+    "db:clean": "bun run --cwd packages/database db:clean",
     "db:migrate": "bun run --cwd packages/database db:migrate",
     "db:push": "bun run --cwd packages/database db:push",
     "db:studio": "bun run --cwd packages/database db:studio",

@@ -37,9 +37,10 @@ Si no mejora al menos una de ellas de forma directa, no entra al MVP.
 
 ### Identidad del comprador
 
-- El comprador debe iniciar sesión antes de completar la compra.
+- El checkout debe permitir flujo invitado o autenticado según política del comercio y reglas del `checkout_session`.
 - La identidad recurrente debe soportar Google y Apple.
 - El sistema debe poder reutilizar datos previamente guardados cuando exista identidad válida.
+- El producto puede incentivar login para acelerar recompra y mejorar calidad de datos, sin convertirlo en requisito universal para crear pedidos.
 - El guardado de datos debe requerir consentimiento explícito.
 
 ### Datos de checkout
@@ -93,13 +94,21 @@ Si no mejora al menos una de ellas de forma directa, no entra al MVP.
 
 ## Merchant operations
 
-- El panel interno debe ser la fuente principal de verdad.
+- El panel interno debe ser la interfaz operativa principal del comercio.
 - El comercio debe poder listar pedidos, ver detalle, confirmar, cancelar y revisar historial.
 - Deben existir alertas mínimas por email o WhatsApp para pedido nuevo, pago recibido, expiración y cancelación.
 - El MVP soporta una sola cuenta operativa por comercio.
 - El tier inicial de onboarding solo habilita métodos de bajo riesgo:
   - pago en tienda
   - pago contra entrega
+
+### Ownership operativo
+
+- `orders` debe conservar ownership de estado del pedido.
+- `payments` debe conservar ownership de estado del pago.
+- `merchant` debe conservar ownership de configuración, políticas y habilitaciones del comercio.
+- El panel debe surfacer y coordinar estos estados sin colapsarlos en un solo subsistema.
+- Email, WhatsApp y otras notificaciones no son la interfaz operativa.
 
 ## Trust and risk
 

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { requireCommerceContext } from "@repo/auth/server";
+import type { Metadata } from "next";
 import "./globals.css";
-import AppSidebar from "@/app/components/AppSidebar";
+import { cookies } from "next/headers";
+import AppSidebar from "@/app/components/app-sidebar";
 import Navbar from "@/app/components/Navbar";
 import { ThemeProvider } from "@/app/components/providers/ThemeProvider";
 import { SidebarProvider } from "@/app/components/ui/sidebar";
-import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Cerramos.com",
@@ -28,8 +28,8 @@ export default async function RootLayout({
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
-      enableSystem
       disableTransitionOnChange
+      enableSystem
     >
       <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar

@@ -4,6 +4,7 @@
 
 - [Monorepo Structure](#monorepo-structure)
 - [Apps](#apps)
+- [Packages](#packages)
 - [Package Naming](#package-naming)
 - [Turborepo Pipeline](#turborepo-pipeline)
 - [Root Scripts](#root-scripts)
@@ -12,84 +13,92 @@
 
 ## Monorepo Structure
 
-next-forge uses Turborepo to manage a monorepo with apps and packages.
+This repo is a Bun-powered Turborepo with deployable apps under `apps/` and shared modules under `packages/`.
 
-```
+```text
 next-forge/
 ├── apps/
-│   ├── app/          # Main SaaS app (port 3000)
-│   ├── web/          # Marketing site (port 3001)
-│   ├── api/          # Serverless API (port 3002)
-│   ├── email/        # Email preview (port 3003)
-│   ├── docs/         # Documentation (port 3004)
-│   ├── storybook/    # Component workshop (port 6006)
-│   └── studio/       # Prisma Studio (port 3005)
+│   ├── app/          # Authenticated product app (port 3000)
+│   ├── web/          # Public marketing site (port 3001)
+│   ├── api/          # API routes, webhooks, health checks (port 3002)
+│   ├── email/        # React Email preview (port 3003)
+│   ├── docs/         # Mintlify docs (port 3004)
+│   └── storybook/    # Component workshop (port 6006)
 ├── packages/
-│   ├── ai/                    # AI/LLM integration
-│   ├── analytics/             # PostHog, Google Analytics, Vercel Analytics
-│   ├── auth/                  # Clerk authentication
-│   ├── cms/                   # BaseHub CMS
-│   ├── collaboration/         # Liveblocks real-time features
-│   ├── cron/                  # Vercel cron jobs
-│   ├── database/              # Prisma + Neon PostgreSQL
-│   ├── design-system/         # shadcn/ui component library
-│   ├── email/                 # Resend + React Email
-│   ├── feature-flags/         # Vercel Flags SDK + PostHog
-│   ├── internationalization/  # Languine i18n
-│   ├── next-config/           # Shared Next.js configuration
-│   ├── notifications/         # Knock notification platform
-│   ├── observability/         # Sentry + BetterStack
-│   ├── payments/              # Stripe integration
-│   ├── rate-limit/            # Rate limiting utilities
-│   ├── security/              # Arcjet WAF + bot detection
-│   ├── seo/                   # Metadata, sitemap, JSON-LD
-│   ├── storage/               # Vercel Blob
-│   ├── typescript-config/     # Shared TS configs
-│   └── webhooks/              # Svix outbound + Stripe/Clerk inbound
+│   ├── ai
+│   ├── analytics
+│   ├── auth
+│   ├── cms
+│   ├── collaboration
+│   ├── database
+│   ├── design-system
+│   ├── email
+│   ├── feature-flags
+│   ├── internationalization
+│   ├── next-config
+│   ├── notifications
+│   ├── observability
+│   ├── payments
+│   ├── rate-limit
+│   ├── security
+│   ├── seo
+│   ├── storage
+│   ├── typescript-config
+│   └── webhooks
 ├── turbo.json
 └── package.json
 ```
 
+Notes:
+- `apps/studio/` exists in the workspace tree but does not have an active app package; database browsing is handled through `bun run db:studio`.
+- There is also a root-level `docs/` directory in the repo for other documentation tooling, but the deployable Mintlify app lives in `apps/docs`.
+
 ## Apps
 
 ### app (Port 3000)
-The main user-facing SaaS application. Includes authentication via Clerk, database access via Prisma, collaboration features via Liveblocks, and notification feeds via Knock. Contains authenticated route layouts with security middleware.
+
+The main authenticated product surface. This repo currently uses Better Auth with first-party session routes in `apps/app/app/api/auth/[...all]/route.ts`. It imports shared capabilities from packages like `@repo/database`, `@repo/collaboration`, `@repo/notifications`, and `@repo/security`.
 
 ### web (Port 3001)
-The marketing website. Integrates BaseHub CMS for blog posts and content, SEO optimization with metadata and sitemap generation, analytics tracking, and internationalization support.
+
+The public marketing site. It uses `@repo/cms`, `@repo/internationalization`, `@repo/seo`, `@repo/security`, and analytics/observability packages.
 
 ### api (Port 3002)
-Serverless API endpoints for webhooks (Stripe, Clerk), cron jobs, and any dedicated API routes. Deployed as a separate Vercel project.
+
+Dedicated API surface for health checks, cron handlers, and inbound webhooks. In the current repo, auth webhooks are disabled and payment webhooks are handled in `apps/api/app/webhooks/payments/route.ts`.
 
 ### email (Port 3003)
-React Email preview server for developing and testing email templates. Templates are React components in the `@repo/email` package.
+
+React Email preview server pointed at `packages/email/templates`.
 
 ### docs (Port 3004)
-Documentation site built with Mintlify. Requires the Mintlify CLI for local preview.
+
+Mintlify docs app in `apps/docs`.
 
 ### storybook (Port 6006)
-Storybook instance for previewing and testing design system components in isolation.
 
-### studio (Port 3005)
-Prisma Studio provides a visual interface for browsing and editing database records.
+Storybook instance for design-system and UI development.
+
+## Packages
+
+All shared modules live under `packages/` and are imported as `@repo/<name>`.
+
+Repo-specific defaults worth remembering:
+- `@repo/database` uses Drizzle + Neon serverless driver
+- `@repo/auth` uses Better Auth, not Clerk
+- `@repo/payments` currently exposes a PagoPar/uPay-oriented adapter, not Stripe
 
 ## Package Naming
 
 All packages use the `@repo/<name>` convention:
 
 ```typescript
-import { database } from '@repo/database';
-import { auth } from '@repo/auth';
-import { stripe } from '@repo/payments';
+import { database } from "@repo/database";
+import { betterAuthServer } from "@repo/auth/server";
+import { pagopar } from "@repo/payments";
 ```
 
-Import from specific subpaths when needed:
-
-```typescript
-import { analytics } from '@repo/analytics/server';
-import { upload } from '@repo/storage/client';
-import { log } from '@repo/observability/log';
-```
+Prefer real exported entrypoints over assumed top-level names. Some packages expose multiple subpaths such as `@repo/auth/server`, `@repo/auth/handlers`, and `@repo/analytics/server`.
 
 ## Turborepo Pipeline
 
@@ -97,46 +106,55 @@ Defined in `turbo.json`:
 
 | Task | Dependencies | Outputs | Cached | Persistent |
 |------|-------------|---------|--------|------------|
-| `build` | `^build`, `test` | `.next`, `storybook-static`, `.react-email` | Yes | No |
-| `test` | `^test` | — | Yes | No |
-| `analyze` | `^analyze` | — | Yes | No |
-| `dev` | — | — | No | Yes |
-| `translate` | `^translate` | — | No | No |
+| `build` | `^build`, `test` | `.next`, `storybook-static`, `.react-email`, `**/generated/**` | Yes | No |
+| `test` | `^test` | none | Yes | No |
+| `analyze` | `^analyze` | none | Yes | No |
+| `dev` | none | none | No | Yes |
+| `translate` | `^translate` | none | No | No |
+| `clean` | none | none | No | No |
 
-Global dependencies include `.env.*local` files. Environment mode is loose. The `dev` task is persistent and never cached.
+Global dependencies include `**/.env.*local`. Environment mode is `loose`.
 
 ## Root Scripts
 
+Use the root `package.json` as the source of truth:
+
 | Command | Description |
 |---------|-------------|
-| `bun run dev` | Start all apps in development mode |
-| `bun run build` | Build all apps and packages |
-| `bun run test` | Run tests across the monorepo |
-| `bun run lint` | Check code style (Ultracite/Biome) |
-| `bun run format` | Fix code style |
-| `bun run analyze` | Run bundle analysis |
-| `bun run translate` | Run i18n translation via Languine |
-| `bun run boundaries` | Check Turborepo workspace boundary violations |
-| `bun run bump-deps` | Update all dependencies |
-| `bun run bump-ui` | Update shadcn/ui components |
-| `bun run migrate` | Push database schema (format, generate, db push) |
-| `bun run clean` | Remove node_modules across the monorepo |
-| `bun run changeset` | Manage changesets for releases |
-| `bun run release` | Publish using changesets |
+| `bun run dev` | Start workspace dev tasks through Turbo |
+| `bun run build` | Build the workspace |
+| `bun run test` | Run tests across apps and packages |
+| `bun run check` | Run Ultracite/Biome checks |
+| `bun run fix` | Apply automated formatting and lint fixes |
+| `bun run analyze` | Run package/app analysis tasks |
+| `bun run translate` | Run translation tasks |
+| `bun run boundaries` | Check workspace boundaries |
+| `bun run db:generate` | Generate Drizzle migrations |
+| `bun run db:migrate` | Apply Drizzle migrations |
+| `bun run db:push` | Push schema directly with Drizzle |
+| `bun run db:studio` | Open Drizzle Studio |
+| `bun run migrate` | Run `db:generate` then `db:migrate` |
+| `bun run migrate:deploy` | Run `db:migrate` |
+| `bun run clean` | Clean `node_modules` and generated artifacts |
+
+Do not tell users to run `bun run lint` or `bun run format` unless you first qualify that as a template-era instruction; this repo uses `check` and `fix`.
 
 ## Filtering
 
-Run commands for a specific app or package:
+Use Turbo filters from the repo root:
 
 ```bash
-bun dev --filter app         # Only the main app
-bun dev --filter web         # Only the marketing site
-bun build --filter @repo/database  # Only the database package
+bun run dev --filter app
+bun run dev --filter web
+bun run dev --filter api
+bun run build --filter @repo/database
 ```
 
 ## Build Outputs
 
-- `.next/` — Next.js build output (per app)
-- `storybook-static/` — Storybook static export
-- `.react-email/` — Compiled email templates
-- `**/generated/**` — Auto-generated files (Prisma client, BaseHub SDK)
+- `.next/` for Next.js app builds
+- `storybook-static/` for Storybook builds
+- `.react-email/` for email previews/build output
+- `**/generated/**` for generated package artifacts
+
+Older references to Prisma client generation are stale for this repo.

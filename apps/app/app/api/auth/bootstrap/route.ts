@@ -32,8 +32,28 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.commerceId) {
-    return NextResponse.json({ commerceId: session.user.commerceId });
+  const [existingUser] = await database
+    .select({ commerceId: schema.user.commerceId })
+    .from(schema.user)
+    .where(eq(schema.user.id, session.user.id))
+    .limit(1);
+
+  if (existingUser?.commerceId) {
+    const [existingCommerce] = await database
+      .select({
+        id: schema.commerce.id,
+        slug: schema.commerce.slug,
+      })
+      .from(schema.commerce)
+      .where(eq(schema.commerce.id, existingUser.commerceId))
+      .limit(1);
+
+    if (existingCommerce) {
+      return NextResponse.json({
+        commerceId: existingCommerce.id,
+        slug: existingCommerce.slug,
+      });
+    }
   }
 
   const body = (await request.json().catch(() => null)) as {
@@ -49,9 +69,8 @@ export const POST = async (request: Request) => {
     );
   }
 
-  // Signing in authenticates the person; bootstrap attaches that person to a
-  // merchant workspace. The dashboard depends on this commerce link to load
-  // stats, products, clients, and product-linked payment flows.
+  // This is the current onboarding completion step. It will later expand into
+  // a fuller business-verification and email-confirmation workflow.
   const slug = await findAvailableSlug(commerceName);
   const [commerce] = await database
     .insert(schema.commerce)

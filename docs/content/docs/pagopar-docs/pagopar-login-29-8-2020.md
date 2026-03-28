@@ -70,7 +70,7 @@ Una vez vinculada la cuenta, se redireccionará a la url de redireccionamiento p
 | --- | --- | --- |
 | hash_comercio | Clave pública del comercio hijo. | H8aEa8X9e3te9w7fcf451cx0a2cz3xYf |
 
-> ![Info](https://img.zohostatic.com/zde/static/images/info.png)El hash_comercio debe ser guardado en el sitio de cliente, con este dato serán invocadas los endpoint correspondientes al comercio hijo.
+> ℹ️ El hash_comercio debe ser guardado en el sitio de cliente, con este dato serán invocadas los endpoint correspondientes al comercio hijo.
 
 ### Confirmación de vinculación
 

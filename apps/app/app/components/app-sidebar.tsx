@@ -1,15 +1,25 @@
 import type { ActiveCommerce } from "@repo/auth/utils";
 import {
+  Calendar,
   Home,
   Inbox,
-  Calendar,
+  Plus,
   Search,
   Settings,
-  Plus,
   Shirt,
-  User,
   ShoppingBasket,
+  User,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import AddCategory from "./AddCategory";
+import AddOrder from "./AddOrder";
+import AddUser from "./AddUser";
+import AddProduct from "./add-product";
+import SidebarAccountMenu, {
+  type SidebarAccountUser,
+} from "./sidebar-account-menu";
+import { Sheet, SheetTrigger } from "./ui/sheet";
 import {
   Sidebar,
   SidebarContent,
@@ -23,19 +33,8 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-
   SidebarSeparator,
 } from "./ui/sidebar";
-import Link from "next/link";
-import Image from "next/image";
-import { Sheet, SheetTrigger } from "./ui/sheet";
-import AddOrder from "./AddOrder";
-import AddUser from "./AddUser";
-import AddCategory from "./AddCategory";
-import AddProduct from "./AddProduct";
-import SidebarAccountMenu, {
-  type SidebarAccountUser,
-} from "./sidebar-account-menu";
 
 const items = [
   {
@@ -78,9 +77,11 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/">
-                <Image src="/logo.svg" alt="logo" width={20} height={20} />
+                <Image alt="logo" height={20} src="/logo.svg" width={20} />
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{activeCommerce.name}</div>
+                  <div className="truncate font-medium">
+                    {activeCommerce.name}
+                  </div>
                   <div className="truncate text-muted-foreground text-xs">
                     /{activeCommerce.slug}
                   </div>

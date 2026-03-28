@@ -16,7 +16,6 @@
 - [Feature Flags (`@repo/feature-flags`)](#feature-flags-repofeature-flags)
 - [Internationalization (`@repo/internationalization`)](#internationalization-repointernationalization)
 - [Webhooks (`@repo/webhooks`)](#webhooks-repowebhooks)
-- [Cron Jobs (`@repo/cron`)](#cron-jobs-repocron)
 - [Notifications (`@repo/notifications`)](#notifications-reponotifications)
 - [Collaboration (`@repo/collaboration`)](#collaboration-repocollaboration)
 - [AI (`@repo/ai`)](#ai-repoai)
@@ -28,297 +27,158 @@ All packages live in `/packages/` and are imported as `@repo/<name>`.
 
 ## Authentication (`@repo/auth`)
 
-**Provider**: Clerk
+**Provider**: Better Auth
 
-Handles user authentication, organization management, and session handling.
+Handles session management, email/password auth, optional Google auth, and auth route handlers for the `app` surface.
 
-**Key exports**:
-- `AuthProvider` — wrapped inside `DesignSystemProvider`
-- Pre-built Clerk components: `<OrganizationSwitcher>`, `<UserButton>`, `<SignIn>`, `<SignUp>`
+**Key entrypoints**:
+- `@repo/auth/server` - server auth instance and session helpers
+- `@repo/auth/handlers` - Next.js route handlers exported into `apps/app/app/api/auth/[...all]/route.ts`
+- `@repo/auth/provider` - lightweight provider wrapper
 
-**Webhooks**: Clerk sends user lifecycle events to `POST /api/webhooks/auth` (handled in the `api` app). Events include user creation, updates, and deletion.
+**Current behavior**:
+- Uses `better-auth`
+- Persists through the Drizzle adapter against `@repo/database`
+- Adds app-specific user fields like `role`, `commerceId`, and `customerId`
 
-**Swappable to**: Supabase Auth, Auth.js, Better Auth.
+**Important repo detail**:
+- `apps/api/app/webhooks/auth/route.ts` returns `410`; external auth webhooks are not part of the active flow
+
+**Swappable to**: Auth.js, Clerk, Supabase Auth, or another provider, but that would require replacing the Better Auth server and route surface rather than just changing a UI component.
 
 ## Database (`@repo/database`)
 
-**ORM**: Prisma
-**Default provider**: Neon PostgreSQL
+**ORM**: Drizzle
+**Driver**: Neon serverless
+**Database**: PostgreSQL
 
 **Key exports**:
-- `database` — Prisma client instance
+- `database` - Drizzle client instance
+- `schema` - exported Drizzle schema namespace
+- `sql` - Drizzle SQL helper
 
 **Usage**:
+
 ```typescript
-import { database } from '@repo/database';
-const users = await database.user.findMany();
+import { database, schema } from "@repo/database";
+import { eq } from "drizzle-orm";
+
+const users = await database
+  .select()
+  .from(schema.user)
+  .where(eq(schema.user.emailVerified, true));
 ```
 
-**Schema**: `packages/database/prisma/schema.prisma`
-**Migrations**: `bun run migrate` (format → generate → db push)
+**Key files**:
+- `packages/database/index.ts`
+- `packages/database/schema.ts`
+- `packages/database/drizzle.config.ts`
+- `packages/database/drizzle/*.sql`
 
-**Swappable to**: Drizzle, PlanetScale, Supabase, Turso, EdgeDB, Prisma Postgres.
+**Migrations**:
+- `bun run db:generate`
+- `bun run db:migrate`
+- `bun run db:push`
+- `bun run db:studio`
+
+Do not reference Prisma schema files or Prisma Client for this repo.
 
 ## Payments (`@repo/payments`)
 
-**Provider**: Stripe
+**Provider default in this repo**: PagoPar/uPay-style adapter
 
 **Key exports**:
-- `stripe` — Stripe client instance (optional chaining: `stripe?.prices.list()`)
+- `pagopar` - config-derived provider object when configured
+- `normalizeStatus`
+- `verifyWebhook`
+- `parseWebhook`
+- `PaymentProviderAdapter` - interface for future provider implementations
 
-**Features**: Subscriptions, one-time payments, Stripe Radar fraud prevention.
+**Current behavior**:
+- The package is intentionally thin
+- Webhook verification uses `PAGOPAR_WEBHOOK_SECRET`
+- `apps/api/app/webhooks/payments/route.ts` logs, normalizes, and tracks inbound payment events
 
-**Webhooks**: `POST /api/webhooks/payments` handles Stripe events (payment success, subscription changes, etc.).
+**Swappable to**: Stripe, Paddle, Lemon Squeezy, or a fuller PagoPar implementation
 
-**Swappable to**: Paddle, Lemon Squeezy.
+When advising changes, mention both the package and the webhook route in `apps/api`.
 
 ## Email (`@repo/email`)
 
 **Provider**: Resend + React Email
 
-**Key exports**:
-- `resend` — Resend client instance
+**Templates**: `packages/email/templates`
 
-**Usage**:
-```typescript
-import { resend } from '@repo/email';
-import { WelcomeEmail } from '@repo/email/templates/welcome';
-
-await resend?.emails.send({
-  from: 'hello@example.com',
-  to: 'user@example.com',
-  subject: 'Welcome',
-  react: <WelcomeEmail />,
-});
-```
-
-**Templates**: React components in the email package. Preview at `http://localhost:3003`.
+Preview and development happen through `apps/email`, not inside the package itself.
 
 ## CMS (`@repo/cms`)
 
 **Provider**: BaseHub
 
-**Key exports**:
-- `Feed`, `Body`, `TableOfContents`, `Image`, `Toolbar` — content rendering components
+**Notes**:
+- `BASEHUB_TOKEN` is optional
+- The package `dev` script no-ops when the token is missing
 
-**Setup**: Fork the `basehub/next-forge` template, generate a Read Token, set `BASEHUB_TOKEN`.
-
-**Features**: Type-safe content queries, Draft Mode preview, on-demand revalidation via webhooks.
-
-**Swappable to**: Content Collections.
+Use repo reality first when answering CMS questions; do not assume BaseHub is always active locally.
 
 ## Design System (`@repo/design-system`)
 
-**Library**: shadcn/ui (New York style, neutral colors)
+**Library**: shadcn/ui-based shared component system
 
-**Key exports**:
-- `DesignSystemProvider` — wraps tooltip, toast, analytics, auth, and theme providers
-- Full component library (Button, Dialog, Form, Table, etc.)
-- Font configuration
-- Utility hooks
-
-**Add components**:
-```bash
-npx shadcn@latest add [component] -c packages/design-system
-```
-
-**Update components**:
-```bash
-bun run bump-ui
-```
-
-**Dark mode**: Integrated via `next-themes`. The provider handles theme switching.
+This package holds common UI primitives, utilities, and provider composition used across apps. Check the package entrypoints before assuming a component already exists in the shared layer; this repo also contains app-local components in `apps/app/app/components`.
 
 ## Analytics (`@repo/analytics`)
 
-**Web analytics**: Vercel Web Analytics (enable in dashboard), Google Analytics (via `NEXT_PUBLIC_GA_MEASUREMENT_ID`).
-
-**Product analytics**: PostHog (default).
-
-**Key exports**:
-- `analytics` from `@repo/analytics/server` — server-side tracking
-- `analytics` from `@repo/analytics/posthog/client` — client-side tracking
-
-**Usage**:
-```typescript
-import { analytics } from '@repo/analytics/server';
-analytics?.capture({ event: 'user_signed_up', distinctId: userId });
-```
-
-**Ad-blocker bypass**: PostHog requests are reverse-proxied through Next.js rewrites (`/ingest/*`).
+Handles analytics integrations for server and client surfaces. Inspect `provider.tsx`, `server.ts`, and `keys.ts` when the user asks which provider is active in a given surface.
 
 ## Observability (`@repo/observability`)
 
-**Error tracking**: Sentry — captures exceptions and performance data.
-
-**Logging**: BetterStack Logs in production, console in development.
-
-**Key exports**:
-- `log` from `@repo/observability/log` — logging interface (`log.info()`, `log.error()`, etc.)
-- Sentry configuration via `instrumentation.ts` and `sentry.client.config.ts`
-
-**Uptime monitoring**: BetterStack integration.
-
-**Sentry tunneling**: Requests proxied through rewrites to bypass ad-blockers.
+Holds error parsing, logging, and observability glue used by apps. In webhook and API flows, prefer pointing to the real helper modules consumed by routes instead of describing generic template behavior.
 
 ## Storage (`@repo/storage`)
 
-**Provider**: Vercel Blob
-
-**Key exports**:
-- `put` from `@repo/storage` — server-side upload
-- `upload` from `@repo/storage/client` — client-side upload
-
-**Note**: Server uploads are limited to 4.5MB. Use client uploads for larger files.
+Shared storage abstraction package. Verify the exported API in the package before suggesting upload usage because storage integrations are often customized per repo.
 
 ## Security (`@repo/security`)
 
-**Provider**: Arcjet
-
-**Features**: Bot detection, Shield WAF (SQL injection, XSS, OWASP Top 10 prevention), rate limiting, IP geolocation.
-
-**Configuration**: Central client at `@repo/security`, extended per app with specific rules.
-
-**Bot policy**: Allows search engines and preview generators; blocks scrapers and AI crawlers.
-
-**Web app**: Security middleware runs on all non-static routes.
-**Main app**: Security checks in the authenticated layout.
-
-**Usage**:
-```typescript
-const decision = await aj.protect(request);
-if (decision.isDenied()) {
-  // handle denial
-}
-```
+Shared security helpers and env validation. The `web` app imports `@arcjet/next`, and both `web` and `app` consume package-level security behavior.
 
 ## SEO (`@repo/seo`)
 
-**Key exports**:
-- `createMetadata` from `@repo/seo/metadata` — generates Next.js metadata with deep merge
-
-**Usage**:
-```typescript
-import { createMetadata } from '@repo/seo/metadata';
-export const metadata = createMetadata({
-  title: 'Page Title',
-  description: 'Page description',
-});
-```
-
-**Sitemap**: Auto-generated at build time. Scans `/app`, `/content/blog`, `/content/legal`. Filters `_` and `()` directories.
-
-**JSON-LD**: Structured data support for search engines.
-
-**Security headers**: Nosecone integration via `@repo/security/middleware`.
+Shared SEO helpers for metadata and related page concerns. When the user asks where metadata is generated, check the consuming app routes first and then the shared package helpers.
 
 ## Feature Flags (`@repo/feature-flags`)
 
-**System**: Vercel Flags SDK + PostHog
-
-**Define flags** in `packages/feature-flags/index.ts`:
-```typescript
-export const myFlag = createFlag('myFlagKey');
-```
-
-**Usage**:
-```typescript
-const isEnabled = await myFlag();
-```
-
-Flags require an authenticated user context. Override flags in development via the Vercel Toolbar.
+Feature-flag support with optional `FLAGS_SECRET`. Treat it as optional infrastructure unless the user is actively working on flags.
 
 ## Internationalization (`@repo/internationalization`)
 
-**Provider**: Languine
-
-**Configuration**: `languine.json` defines source and target locales.
-
-**Dictionaries**: TypeScript files per locale. Non-source locales are auto-translated.
-
-**Usage**:
-```typescript
-const dict = await getDictionary(locale);
-```
-
-**Routing**: Language-specific paths (`/en/about`, `/fr/about`) with automatic language detection.
-
-**Middleware**: `internationalizationMiddleware` configured for the `web` app.
-
-**Translate**: `bun run translate`
+Shared i18n package used primarily by the marketing surface. Verify actual route and middleware usage in `apps/web` before describing locale handling.
 
 ## Webhooks (`@repo/webhooks`)
 
-### Inbound
-- **Stripe**: `POST /api/webhooks/payments` — payment and subscription events
-- **Clerk**: `POST /api/webhooks/auth` — user lifecycle events
-- **Local testing**: Stripe CLI auto-forwards to localhost
-
-### Outbound
-**Provider**: Svix
-
-**Key exports**:
-- `webhooks.send(eventType, data)` — send a webhook event
-- `webhooks.getAppPortal()` — get embeddable webhook management portal URL
-
-Uses organization ID as the Svix app UID (stateless design).
-
-## Cron Jobs (`@repo/cron`)
-
-**Platform**: Vercel Cron
-
-**Location**: `apps/api/app/cron/[job-name]/route.ts`
-
-**Configuration**: `apps/api/vercel.json`
-
-```json
-{ "path": "/cron/keep-alive", "schedule": "0 1 * * *" }
-```
-
-Cron routes must use the `GET` HTTP method. Test locally via direct HTTP GET.
+Shared outbound or cross-app webhook utilities. For inbound webhooks, point users first to the concrete route handlers in `apps/api/app/webhooks/*`.
 
 ## Notifications (`@repo/notifications`)
 
-**Provider**: Knock
-
-**Key exports**:
-- `notifications.workflows.trigger(workflowKey, { recipients, data })` — trigger a notification
-- `<NotificationsTrigger>` — renders in-app notification feed
-
-**Channels**: In-app, email, SMS, push, and chat — configured via Knock workflows.
+Shared notifications package used by the authenticated app. Check package exports and consuming components when the user asks how feeds or triggers are wired.
 
 ## Collaboration (`@repo/collaboration`)
 
-**Provider**: Liveblocks
-
-**Features**: Real-time presence indicators, multiplayer document editing, threaded comments.
-
-**Hooks**: `useOthers()`, `useStorage()`, `useMutation()`, `useThreads()`
-
-**Components**: `<Thread>`, `<Composer>`, `<InboxNotification>`
-
-**Editor integration**: Tiptap or Lexical for collaborative rich text editing.
-
-Requires `LIVEBLOCKS_SECRET` environment variable.
+Shared real-time collaboration package used by the authenticated app. The active route for auth lives in `apps/app/app/api/collaboration/auth/route.ts`.
 
 ## AI (`@repo/ai`)
 
-AI/LLM integration package for adding AI-powered features to the application.
+Shared AI integration package. Read the local package files before describing models or provider defaults because these tend to drift quickly.
 
 ## Rate Limit (`@repo/rate-limit`)
 
-Rate limiting utilities used in conjunction with `@repo/security` for request throttling.
+Shared rate-limiting helpers, used notably by the `web` surface.
 
 ## Next Config (`@repo/next-config`)
 
-Shared Next.js configuration applied across apps:
-- Image optimization (AVIF, WebP)
-- Clerk image domain patterns
-- Prisma webpack plugin for monorepo builds
-- PostHog reverse proxy rewrites (`/ingest/*`)
-- OpenTelemetry webpack compatibility fix
-- Bundle analyzer support
+Shared Next.js config and env helpers. Check this package when the user asks about URL defaults or shared Next.js setup.
 
 ## TypeScript Config (`@repo/typescript-config`)
 
-Shared TypeScript configurations extended by all apps and packages.
+Workspace-wide TypeScript base configs consumed by apps and packages.

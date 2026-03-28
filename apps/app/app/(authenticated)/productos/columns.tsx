@@ -1,63 +1,48 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import Image from "next/image";
+import { Badge } from "@repo/design-system/components/ui/badge";
+import { Button } from "@repo/design-system/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+} from "@repo/design-system/components/ui/dropdown-menu";
+import {
+  formatDeliveryIncludedLabel,
+  formatProductStatusLabel,
+  type ProductTableRow,
+} from "@/lib/products";
 
-export type Product = {
-  id: string | number;
-  price: number;
-  name: string;
-  shortDescription: string;
-  description: string;
-  sizes: string[];
-  colors: string[];
-  images: Record<string, string>;
-};
-
-export const columns: ColumnDef<Product>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        checked={row.getIsSelected()}
-      />
-    ),
-  },
+export const columns: ColumnDef<ProductTableRow>[] = [
   {
     accessorKey: "image",
-    header: "Image",
+    header: "Imagen",
     cell: ({ row }) => {
       const product = row.original;
+      const imageSrc = product.image;
+
+      if (!imageSrc) {
+        return (
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary font-medium text-xs uppercase">
+            {product.name.slice(0, 1)}
+          </div>
+        );
+      }
+
       return (
-        <div className="w-9 h-9 relative">
+        <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
           <Image
-            src={product.images[product.colors[0]]}
             alt={product.name}
-            fill
-            className="rounded-full object-cover"
+            className="h-full w-full object-cover"
+            height={36}
+            src={imageSrc}
+            unoptimized
+            width={36}
           />
         </div>
       );
@@ -65,25 +50,43 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: "name",
-    header: "Name",
+    header: "Nombre",
   },
   {
-    accessorKey: "price",
+    accessorKey: "status",
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          variant="ghost"
         >
-          Price
+          Estado
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === "active" ? "default" : "secondary"}>
+        {formatProductStatusLabel(row.original.status)}
+      </Badge>
+    ),
   },
   {
-    accessorKey: "shortDescription",
-    header: "Description",
+    accessorKey: "stock",
+    header: "Stock",
+  },
+  {
+    accessorKey: "category",
+    header: "Categoria",
+  },
+  {
+    accessorKey: "deliveryIncluded",
+    header: "Delivery",
+    cell: ({ row }) => formatDeliveryIncludedLabel(row.original.deliveryIncluded),
+  },
+  {
+    accessorKey: "description",
+    header: "Descripcion",
   },
   {
     id: "actions",
@@ -93,7 +96,7 @@ export const columns: ColumnDef<Product>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button className="h-8 w-8 p-0" variant="ghost">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -101,13 +104,9 @@ export const columns: ColumnDef<Product>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(product.id.toString())}
+              onClick={() => navigator.clipboard.writeText(product.id)}
             >
               Copy product ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href={`/productos/${product.id}`}>View customer</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

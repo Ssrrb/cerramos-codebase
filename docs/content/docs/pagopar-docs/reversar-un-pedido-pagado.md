@@ -95,7 +95,7 @@ Datos de respuesta en caso de realizarse satisfactoriamente la reversión en tie
 }
 ```
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Si respuesta es true y resultado.[0].tiempo_reversion = "Inmediata", significa que la reversión ha sido aplicada satisfactoriamente.
+> ℹ️ Si respuesta es true y resultado.[0].tiempo_reversion = "Inmediata", significa que la reversión ha sido aplicada satisfactoriamente.
 
 | **Campos** | **Descripción** | **Ejemplo** |
 | --- | --- | --- |
@@ -124,7 +124,7 @@ Datos de respuesta en caso de realizarse satisfactoriamente la reversión en tie
 ]
 ```
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Si respuesta es true y resultado.[0].tiempo_reversion = "Agendada", significa que la reversión ha sido programada para aplicarse de forma manual.
+> ℹ️ Si respuesta es true y resultado.[0].tiempo_reversion = "Agendada", significa que la reversión ha sido programada para aplicarse de forma manual.
 
 Como en este caso la reversión es programada, probablemente necesitemos saber cuándo se aplica efectivamente. Para saber si la reversión fue aplicada, puede hacer la siguiente petición:      URL: [https://api.pagopar.com/api/pedidos/1.1/traer](https://api.pagopar.com/api/pedidos/1.1/traer)   Método: POST
 ```
@@ -220,7 +220,7 @@ Explicación de los campos
 | resultado.datos_adicionales | Datos adicionales mayormente de uso interno relacionado al pedido | 0 |
 | resultado.datos_adicionales.fecha_reversion | Fecha de reversión, si ya se realizó | 2022-04-14T12:55:00 |
 
-> ![image](https://img.zohostatic.com/zde/static/images/info.png) Para determinar si una reversión ya se realizó, en caso de que haya sido agendada anteriormente, se debe verificar el valor de resultado.datos_adicionales.fecha_reversión, si esta es de valor null, es porque aún no se ha aplicado dicha reversión, si contiene una fecha, es porque ya se realizó la reversión.
+> ℹ️ Para determinar si una reversión ya se realizó, en caso de que haya sido agendada anteriormente, se debe verificar el valor de resultado.datos_adicionales.fecha_reversión, si esta es de valor null, es porque aún no se ha aplicado dicha reversión, si contiene una fecha, es porque ya se realizó la reversión.
 
 Datos de respuesta en caso de no haberse realizado la reversión ni inmediata ni de pudo agendarse
 

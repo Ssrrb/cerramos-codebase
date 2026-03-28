@@ -11,202 +11,167 @@
 
 ## Swapping Providers
 
-next-forge is designed to be modular. Each integration can be replaced by modifying its corresponding package.
+next-forge is modular, but this repo has already diverged from the original starter. Distinguish between starter defaults and current-repo defaults before recommending changes.
 
 ### Database / ORM
 
-**Default**: Prisma + Neon PostgreSQL
+**Current repo default**: Drizzle + Neon serverless + PostgreSQL
 
-**Alternatives**:
-- **Drizzle** — Replace Prisma schema with Drizzle schema definitions. Update `@repo/database` exports to use Drizzle client.
-- **PlanetScale** — Change the Prisma datasource provider or use PlanetScale's serverless driver.
-- **Supabase** — Use Supabase's PostgreSQL connection string as `DATABASE_URL`, or swap to the Supabase client SDK.
-- **Turso** — Use Turso's libSQL adapter with Prisma or Drizzle.
-- **EdgeDB** — Replace Prisma with EdgeDB's schema and query builder.
-- **Prisma Postgres** — Use Prisma's managed PostgreSQL service.
+To swap:
+- update `packages/database/`
+- replace `database` exports and schema definitions
+- update migration commands if the new stack is not Drizzle-based
+- review all consumers importing `database`, `schema`, or Drizzle helpers
 
-To swap: update `packages/database/`, change the client export, and update `DATABASE_URL`.
+If you are only changing the PostgreSQL host, do not treat that as an ORM migration; it is usually just a `DATABASE_URL` change.
 
 ### Authentication
 
-**Default**: Clerk
+**Current repo default**: Better Auth
 
-**Alternatives**:
-- **Supabase Auth** — Replace `@repo/auth` with Supabase Auth client. Update middleware and session handling.
-- **Auth.js** — Implement Auth.js (NextAuth v5) with chosen providers. Update session access patterns.
-- **Better Auth** — Use Better Auth's session management. Update `@repo/auth` exports.
+To swap:
+- replace `packages/auth/server.ts`, `packages/auth/handlers.ts`, and related helpers
+- update `apps/app/app/api/auth/[...all]/route.ts`
+- review auth-dependent UI in unauthenticated routes and shared provider usage
+- update database tables if the provider changes session/account models
 
-To swap: replace `packages/auth/`, update the `AuthProvider` in the design system, and update webhook handlers.
-
-### CMS
-
-**Default**: BaseHub
-
-**Alternatives**:
-- **Content Collections** — Use local MDX/Markdown files with content collections. Remove BaseHub SDK dependency.
-
-To swap: replace `packages/cms/` with the new CMS client and update content queries in the `web` app.
+Do not tell users to update Clerk components unless you first clarify that Clerk is a starter-era reference, not the current repo state.
 
 ### Payments
 
-**Default**: Stripe
+**Current repo default**: PagoPar/uPay-oriented adapter
 
-**Alternatives**:
-- **Paddle** — Replace Stripe SDK with Paddle SDK. Update webhook handlers at `/api/webhooks/payments`.
-- **Lemon Squeezy** — Replace Stripe SDK with Lemon Squeezy SDK. Update webhook verification logic.
+To swap:
+- replace or extend `packages/payments/`
+- update `apps/api/app/webhooks/payments/route.ts`
+- update any app-level payment status handling that assumes current enum values
 
-To swap: update `packages/payments/`, replace the webhook handler in `apps/api/`, and update pricing page logic.
+If introducing Stripe, add the Stripe SDK and webhook verification flow explicitly rather than assuming it already exists.
 
-### Design System
+### CMS
 
-**Default**: shadcn/ui (New York style, neutral colors)
+**Current repo default**: BaseHub, but optional in local development
 
-**Alternatives**:
-- **Tailwind Catalyst** — Replace shadcn/ui components with Catalyst components.
-- Any Tailwind-based component library can be integrated.
-
-To swap: replace components in `packages/design-system/`. Keep `DesignSystemProvider` as the wrapper.
-
-### Email
-
-**Default**: Resend + React Email
-
-To swap: replace the `resend` client in `packages/email/` with another provider SDK (SendGrid, Postmark, AWS SES). Keep React Email templates as they compile to standard HTML.
+To swap:
+- update `packages/cms/`
+- update content queries and rendering in `apps/web`
 
 ### Documentation
 
-**Default**: Mintlify
+**Current repo default**: Mintlify app in `apps/docs`
 
-**Alternative**: Fumadocs — MDX-based documentation framework for Next.js.
+Do not confuse this with the separate root `docs/` directory in the repo, which is not the active deployable docs app described by the workspace scripts.
 
-To swap: replace the `docs` app with a Fumadocs Next.js app.
+### Design System
 
-### Notifications
+**Current repo default**: shared shadcn/ui-based system in `packages/design-system`
 
-**Default**: Knock
+When customizing design, check whether the relevant UI already lives in:
+- `packages/design-system` for shared primitives
+- `apps/app/app/components` for app-local UI
+- `apps/web/components` for marketing-only UI
 
-**Alternative**: Novu — similar workflow-based notification platform.
+### Email
 
-To swap: replace `packages/notifications/` with the new provider's SDK and update workflow triggers.
+**Current repo default**: React Email templates with Resend-style package integration
 
-### Code Formatting
-
-**Default**: Ultracite (Biome-based)
-
-**Alternative**: ESLint configurations.
-
-Commands remain the same: `bun run lint`, `bun run format`.
+To swap providers:
+- change the sending client in `packages/email`
+- keep or replace the React Email templates depending on the goal
+- preserve `apps/email` if you still want local template preview
 
 ## Deployment to Vercel
 
-### Project Setup
+Treat `app`, `web`, and `api` as separate projects unless the repo has been explicitly consolidated.
 
-Create three separate Vercel projects, one for each deployable app:
+Suggested mapping:
+1. `apps/app`
+2. `apps/web`
+3. `apps/api`
 
-1. **app** — Root directory: `apps/app`
-2. **web** — Root directory: `apps/web`
-3. **api** — Root directory: `apps/api`
-
-For each project:
-1. Import the repository in Vercel.
-2. Set the Root Directory to the app's path (e.g., `apps/app`).
-3. Vercel auto-detects the Next.js framework.
-4. Add all required environment variables.
-5. Deploy.
+Additional deployable surfaces may exist depending on the team workflow:
+- `apps/docs`
+- `apps/storybook`
 
 ### Environment Variables on Vercel
 
-Use Vercel Team Environment Variables to share common variables across projects (e.g., `DATABASE_URL`, Stripe keys). This avoids duplicating values per project.
+Prefer shared environment variables for common cross-app settings:
 
-Recommended: install the BetterStack and Sentry Vercel integrations to auto-inject their environment variables.
+```bash
+DATABASE_URL=
+NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_WEB_URL=
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_DOCS_URL=
+BETTER_AUTH_URL=
+BETTER_AUTH_SECRET=
+```
+
+Then add provider-specific values only to the apps that need them.
 
 ### Production URLs
 
-Update inter-app URL variables to production domains:
+Update inter-app URLs to production domains:
 
 ```bash
 NEXT_PUBLIC_APP_URL="https://app.yourdomain.com"
 NEXT_PUBLIC_WEB_URL="https://www.yourdomain.com"
 NEXT_PUBLIC_API_URL="https://api.yourdomain.com"
 NEXT_PUBLIC_DOCS_URL="https://docs.yourdomain.com"
+BETTER_AUTH_URL="https://app.yourdomain.com"
 ```
-
-### Preview Deployments
-
-Three strategies for preview environment inter-app communication:
-
-1. **Point to production** — Preview apps use production URLs for other apps. Simplest setup.
-2. **Branch-based URLs** — Use Vercel's deterministic branch URLs derived from `VERCEL_GIT_COMMIT_REF`. Each branch gets a stable preview URL.
-3. **Manual override** — Set custom URLs per preview deployment in Vercel project settings.
 
 ## Adding New Apps
 
-1. Create a new directory under `/apps/`.
-2. Initialize a Next.js app (or other framework).
-3. Add `@repo/*` package dependencies as needed.
-4. Add the app to `turbo.json` if it needs custom pipeline tasks.
-5. Assign a unique development port.
+1. Create a new directory under `apps/`.
+2. Add a `package.json` with workspace scripts.
+3. Import only the `@repo/*` packages that app actually needs.
+4. Ensure the app has a clear port and deployment role.
+5. Rely on Turbo defaults unless you need custom tasks.
 
 ## Adding New Packages
 
-1. Create a new directory under `/packages/`.
-2. Add a `package.json` with the `@repo/<name>` naming convention.
-3. Export the package's public API.
-4. Add a `keys.ts` file if the package requires environment variables (use `@t3-oss/env-nextjs` with Zod).
-5. Add the package as a dependency in consuming apps.
+1. Create a new directory under `packages/`.
+2. Use the `@repo/<name>` naming convention.
+3. Export a clear public API.
+4. Add `keys.ts` if the package owns env vars.
+5. Compose that package's env schema into the consuming apps' `env.ts`.
+
+This last step matters in this repo because env composition is app-specific.
 
 ## Design System Theming
 
-### Colors
+Update theming through the shared design system first, then only add app-local overrides where needed.
 
-The design system uses CSS custom properties for theming. Edit the theme in the design system's global CSS file. shadcn/ui provides a theme generator at ui.shadcn.com/themes.
-
-### Dark Mode
-
-Dark mode is handled by `next-themes` via `DesignSystemProvider`. The provider supports system preference detection and manual theme toggling. Use the `dark:` Tailwind prefix for dark mode styles.
-
-### Fonts
-
-Font configuration is centralized in the design system package. Update the font imports and CSS variables to change the application font.
-
-### Adding Components
-
-Add new shadcn/ui components:
-
-```bash
-npx shadcn@latest add [component] -c packages/design-system
-```
-
-Create custom compound components following the composable pattern:
-
-```typescript
-import { Banner, BannerContent, BannerTitle, BannerDescription } from '@repo/design-system/components/banner';
-```
+Check:
+- `packages/design-system`
+- app-local global CSS files
+- font utilities in shared packages before duplicating font setup per app
 
 ## Extending Features
 
 ### Adding API Routes
 
-Add routes in `apps/api/app/` following Next.js App Router conventions. Export named HTTP method handlers (`GET`, `POST`, etc.).
+Add routes in `apps/api/app/` when the endpoint should live on the dedicated API surface. For app-specific authenticated routes, `apps/app/app/api/` may still be the correct location.
 
-### Adding Cron Jobs
+### Adding Auth Endpoints
 
-1. Create a route at `apps/api/app/cron/[job-name]/route.ts` with a `GET` handler.
-2. Add the schedule to `apps/api/vercel.json`:
-   ```json
-   { "path": "/cron/job-name", "schedule": "0 * * * *" }
-   ```
+The Better Auth catch-all route already lives in:
+
+```text
+apps/app/app/api/auth/[...all]/route.ts
+```
+
+Prefer extending `@repo/auth` instead of adding parallel auth stacks.
 
 ### Adding Webhook Handlers
 
-Create routes in `apps/api/app/webhooks/` for inbound webhooks. Verify signatures using the provider's SDK.
+Inbound webhooks belong in `apps/api/app/webhooks/`. Verify signatures in the route using the provider package.
 
-### Adding Feature Flags
+### Adding Database Models
 
-1. Define the flag in `packages/feature-flags/index.ts` using `createFlag('key')`.
-2. Create the flag in PostHog.
-3. Use it: `const enabled = await myFlag()`.
+Add tables and enums in `packages/database/schema.ts`, then run the Drizzle migration flow.
 
 ### Adding Email Templates
 
-Create React components in the email package. Preview them at `http://localhost:3003`. Use the `resend` client to send them.
+Create templates in `packages/email/templates` and preview them through `apps/email`.

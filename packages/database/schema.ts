@@ -35,6 +35,12 @@ export const productLinkStatusEnum = pgEnum("ProductLinkStatus", [
   "expired",
 ]);
 
+export const productStatusEnum = pgEnum("ProductStatus", [
+  "draft",
+  "active",
+  "inactive",
+]);
+
 export const fulfillmentTypeEnum = pgEnum("FulfillmentType", [
   "delivery",
   "pickup",
@@ -254,6 +260,26 @@ export const productLink = pgTable(
     uniqueIndex("ProductLink_slug_key").on(table.slug),
     index("ProductLink_commerceId_idx").on(table.commerceId),
   ]
+);
+
+export const product = pgTable(
+  "Product",
+  {
+    id: cuidPrimaryKey(),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull(),
+    status: productStatusEnum("status").notNull().default("draft"),
+    stock: integer("stock").notNull().default(0),
+    deliveryIncluded: boolean("deliveryIncluded").notNull().default(false),
+    image: text("image").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("Product_commerceId_idx").on(table.commerceId)]
 );
 
 export const productVariantOption = pgTable(

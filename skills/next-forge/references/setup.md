@@ -3,49 +3,50 @@
 ## Contents
 
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
+- [Install Dependencies](#install-dependencies)
 - [Required Environment Variables](#required-environment-variables)
 - [Optional Environment Variables](#optional-environment-variables)
 - [Database Setup](#database-setup)
-- [Stripe CLI Setup](#stripe-cli-setup)
+- [Authentication Setup](#authentication-setup)
+- [Payments Setup](#payments-setup)
 - [Running Development](#running-development)
 - [Environment Variable Validation](#environment-variable-validation)
 
 ## Prerequisites
 
-- Node.js >= 18
-- A PostgreSQL database (Neon recommended)
-- Stripe CLI (for local webhook testing)
-- Mintlify CLI (for docs preview)
-- Supported OS: macOS, Linux (Ubuntu 24.04+), Windows 11
+- Bun 1.3.x
+- Node.js 18+
+- A PostgreSQL database
+- Optional CLIs depending on the surface you are working on:
+  - Mintlify CLI for `apps/docs`
+  - Stripe CLI is no longer part of the default local flow in this repo
 
-## Installation
+## Install Dependencies
+
+From the repository root:
 
 ```bash
-npx next-forge@latest init
+bun install
 ```
 
-The CLI prompts for:
-1. **Project name** — used as the directory name
-2. **Package manager** — bun (recommended), npm, yarn, or pnpm
-
-Post-installation, the CLI installs dependencies and copies `.env.example` files to their working equivalents.
+This repo is an existing Bun-powered Turborepo. Prefer answering from the checked-in scripts rather than repeating the generic `next-forge init` flow unless the user explicitly asked about the starter itself.
 
 ## Required Environment Variables
 
-### Database (required)
+### Database
 
-Set in `packages/database/.env`:
+Set `DATABASE_URL` for `@repo/database`. In development, `packages/database/keys.ts` falls back to `postgresql://postgres:postgres@127.0.0.1:5432/postgres`, but production requires an explicit value.
+
+Typical local placement:
 
 ```bash
+# packages/database/.env.local
 DATABASE_URL="postgresql://user:password@host:5432/dbname"
 ```
 
-Neon provides a free PostgreSQL database. Create one at neon.tech and copy the connection string.
+### Local URLs
 
-### Local URLs (pre-configured)
-
-These defaults work out of the box for local development:
+These are usually defined in app-level `.env.local` files and used by shared packages such as `@repo/auth` and `@repo/next-config`:
 
 ```bash
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -56,170 +57,207 @@ NEXT_PUBLIC_DOCS_URL="http://localhost:3004"
 
 ## Optional Environment Variables
 
-All integrations below are optional. If the corresponding environment variable is not set, the feature is disabled gracefully.
+All integrations below are optional unless the feature is being used. The repo generally degrades gracefully when provider env vars are absent.
 
-### Authentication (Clerk)
+### Authentication (`@repo/auth`)
 
-Set in `apps/app/.env.local`:
+This repo uses Better Auth with database-backed sessions.
 
 ```bash
-CLERK_SECRET_KEY="sk_test_..."
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
-CLERK_WEBHOOK_SECRET="whsec_..."
+BETTER_AUTH_SECRET="replace-with-a-long-random-secret"
+BETTER_AUTH_URL="http://localhost:3000"
+BETTER_AUTH_COOKIE_DOMAIN=""
+AUTH_GOOGLE_CLIENT_ID=""
+AUTH_GOOGLE_CLIENT_SECRET=""
+NEXT_PUBLIC_AUTH_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_AUTH_SIGN_UP_URL="/sign-up"
+NEXT_PUBLIC_AUTH_AFTER_SIGN_IN_URL="/"
+NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL="/"
 ```
 
-### Payments (Stripe)
+Notes:
+- `BETTER_AUTH_SECRET` is required outside development.
+- Google auth is enabled only when both Google vars are present.
+- The Better Auth handler lives in `apps/app/app/api/auth/[...all]/route.ts`.
 
-Set in `apps/app/.env.local` and `apps/api/.env.local`:
+### Payments (`@repo/payments`)
+
+The current default is PagoPar/uPay, not Stripe.
 
 ```bash
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+PAGOPAR_PUBLIC_KEY=""
+PAGOPAR_PRIVATE_KEY=""
+PAGOPAR_COMMERCE_ID=""
+PAGOPAR_BRANCH_ID=""
+PAGOPAR_API_URL=""
+PAGOPAR_WEBHOOK_SECRET=""
 ```
 
-### CMS (BaseHub)
+If `PAGOPAR_API_URL` is absent, the payment adapter is considered unconfigured.
 
-Set in `packages/cms/.env.local`:
+### CMS (`@repo/cms`)
 
 ```bash
-BASEHUB_TOKEN="bshb_..."
+BASEHUB_TOKEN=""
 ```
 
-Fork the `basehub/next-forge` template in BaseHub, then generate a Read Token.
+`packages/cms` skips its dev server when `BASEHUB_TOKEN` is missing.
 
-### Email (Resend)
-
-Set in `apps/app/.env.local`:
+### Email (`@repo/email`)
 
 ```bash
-RESEND_TOKEN="re_..."
+RESEND_TOKEN=""
 ```
 
-### Analytics (PostHog)
-
-Set in `apps/app/.env.local` and `apps/web/.env.local`:
+### Analytics (`@repo/analytics`)
 
 ```bash
-NEXT_PUBLIC_POSTHOG_KEY="phc_..."
-NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
+NEXT_PUBLIC_POSTHOG_KEY=""
+NEXT_PUBLIC_POSTHOG_HOST=""
+NEXT_PUBLIC_GA_MEASUREMENT_ID=""
 ```
 
-### Analytics (Google)
+### Observability (`@repo/observability`)
 
 ```bash
-NEXT_PUBLIC_GA_MEASUREMENT_ID="G-..."
+SENTRY_ORG=""
+SENTRY_PROJECT=""
+NEXT_PUBLIC_SENTRY_DSN=""
+BETTERSTACK_API_KEY=""
+BETTERSTACK_URL=""
 ```
 
-### Observability (Sentry)
+### Security (`@repo/security`)
 
 ```bash
-SENTRY_ORG="..."
-SENTRY_PROJECT="..."
-NEXT_PUBLIC_SENTRY_DSN="https://..."
+ARCJET_KEY=""
 ```
 
-### Logging (BetterStack)
+### Storage (`@repo/storage`)
 
 ```bash
-BETTERSTACK_API_KEY="..."
-BETTERSTACK_URL="..."
+BLOB_READ_WRITE_TOKEN=""
 ```
 
-### Security (Arcjet)
+### Feature Flags (`@repo/feature-flags`)
 
 ```bash
-ARCJET_KEY="ajkey_..."
+FLAGS_SECRET=""
 ```
 
-### Storage (Vercel Blob)
+### Notifications (`@repo/notifications`)
 
 ```bash
-BLOB_READ_WRITE_TOKEN="vercel_blob_..."
+KNOCK_API_KEY=""
+NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY=""
+NEXT_PUBLIC_KNOCK_FEED_CHANNEL_ID=""
 ```
 
-### Feature Flags
+### Collaboration (`@repo/collaboration`)
 
 ```bash
-FLAGS_SECRET="..."  # Generate: node -e "console.log(crypto.randomBytes(32).toString('base64url'))"
+LIVEBLOCKS_SECRET=""
 ```
 
-### Notifications (Knock)
+### Webhooks (`@repo/webhooks`)
 
 ```bash
-KNOCK_API_KEY="sk_..."
-NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY="pk_..."
-NEXT_PUBLIC_KNOCK_FEED_CHANNEL_ID="..."
-```
-
-### Collaboration (Liveblocks)
-
-```bash
-LIVEBLOCKS_SECRET="sk_..."
-```
-
-### Webhooks (Svix)
-
-```bash
-SVIX_TOKEN="..."
-```
-
-### Internationalization (Languine)
-
-Set in `packages/internationalization/.env.local`:
-
-```bash
-LANGUINE_PROJECT_ID="..."
+SVIX_TOKEN=""
 ```
 
 ## Database Setup
 
-After setting `DATABASE_URL`, push the schema to the database:
+The repo uses Drizzle with Neon serverless driver, not Prisma.
+
+Key files:
+- `packages/database/schema.ts`
+- `packages/database/drizzle.config.ts`
+- `packages/database/drizzle/*.sql`
+
+Common commands:
 
 ```bash
-bun run migrate
+bun run db:generate
+bun run db:migrate
+bun run db:push
+bun run db:studio
 ```
 
-This runs three Prisma commands in sequence:
-1. `prisma format` — formats the schema file
-2. `prisma generate` — generates the Prisma client
-3. `prisma db push` — pushes the schema to the database
-
-The schema lives at `packages/database/prisma/schema.prisma`. Edit it, then run `bun run migrate` again after changes.
-
-Browse the database visually with Prisma Studio:
+Workspace shortcuts from the root:
 
 ```bash
-bun dev --filter studio
+bun run migrate        # db:generate + db:migrate
+bun run migrate:deploy # db:migrate
 ```
 
-## Stripe CLI Setup
+Current behavior:
+- `db:generate` creates SQL migrations from `schema.ts`
+- `db:migrate` applies generated migrations
+- `db:push` pushes schema changes directly without generating migrations
+- `db:studio` opens Drizzle Studio
 
-Install the Stripe CLI for local webhook testing:
+Do not point users to `prisma/schema.prisma` or Prisma Studio in this repo.
 
-```bash
-brew install stripe/stripe-cli/stripe
-stripe login
+## Authentication Setup
+
+The auth stack is Better Auth backed by Drizzle tables in `@repo/database`.
+
+Relevant files:
+- `packages/auth/server.ts`
+- `packages/auth/handlers.ts`
+- `apps/app/app/api/auth/[...all]/route.ts`
+
+Notes:
+- Sessions, accounts, and verifications live in the shared database schema.
+- `apps/api/app/webhooks/auth/route.ts` intentionally returns `410` because external auth webhooks are disabled in this repo.
+
+## Payments Setup
+
+Inbound payment webhooks are handled at:
+
+```text
+apps/api/app/webhooks/payments/route.ts
 ```
 
-The Stripe CLI automatically forwards webhook events to `http://localhost:3000/api/webhooks/payments` during local development.
+That route currently verifies a shared secret from `x-cerramos-webhook-secret` and normalizes events through `@repo/payments`.
+
+If the user asks about Stripe CLI or `/api/webhooks/payments` under a Stripe flow, qualify the answer as a template default and then explain that this repo currently uses PagoPar/uPay.
 
 ## Running Development
 
-Start all apps:
+From the repository root:
 
 ```bash
 bun run dev
 ```
 
-Start a specific app:
+Scope to a workspace when needed:
 
 ```bash
-bun dev --filter app         # Port 3000
-bun dev --filter web         # Port 3001
-bun dev --filter api         # Port 3002
+bun run dev --filter app
+bun run dev --filter web
+bun run dev --filter api
+bun run build --filter @repo/database
 ```
+
+Typical local ports:
+- `app`: 3000
+- `web`: 3001
+- `api`: 3002
+- `email`: 3003
+- `docs`: 3004
+- `storybook`: 6006
 
 ## Environment Variable Validation
 
-Each package validates its environment variables at build time using `@t3-oss/env-nextjs` with Zod schemas. The validation files are named `keys.ts` within each package. If a required variable is missing, the build fails with a descriptive error message.
+Environment validation is spread across package-level `keys.ts` files and composed by each app's `env.ts`.
+
+Check these first when debugging missing env vars:
+- `packages/*/keys.ts`
+- `apps/app/env.ts`
+- `apps/web/env.ts`
+- `apps/api/env.ts`
+
+The pattern in this repo is:
+- shared packages own their own schemas
+- apps compose only the package schemas they actually consume

@@ -129,7 +129,7 @@ Datos de ejemplo que Pagopar retornaría en caso de éxito (retorna el hash de p
 
 > El campo 'data' es el que utilizará en su base de datos para relacionar los datos de cada pedido, este campo es obligatorio almacenarlo. En cambio el campo 'pedido' tiene un uso meramente informativo
 
-> ![Info](https://img.zohostatic.com/zde/static/images/info.png)A tener en cuenta, el valor de resultado.data es el identificador del pedido.
+> ℹ️ A tener en cuenta, el valor de resultado.data es el identificador del pedido.
 
 Datos de ejemplo que Pagopar retornaría en caso de error:
 
@@ -586,4 +586,4 @@ decir que quiere pagar el comercio <strong>Pagopar</strong>, mencionando su céd
 
 Pagina de redireccionamiento
 
-> ![Info](https://img.zohostatic.com/zde/static/images/info.png)Posterior a finalizar los pasos de esta documentación solo faltaría hacer [el pase a producción](https://soporte.pagopar.com/portal/es/kb/articles/entornos-pase-a-producci%C3%B3n) .
+> ℹ️ Posterior a finalizar los pasos de esta documentación solo faltaría hacer [el pase a producción](https://soporte.pagopar.com/portal/es/kb/articles/entornos-pase-a-producci%C3%B3n) .

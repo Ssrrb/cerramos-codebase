@@ -125,7 +125,7 @@ Sample data that Pagopar would return on success (returns the order hash):
 
 > ![Warning](https://img.zohostatic.com/zde/static/images/caution.png)The 'data' field is the one you will use in your database to associate the data of each order; this field is mandatory to store. On the other hand, the 'pedido' field is used purely for informational purposes
 
-> ![Info](https://img.zohostatic.com/zde/static/images/info.png)Keep in mind, the value of result.data is the order identifier.
+> ℹ️ Keep in mind, the value of result.data is the order identifier.
 
 Sample data that Pagopar would return in case of error:
 ```
@@ -573,4 +573,4 @@ decir que quiere pagar el comercio <strong>Pagopar</strong>, mencionando su céd
 
 Pagina de redireccionamiento
 
-> ![Info](https://img.zohostatic.com/zde/static/images/info.png)Following the completion of the steps in this documentation, the only remaining task is to [transition to production](https://soporte.pagopar.com/portal/es/kb/articles/entornos-pase-a-producci%C3%B3n).
+> ℹ️ Following the completion of the steps in this documentation, the only remaining task is to [transition to production](https://soporte.pagopar.com/portal/es/kb/articles/entornos-pase-a-producci%C3%B3n).

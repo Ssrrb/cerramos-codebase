@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "if [ -z \"$BASEHUB_TOKEN\" ]; then echo '[cms] BASEHUB_TOKEN not set; skipping BaseHub dev server.'; tail -f /dev/null; else basehub dev; fi",
+    "dev": "node -e \"const { spawnSync } = require('child_process'); if (!process.env.BASEHUB_TOKEN) { console.log('[cms] BASEHUB_TOKEN not set; skipping BaseHub dev server.'); process.stdin.resume(); } else { spawnSync('basehub', ['dev'], { stdio: 'inherit' }); }\"",
     "build": "basehub build",
     "analyze": "basehub",
     "clean": "git clean -xdf .cache .turbo dist node_modules",

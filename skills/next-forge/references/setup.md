@@ -136,8 +136,19 @@ ARCJET_KEY=""
 ### Storage (`@repo/storage`)
 
 ```bash
-BLOB_READ_WRITE_TOKEN=""
+GCS_BUCKET_NAME=""
+GCS_UPLOAD_URL_TTL_SECONDS=""
+GCS_READ_URL_TTL_SECONDS=""
+GOOGLE_CLOUD_PROJECT=""
 ```
+
+Use Application Default Credentials for both localhost and Cloud Run. For local development:
+
+```bash
+gcloud auth application-default login
+```
+
+Do not commit or ship a service account JSON key for Cloud Run. Run the service with a user-managed service account that has only the bucket permissions it needs.
 
 ### Feature Flags (`@repo/feature-flags`)
 

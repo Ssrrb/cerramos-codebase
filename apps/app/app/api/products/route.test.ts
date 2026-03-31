@@ -95,7 +95,7 @@ describe("products route", () => {
           category: "",
           deliveryIncluded: false,
           description: "",
-          imageUrl: "",
+          imageObjectKey: "",
           name: "",
           status: "draft",
           stock: -1,
@@ -116,7 +116,7 @@ describe("products route", () => {
     expect(payload.fieldErrors.name).toBeTruthy();
     expect(payload.fieldErrors.description).toBeTruthy();
     expect(payload.fieldErrors.stock).toBeTruthy();
-    expect(payload.fieldErrors.imageUrl).toBeTruthy();
+    expect(payload.fieldErrors.imageObjectKey).toBeTruthy();
     expect(payload.fieldErrors.category).toBeTruthy();
     expect(insertMock).not.toHaveBeenCalled();
   });
@@ -137,7 +137,7 @@ describe("products route", () => {
           category: "Electrodomesticos",
           deliveryIncluded: true,
           description: "Licuadora premium para tu cocina diaria.",
-          imageUrl: "/productos/licuadora.png",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
           name: "Licuadora Cerramos",
           status: "active",
           stock: 14,
@@ -157,7 +157,7 @@ describe("products route", () => {
       commerceId: "commerce_1",
       deliveryIncluded: true,
       description: "Licuadora premium para tu cocina diaria.",
-      image: "/productos/licuadora.png",
+      image: "products/commerce_1/images/licuadora.png",
       name: "Licuadora Cerramos",
       status: "active",
       stock: 14,

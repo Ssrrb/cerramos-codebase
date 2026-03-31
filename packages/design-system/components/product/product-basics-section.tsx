@@ -20,6 +20,7 @@ type ProductBasicsSectionProps<TFieldValues extends FieldValues> = {
   descriptionName: FieldPath<TFieldValues>
   disabled?: boolean
   imageName: FieldPath<TFieldValues>
+  imageUploadUrl: string
   nameName: FieldPath<TFieldValues>
   statusName: FieldPath<TFieldValues>
   statusOptions: ProductSelectOption[]
@@ -34,6 +35,7 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
   descriptionName,
   disabled,
   imageName,
+  imageUploadUrl,
   nameName,
   statusName,
   statusOptions,
@@ -60,7 +62,12 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
           />
         </div>
         <div className="space-y-6">
-          <ProductImageUpload control={control} disabled={disabled} name={imageName} />
+          <ProductImageUpload
+            control={control}
+            disabled={disabled}
+            name={imageName}
+            uploadUrl={imageUploadUrl}
+          />
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-2">

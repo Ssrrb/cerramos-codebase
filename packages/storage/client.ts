@@ -1,1 +1,1 @@
-export * from "@vercel/blob/client";
+export type { SignedReadTarget, SignedUploadTarget } from "./index";

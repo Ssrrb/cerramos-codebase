@@ -34,10 +34,18 @@ function ProductStockField<
             <Input
               disabled={disabled}
               min={0}
-              onChange={(event) => field.onChange(event.target.valueAsNumber)}
+              onChange={(event) => {
+                const nextValue = event.target.value
+
+                field.onChange(nextValue === "" ? 0 : event.target.valueAsNumber)
+              }}
               placeholder="0"
               type="number"
-              value={field.value ?? 0}
+              value={
+                typeof field.value === "number" && Number.isNaN(field.value)
+                  ? 0
+                  : (field.value ?? 0)
+              }
             />
           </FormControl>
           <FormDescription>{description}</FormDescription>

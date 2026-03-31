@@ -20,5 +20,6 @@ export type ProductSelectOption = {
 
 export type ProductImageValue = {
   fileName: string
+  objectKey: string
   src: string
 }

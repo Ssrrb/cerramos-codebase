@@ -29,6 +29,7 @@ type ProductImageUploadProps<
 > = ProductFieldProps<TFieldValues, TName> & {
   accept?: string
   maxSizeInMb?: number
+  uploadUrl: string
 }
 
 function ProductImageUpload<
@@ -42,6 +43,7 @@ function ProductImageUpload<
   label = "Imagen principal",
   maxSizeInMb = 5,
   name,
+  uploadUrl,
 }: ProductImageUploadProps<TFieldValues, TName>) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -60,6 +62,7 @@ function ProductImageUpload<
           inputRef={inputRef}
           label={label}
           maxSizeInMb={maxSizeInMb}
+          uploadUrl={uploadUrl}
         />
       )}
     />
@@ -75,6 +78,15 @@ type ImageUploadControlProps = {
   inputRef: React.RefObject<HTMLInputElement | null>
   label: string
   maxSizeInMb: number
+  uploadUrl: string
+}
+
+type UploadRouteResponse = {
+  expiresAt: string
+  headers: Record<string, string>
+  maxBytes?: number
+  objectKey: string
+  url: string
 }
 
 function ImageUploadControl({
@@ -86,10 +98,13 @@ function ImageUploadControl({
   inputRef,
   label,
   maxSizeInMb,
+  uploadUrl,
 }: ImageUploadControlProps) {
+  const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const value = (field.value ?? {
     fileName: "",
+    objectKey: "",
     src: "",
   }) as ProductImageValue
 
@@ -109,7 +124,7 @@ function ImageUploadControl({
             disabled={disabled}
             id={inputId}
             onBlur={field.onBlur}
-            onChange={(event) => {
+            onChange={async (event) => {
               const file = event.target.files?.[0]
 
               if (!file) {
@@ -120,6 +135,7 @@ function ImageUploadControl({
                 setUploadError("Solo puedes subir archivos de imagen.")
                 field.onChange({
                   fileName: "",
+                  objectKey: "",
                   src: "",
                 })
 
@@ -130,23 +146,74 @@ function ImageUploadControl({
                 setUploadError(`La imagen debe pesar menos de ${maxSizeInMb} MB.`)
                 field.onChange({
                   fileName: "",
+                  objectKey: "",
                   src: "",
                 })
 
                 return
               }
 
-              const reader = new FileReader()
+              setIsUploading(true)
 
-              reader.onload = () => {
+              try {
+                const previewUrl = URL.createObjectURL(file)
+                const uploadResponse = await fetch(uploadUrl, {
+                  body: JSON.stringify({
+                    contentType: file.type,
+                    fileName: file.name,
+                    size: file.size,
+                  }),
+                  headers: {
+                    "content-type": "application/json",
+                  },
+                  method: "POST",
+                })
+
+                const uploadPayload =
+                  (await uploadResponse.json().catch(() => null)) as
+                    | { error?: string }
+                    | UploadRouteResponse
+                    | null
+
+                if (!uploadResponse.ok || !uploadPayload || !("url" in uploadPayload)) {
+                  throw new Error(
+                    uploadPayload && "error" in uploadPayload && uploadPayload.error
+                      ? uploadPayload.error
+                      : "No se pudo preparar la carga de la imagen."
+                  )
+                }
+
+                const uploadResult = uploadPayload as UploadRouteResponse
+                const directUploadResponse = await fetch(uploadResult.url, {
+                  body: file,
+                  headers: uploadResult.headers,
+                  method: "PUT",
+                })
+
+                if (!directUploadResponse.ok) {
+                  throw new Error("No se pudo subir la imagen.")
+                }
+
                 setUploadError(null)
                 field.onChange({
                   fileName: file.name,
-                  src: String(reader.result ?? ""),
+                  objectKey: uploadResult.objectKey,
+                  src: previewUrl,
                 })
+              } catch (error) {
+                setUploadError(
+                  error instanceof Error
+                    ? error.message
+                    : "No se pudo subir la imagen."
+                )
+                field.onChange({
+                  fileName: "",
+                  objectKey: "",
+                  src: "",
+                })
+              } finally {
+                setIsUploading(false)
               }
-
-              reader.readAsDataURL(file)
             }}
             ref={inputRef}
             type="file"
@@ -185,6 +252,7 @@ function ImageUploadControl({
                         setUploadError(null)
                         field.onChange({
                           fileName: "",
+                          objectKey: "",
                           src: "",
                         })
 
@@ -212,9 +280,15 @@ function ImageUploadControl({
                   <ImagePlusIcon className="size-5" />
                 </span>
                 <div className="space-y-1">
-                  <p className="font-medium text-sm">Cargar imagen del producto</p>
+                  <p className="font-medium text-sm">
+                    {isUploading
+                      ? "Subiendo imagen del producto"
+                      : "Cargar imagen del producto"}
+                  </p>
                   <p className="text-muted-foreground text-sm">
-                    Haz clic para seleccionar una imagen
+                    {isUploading
+                      ? "Espera mientras preparamos la imagen."
+                      : "Haz clic para seleccionar una imagen"}
                   </p>
                 </div>
               </button>

@@ -134,7 +134,13 @@ export const CategoryField: Story = {
 export const ImageField: Story = {
   render: () => (
     <StoryForm>
-      {(form) => <ProductImageUpload control={form.control as any} name="image" />}
+      {(form) => (
+        <ProductImageUpload
+          control={form.control as any}
+          name="image"
+          uploadUrl="/api/products/image-upload"
+        />
+      )}
     </StoryForm>
   ),
 };
@@ -150,6 +156,7 @@ export const BasicsSection: Story = {
           deliveryIncludedName="deliveryIncluded"
           descriptionName="description"
           imageName="image"
+          imageUploadUrl="/api/products/image-upload"
           nameName="name"
           statusName="status"
           statusOptions={statusOptions}

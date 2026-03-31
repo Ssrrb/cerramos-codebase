@@ -19,10 +19,29 @@ export const productImageUploadSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "La imagen necesita un nombre de archivo." }),
+  objectKey: z
+    .string()
+    .trim()
+    .min(1, { message: "La imagen del producto es obligatoria." }),
   src: z
     .string()
     .trim()
     .min(1, { message: "La imagen del producto es obligatoria." }),
+});
+
+export const productImageUploadRequestSchema = z.object({
+  contentType: z.string().trim().min(1),
+  fileName: z.string().trim().min(1),
+  size: z
+    .coerce
+    .number({
+      error: "Ingresa un tamano valido.",
+    })
+    .int()
+    .positive()
+    .max(5 * 1024 * 1024, {
+      message: "La imagen debe pesar menos de 5 MB.",
+    }),
 });
 
 export const addProductFormSchema = z.object({
@@ -71,7 +90,7 @@ export const productPayloadSchema = z.object({
     .max(400, {
       message: "La descripcion debe tener 400 caracteres o menos.",
     }),
-  imageUrl: z
+  imageObjectKey: z
     .string()
     .trim()
     .min(1, { message: "La imagen del producto es obligatoria." }),
@@ -93,6 +112,9 @@ export const productPayloadSchema = z.object({
 });
 
 export type ProductImageUploadValue = z.infer<typeof productImageUploadSchema>;
+export type ProductImageUploadRequest = z.infer<
+  typeof productImageUploadRequestSchema
+>;
 export type AddProductFormValues = z.infer<typeof addProductFormSchema>;
 export type ProductPayload = z.infer<typeof productPayloadSchema>;
 
@@ -102,6 +124,7 @@ export const defaultAddProductFormValues: AddProductFormValues = {
   description: "",
   image: {
     fileName: "",
+    objectKey: "",
     src: "",
   },
   name: "",
@@ -115,7 +138,7 @@ export const toProductPayload = (
   category: values.category,
   deliveryIncluded: values.deliveryIncluded,
   description: values.description,
-  imageUrl: values.image.src,
+  imageObjectKey: values.image.objectKey,
   name: values.name,
   status: values.status,
   stock: values.stock,

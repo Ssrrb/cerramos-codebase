@@ -41,7 +41,7 @@ const applyServerFieldErrors = (
       continue;
     }
 
-    if (field === "imageUrl") {
+    if (field === "imageObjectKey") {
       form.setError("image", {
         message: messages[0],
       });
@@ -144,6 +144,7 @@ export const AddProductForm = ({ onSuccess }: AddProductFormProps) => {
           descriptionName="description"
           disabled={isPending}
           imageName="image"
+          imageUploadUrl="/api/products/image-upload"
           nameName="name"
           statusName="status"
           statusOptions={statusOptions}

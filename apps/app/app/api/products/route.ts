@@ -30,14 +30,14 @@ export const POST = async (request: Request) => {
     );
   }
 
-  const { imageUrl, ...rest } = result.data;
+  const { imageObjectKey, ...rest } = result.data;
 
   const [product] = await database
     .insert(schema.product)
     .values({
       commerceId: session.user.commerceId,
       ...rest,
-      image: imageUrl,
+      image: imageObjectKey,
     })
     .returning({
       id: schema.product.id,

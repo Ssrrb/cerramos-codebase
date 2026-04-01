@@ -1,4 +1,4 @@
-import { getSession } from "@repo/auth/server";
+import { requireCommerceIdForRequest } from "@repo/auth/server";
 import { createSignedUploadUrl } from "@repo/storage";
 import { buildProductImageKey } from "@repo/storage/product";
 import { NextResponse } from "next/server";
@@ -12,17 +12,10 @@ const ALLOWED_IMAGE_TYPES = new Set([
 ]);
 
 export const POST = async (request: Request) => {
-  const session = await getSession();
+  const commerceId = await requireCommerceIdForRequest();
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!session.user.commerceId) {
-    return NextResponse.json(
-      { error: "Commerce context is required." },
-      { status: 400 }
-    );
+  if (commerceId instanceof NextResponse) {
+    return commerceId;
   }
 
   const body = (await request.json().catch(() => null)) as unknown;
@@ -48,7 +41,7 @@ export const POST = async (request: Request) => {
   }
 
   const objectKey = buildProductImageKey({
-    commerceId: session.user.commerceId,
+    commerceId,
     fileName: result.data.fileName,
   });
 

@@ -1,9 +1,10 @@
+import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
-  getSessionMock,
   isMissingRelationErrorMock,
   isUniqueConstraintErrorMock,
+  requireCommerceIdForRequestMock,
   selectFromMock,
   selectMock,
   selectWhereMock,
@@ -12,9 +13,9 @@ const {
   updateSetMock,
   updateWhereMock,
 } = vi.hoisted(() => ({
-  getSessionMock: vi.fn(),
   isMissingRelationErrorMock: vi.fn(),
   isUniqueConstraintErrorMock: vi.fn(),
+  requireCommerceIdForRequestMock: vi.fn(),
   selectFromMock: vi.fn(),
   selectMock: vi.fn(),
   selectWhereMock: vi.fn(),
@@ -25,7 +26,7 @@ const {
 }));
 
 vi.mock("@repo/auth/server", () => ({
-  getSession: getSessionMock,
+  requireCommerceIdForRequest: requireCommerceIdForRequestMock,
 }));
 
 vi.mock("@repo/database", () => ({
@@ -53,9 +54,9 @@ vi.mock("@repo/database", () => ({
 describe("product link by id route", () => {
   beforeEach(() => {
     vi.resetModules();
-    getSessionMock.mockReset();
     isMissingRelationErrorMock.mockReset();
     isUniqueConstraintErrorMock.mockReset();
+    requireCommerceIdForRequestMock.mockReset();
     selectMock.mockReset();
     selectFromMock.mockReset();
     selectWhereMock.mockReset();
@@ -87,12 +88,7 @@ describe("product link by id route", () => {
   });
 
   test("returns 404 when the product link does not exist", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([]);
 
     const { PATCH } = await import("./route");
@@ -127,12 +123,7 @@ describe("product link by id route", () => {
   });
 
   test("rejects changing the linked product", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "link_1",
@@ -174,12 +165,7 @@ describe("product link by id route", () => {
   });
 
   test("rejects duplicate slugs when updating", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "link_1",
@@ -225,12 +211,7 @@ describe("product link by id route", () => {
   });
 
   test("rejects past expiration dates when updating", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "link_1",
@@ -277,12 +258,7 @@ describe("product link by id route", () => {
   });
 
   test("maps database uniqueness races for slug to a friendly conflict", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "link_1",
@@ -337,12 +313,7 @@ describe("product link by id route", () => {
   });
 
   test("updates the link when the payload is valid", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "link_1",
@@ -401,12 +372,7 @@ describe("product link by id route", () => {
   });
 
   test("returns a migration error when ProductLink is missing", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     selectWhereMock.mockRejectedValueOnce(new Error("relation missing"));
     isMissingRelationErrorMock.mockReturnValue(true);
 
@@ -441,5 +407,78 @@ describe("product link by id route", () => {
         "Los links publicos no estan disponibles en esta base de datos. Ejecuta bun run db:migrate para aplicar las migraciones pendientes.",
     });
     expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  test("returns auth errors from the shared commerce resolver", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue(
+      NextResponse.json(
+        { error: "Commerce context is required." },
+        { status: 400 }
+      )
+    );
+
+    const { PATCH } = await import("./route");
+    const response = await PATCH(
+      new Request("http://localhost/api/product-links/link_1", {
+        body: JSON.stringify({}),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      }),
+      {
+        params: Promise.resolve({
+          linkId: "link_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Commerce context is required.",
+    });
+  });
+
+  test("updates the link when commerce id is resolved from the database instead of the session cookie", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        id: "link_1",
+        productId: "product_1",
+        productImage: "products/commerce_1/images/mate.png",
+        productStatus: "active",
+      },
+    ]);
+    selectWhereMock.mockResolvedValueOnce([]);
+    updateReturningMock.mockResolvedValue([{ id: "link_db_resolved" }]);
+
+    const { PATCH } = await import("./route");
+    const response = await PATCH(
+      new Request("http://localhost/api/product-links/link_1", {
+        body: JSON.stringify({
+          deliveryEnabled: false,
+          description: "Oferta ajustada",
+          expiresAt: "",
+          paymentRequired: true,
+          pickupEnabled: true,
+          productId: "product_1",
+          slug: "mate-vip-db",
+          status: "active",
+          title: "Mate VIP DB",
+          unitPrice: 180_000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      }),
+      {
+        params: Promise.resolve({
+          linkId: "link_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      id: "link_db_resolved",
+      success: true,
+    });
   });
 });

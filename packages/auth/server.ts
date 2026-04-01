@@ -7,6 +7,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { nextCookies } from "better-auth/next-js";
 import { asc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { keys } from "./keys";
@@ -207,6 +208,25 @@ export const requireCommerceContext = async (): Promise<AuthenticatedAppContext>
   }
 
   return context;
+};
+
+export const requireCommerceIdForRequest = async () => {
+  const session = await getSessionState();
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const activeCommerce = await getCurrentCommerce();
+
+  if (!activeCommerce) {
+    return NextResponse.json(
+      { error: "Commerce context is required." },
+      { status: 400 }
+    );
+  }
+
+  return activeCommerce.id;
 };
 
 export const auth = async (): Promise<AuthContext> => {

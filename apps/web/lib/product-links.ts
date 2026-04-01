@@ -227,7 +227,7 @@ export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
     trustState: record.trustState,
   },
   orderSummary: {
-    badgeLabel: "Checkout seguro",
+    badgeLabel: "",
     helperText:
       "El pedido se crea con snapshot inmutable y el servidor vuelve a validar precio, disponibilidad y vigencia.",
     rows: [

@@ -1,4 +1,4 @@
-import { getSession } from "@repo/auth/server";
+import { requireCommerceIdForRequest } from "@repo/auth/server";
 import { database, schema } from "@repo/database";
 import { NextResponse } from "next/server";
 import {
@@ -7,17 +7,10 @@ import {
 } from "@/lib/products";
 
 export const POST = async (request: Request) => {
-  const session = await getSession();
+  const commerceId = await requireCommerceIdForRequest();
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!session.user.commerceId) {
-    return NextResponse.json(
-      { error: "Commerce context is required." },
-      { status: 400 }
-    );
+  if (commerceId instanceof NextResponse) {
+    return commerceId;
   }
 
   const body = (await request.json().catch(() => null)) as unknown;
@@ -58,7 +51,7 @@ export const POST = async (request: Request) => {
   const [product] = await database
     .insert(schema.product)
     .values({
-      commerceId: session.user.commerceId,
+      commerceId,
       ...rest,
       image: imageObjectKey,
       images,

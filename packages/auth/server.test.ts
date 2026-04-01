@@ -231,4 +231,63 @@ describe("auth server commerce context", () => {
 
     await expect(requireCommerceContext()).rejects.toThrow("redirect:/onboarding");
   });
+
+  test("returns 401 for request handlers when there is no session", async () => {
+    getSessionMock.mockResolvedValue(null);
+
+    const { requireCommerceIdForRequest } = await import("./server");
+    const response = await requireCommerceIdForRequest();
+
+    expect(response).toBeInstanceOf(Response);
+    expect((response as Response).status).toBe(401);
+    await expect((response as Response).json()).resolves.toEqual({
+      error: "Unauthorized",
+    });
+  });
+
+  test("returns 400 for request handlers when no commerce can be resolved", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: null,
+        email: "owner@example.com",
+        id: "user_1",
+        image: null,
+        name: "Sebastian",
+      },
+    });
+    limitMock.mockResolvedValue([]);
+
+    const { requireCommerceIdForRequest } = await import("./server");
+    const response = await requireCommerceIdForRequest();
+
+    expect(response).toBeInstanceOf(Response);
+    expect((response as Response).status).toBe(400);
+    await expect((response as Response).json()).resolves.toEqual({
+      error: "Commerce context is required.",
+    });
+  });
+
+  test("returns the database commerce id for request handlers when the session cookie is stale", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: null,
+        email: "owner@example.com",
+        id: "user_1",
+        image: "https://example.com/avatar.png",
+        name: "Sebastian",
+      },
+    });
+    limitMock.mockResolvedValue([
+      {
+        id: "commerce_1",
+        name: "Tienda Centro",
+        role: "merchant_admin",
+        slug: "tienda-centro",
+      },
+    ]);
+
+    const { requireCommerceIdForRequest } = await import("./server");
+
+    await expect(requireCommerceIdForRequest()).resolves.toBe("commerce_1");
+  });
 });

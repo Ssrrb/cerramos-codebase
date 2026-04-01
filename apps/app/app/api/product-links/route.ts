@@ -1,4 +1,4 @@
-import { getSession } from "@repo/auth/server";
+import { requireCommerceIdForRequest } from "@repo/auth/server";
 import {
   database,
   isMissingRelationError,
@@ -14,23 +14,6 @@ import {
   productLinksMigrationRequiredMessage,
   singleProductLinkPerProductMessage,
 } from "@/lib/product-links";
-
-const getCommerceId = async () => {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!session.user.commerceId) {
-    return NextResponse.json(
-      { error: "Commerce context is required." },
-      { status: 400 }
-    );
-  }
-
-  return session.user.commerceId;
-};
 
 const resolveProductForCommerce = async (
   commerceId: string,
@@ -78,7 +61,7 @@ const validatePublishState = ({
 };
 
 export const POST = async (request: Request) => {
-  const commerceId = await getCommerceId();
+  const commerceId = await requireCommerceIdForRequest();
 
   if (commerceId instanceof NextResponse) {
     return commerceId;

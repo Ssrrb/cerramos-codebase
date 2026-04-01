@@ -1,15 +1,20 @@
+import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { getSessionMock, insertMock, insertReturningMock, insertValuesMock } =
-  vi.hoisted(() => ({
-    getSessionMock: vi.fn(),
-    insertMock: vi.fn(),
-    insertReturningMock: vi.fn(),
-    insertValuesMock: vi.fn(),
-  }));
+const {
+  insertMock,
+  insertReturningMock,
+  insertValuesMock,
+  requireCommerceIdForRequestMock,
+} = vi.hoisted(() => ({
+  insertMock: vi.fn(),
+  insertReturningMock: vi.fn(),
+  insertValuesMock: vi.fn(),
+  requireCommerceIdForRequestMock: vi.fn(),
+}));
 
 vi.mock("@repo/auth/server", () => ({
-  getSession: getSessionMock,
+  requireCommerceIdForRequest: requireCommerceIdForRequestMock,
 }));
 
 vi.mock("@repo/database", () => ({
@@ -26,10 +31,10 @@ vi.mock("@repo/database", () => ({
 describe("products route", () => {
   beforeEach(() => {
     vi.resetModules();
-    getSessionMock.mockReset();
     insertMock.mockReset();
     insertReturningMock.mockReset();
     insertValuesMock.mockReset();
+    requireCommerceIdForRequestMock.mockReset();
 
     insertMock.mockImplementation(() => ({
       values: insertValuesMock,
@@ -40,7 +45,9 @@ describe("products route", () => {
   });
 
   test("rejects unauthenticated requests", async () => {
-    getSessionMock.mockResolvedValue(null);
+    requireCommerceIdForRequestMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -57,12 +64,12 @@ describe("products route", () => {
   });
 
   test("rejects users without a commerce context", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: null,
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue(
+      NextResponse.json(
+        { error: "Commerce context is required." },
+        { status: 400 }
+      )
+    );
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -81,12 +88,7 @@ describe("products route", () => {
   });
 
   test("rejects invalid payloads", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -124,12 +126,7 @@ describe("products route", () => {
   });
 
   test("creates a product for the authenticated commerce", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     insertReturningMock.mockResolvedValue([{ id: "product_1" }]);
 
     const { POST } = await import("./route");
@@ -174,12 +171,7 @@ describe("products route", () => {
   test("normalizes bucket-prefixed image object keys before inserting", async () => {
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
 
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     insertReturningMock.mockResolvedValue([{ id: "product_2" }]);
 
     const { POST } = await import("./route");
@@ -219,12 +211,7 @@ describe("products route", () => {
   });
 
   test("rejects blob preview urls as product image keys", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
 
     const { POST } = await import("./route");
     const response = await POST(
@@ -252,5 +239,39 @@ describe("products route", () => {
       },
     });
     expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  test("creates a product when commerce id is resolved from the database instead of the session cookie", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    insertReturningMock.mockResolvedValue([{ id: "product_db_resolved" }]);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/products", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Licuadora premium para tu cocina diaria.",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      id: "product_db_resolved",
+      success: true,
+    });
+    expect(insertValuesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commerceId: "commerce_1",
+      })
+    );
   });
 });

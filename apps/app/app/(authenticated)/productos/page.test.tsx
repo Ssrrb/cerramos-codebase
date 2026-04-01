@@ -1,16 +1,17 @@
 import { describe, expect, test, vi } from "vitest";
 
-const { requireCommerceContextMock, selectMock, fromMock, whereMock, orderByMock } =
-  vi.hoisted(() => ({
-    fromMock: vi.fn(),
-    orderByMock: vi.fn(),
-    requireCommerceContextMock: vi.fn(),
-    selectMock: vi.fn(),
-    whereMock: vi.fn(),
-  }));
-
-const { createSignedReadUrlMock } = vi.hoisted(() => ({
-  createSignedReadUrlMock: vi.fn(),
+const {
+  requireCommerceContextMock,
+  selectMock,
+  fromMock,
+  whereMock,
+  orderByMock,
+} = vi.hoisted(() => ({
+  fromMock: vi.fn(),
+  orderByMock: vi.fn(),
+  requireCommerceContextMock: vi.fn(),
+  selectMock: vi.fn(),
+  whereMock: vi.fn(),
 }));
 
 vi.mock("@repo/auth/server", () => ({
@@ -33,12 +34,9 @@ vi.mock("@repo/database", () => ({
       name: "product.name",
       status: "product.status",
       stock: "product.stock",
+      unitPrice: "product.unitPrice",
     },
   },
-}));
-
-vi.mock("@repo/storage", () => ({
-  createSignedReadUrl: createSignedReadUrlMock,
 }));
 
 vi.mock("./products-view", () => ({
@@ -48,7 +46,9 @@ vi.mock("./products-view", () => ({
 }));
 
 describe("products page", () => {
-  test("resolves stored object keys into signed image URLs", async () => {
+  test("maps stored object keys to same-origin product image routes", async () => {
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+
     requireCommerceContextMock.mockResolvedValue({
       commerce: {
         id: "commerce_1",
@@ -74,29 +74,40 @@ describe("products page", () => {
         name: "Licuadora Cerramos",
         status: "active",
         stock: 14,
+        unitPrice: 185_000,
       },
       {
         category: "Electrodomesticos",
         deliveryIncluded: false,
         description: "Descripcion",
         id: "product_2",
+        image: "imagenes-cerramos/products/commerce_1/images/bucket-object.png",
+        name: "Bucket prefixed",
+        status: "draft",
+        stock: 1,
+        unitPrice: 99_000,
+      },
+      {
+        category: "Electrodomesticos",
+        deliveryIncluded: false,
+        description: "Descripcion",
+        id: "product_3",
         image: "/productos/legacy.png",
         name: "Legacy",
         status: "draft",
         stock: 1,
+        unitPrice: 50_000,
       },
     ]);
-    createSignedReadUrlMock.mockResolvedValue({
-      url: "https://signed.example.test/object.png",
-    });
-
     const { default: ProductsPage } = await import("./page");
     const rendered = await ProductsPage();
 
-    expect(createSignedReadUrlMock).toHaveBeenCalledWith({
-      objectKey: "products/commerce_1/images/object.png",
-    });
-    expect(JSON.stringify(rendered)).toContain("https://signed.example.test/object.png");
+    expect(JSON.stringify(rendered)).toContain(
+      "/api/products/image?objectKey=products%2Fcommerce_1%2Fimages%2Fobject.png"
+    );
+    expect(JSON.stringify(rendered)).toContain(
+      "/api/products/image?objectKey=products%2Fcommerce_1%2Fimages%2Fbucket-object.png"
+    );
     expect(JSON.stringify(rendered)).toContain("/productos/legacy.png");
   });
 });

@@ -170,4 +170,87 @@ describe("products route", () => {
       unitPrice: 185000,
     });
   });
+
+  test("normalizes bucket-prefixed image object keys before inserting", async () => {
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: "commerce_1",
+        id: "user_1",
+      },
+    });
+    insertReturningMock.mockResolvedValue([{ id: "product_2" }]);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/products", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: false,
+          description: "Descripcion",
+          imageObjectKey:
+            "imagenes-cerramos/products/commerce_1/images/object.png",
+          name: "Producto con bucket",
+          status: "draft",
+          stock: 3,
+          unitPrice: 5000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(insertValuesMock).toHaveBeenCalledWith({
+      category: "Electrodomesticos",
+      commerceId: "commerce_1",
+      deliveryIncluded: false,
+      description: "Descripcion",
+      image: "products/commerce_1/images/object.png",
+      images: {
+        primary: "products/commerce_1/images/object.png",
+      },
+      name: "Producto con bucket",
+      status: "draft",
+      stock: 3,
+      unitPrice: 5000,
+    });
+  });
+
+  test("rejects blob preview urls as product image keys", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: "commerce_1",
+        id: "user_1",
+      },
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/products", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: false,
+          description: "Descripcion",
+          imageObjectKey: "blob:preview-image",
+          name: "Producto invalido",
+          status: "draft",
+          stock: 3,
+          unitPrice: 5000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      })
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Invalid product data.",
+      fieldErrors: {
+        imageObjectKey: ["La imagen del producto es obligatoria."],
+      },
+    });
+    expect(insertMock).not.toHaveBeenCalled();
+  });
 });

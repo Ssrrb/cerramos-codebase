@@ -32,8 +32,7 @@ export const productImageUploadSchema = z.object({
 export const productImageUploadRequestSchema = z.object({
   contentType: z.string().trim().min(1),
   fileName: z.string().trim().min(1),
-  size: z
-    .coerce
+  size: z.coerce
     .number({
       error: "Ingresa un tamano valido.",
     })
@@ -64,8 +63,7 @@ export const addProductFormSchema = z.object({
     .trim()
     .min(1, { message: "El nombre del producto es obligatorio." })
     .max(80, { message: "El nombre debe tener 80 caracteres o menos." }),
-  unitPrice: z
-    .coerce
+  unitPrice: z.coerce
     .number({
       error: "Ingresa un precio valido.",
     })
@@ -74,8 +72,7 @@ export const addProductFormSchema = z.object({
   status: z.enum(productStatusValues, {
     error: "Selecciona un estado valido.",
   }),
-  stock: z
-    .coerce
+  stock: z.coerce
     .number({
       error: "Ingresa una cantidad valida.",
     })
@@ -106,8 +103,7 @@ export const productPayloadSchema = z.object({
     .trim()
     .min(1, { message: "El nombre del producto es obligatorio." })
     .max(80, { message: "El nombre debe tener 80 caracteres o menos." }),
-  unitPrice: z
-    .coerce
+  unitPrice: z.coerce
     .number({
       error: "Ingresa un precio valido.",
     })
@@ -116,8 +112,7 @@ export const productPayloadSchema = z.object({
   status: z.enum(productStatusValues, {
     error: "Selecciona un estado valido.",
   }),
-  stock: z
-    .coerce
+  stock: z.coerce
     .number({
       error: "Ingresa una cantidad valida.",
     })
@@ -131,6 +126,65 @@ export type ProductImageUploadRequest = z.infer<
 >;
 export type AddProductFormValues = z.infer<typeof addProductFormSchema>;
 export type ProductPayload = z.infer<typeof productPayloadSchema>;
+
+export interface ProductTableRow {
+  category: string;
+  deliveryIncluded: boolean;
+  description: string;
+  id: string;
+  image: string;
+  imageObjectKey: string;
+  name: string;
+  status: ProductStatus;
+  stock: number;
+  unitPrice: number;
+}
+
+const LEADING_SLASHES_PATTERN = /^\/+/;
+
+const trimLeadingSlashes = (value: string) =>
+  value.replace(LEADING_SLASHES_PATTERN, "");
+
+export const normalizeProductImageObjectKey = (
+  value: string,
+  bucketName?: string
+) => {
+  const trimmedValue = value.trim();
+
+  if (
+    !trimmedValue ||
+    trimmedValue.startsWith("blob:") ||
+    trimmedValue.startsWith("data:") ||
+    trimmedValue.startsWith("http://") ||
+    trimmedValue.startsWith("https://") ||
+    trimmedValue.startsWith("/")
+  ) {
+    return "";
+  }
+
+  if (!bucketName) {
+    return trimmedValue;
+  }
+
+  const trimmedBucketName = bucketName.trim().replace(/\/+$/g, "");
+
+  if (!trimmedBucketName) {
+    return trimmedValue;
+  }
+
+  const bucketPrefixes = [
+    `${trimmedBucketName}/`,
+    `gs://${trimmedBucketName}/`,
+  ];
+
+  for (const prefix of bucketPrefixes) {
+    if (trimmedValue.startsWith(prefix)) {
+      return trimLeadingSlashes(trimmedValue.slice(prefix.length));
+    }
+  }
+
+  return trimmedValue;
+};
 
 export const defaultAddProductFormValues: AddProductFormValues = {
   category: productCategorySuggestions[0],
@@ -148,29 +202,21 @@ export const defaultAddProductFormValues: AddProductFormValues = {
 };
 
 export const toProductPayload = (
-  values: AddProductFormValues
+  values: AddProductFormValues,
+  bucketName?: string
 ): ProductPayload => ({
   category: values.category,
   deliveryIncluded: values.deliveryIncluded,
   description: values.description,
-  imageObjectKey: values.image.objectKey,
+  imageObjectKey: normalizeProductImageObjectKey(
+    values.image.objectKey,
+    bucketName
+  ),
   name: values.name,
   status: values.status,
   stock: values.stock,
   unitPrice: values.unitPrice,
 });
-
-export interface ProductTableRow {
-  category: string;
-  deliveryIncluded: boolean;
-  description: string;
-  id: string;
-  image: string;
-  name: string;
-  status: ProductStatus;
-  stock: number;
-  unitPrice: number;
-}
 
 export const formatProductStatusLabel = (status: ProductStatus) => {
   switch (status) {
@@ -179,6 +225,8 @@ export const formatProductStatusLabel = (status: ProductStatus) => {
     case "inactive":
       return "Inactivo";
     case "draft":
+      return "Borrador";
+    default:
       return "Borrador";
   }
 };

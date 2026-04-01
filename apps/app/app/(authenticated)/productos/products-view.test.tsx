@@ -4,13 +4,10 @@ import type { ReactNode } from "react";
 import { describe, expect, test, vi } from "vitest";
 
 vi.mock("next/image", () => ({
-  default: ({
-    alt,
-    src,
-  }: {
-    alt: string;
-    src: string;
-  }) => <img alt={alt} src={src} />,
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    /* biome-ignore lint/performance/noImgElement: test double for next/image */
+    <img alt={alt} height={1} src={src} width={1} />
+  ),
 }));
 
 vi.mock("./new-product-sheet-button", () => ({
@@ -26,17 +23,18 @@ vi.mock("./columns", () => ({
 vi.mock("./data-table", () => ({
   DataTable: ({
     data,
-      }: {
-        data: Array<{
-          category: string;
-          deliveryIncluded: boolean;
-          image: string;
-          name: string;
-          status: string;
-          stock: number;
-          unitPrice: number;
-        }>;
-      }) => {
+  }: {
+    data: Array<{
+      category: string;
+      deliveryIncluded: boolean;
+      image: string;
+      imageObjectKey: string;
+      name: string;
+      status: string;
+      stock: number;
+      unitPrice: number;
+    }>;
+  }) => {
     const firstImage = data[0]?.image;
 
     return (
@@ -88,10 +86,11 @@ describe("ProductsView", () => {
             description: "Descripcion extensa",
             id: "product_1",
             image: "/productos/licuadora.png",
+            imageObjectKey: "products/commerce_1/images/licuadora.png",
             name: "Licuadora Cerramos",
             status: "active",
             stock: 14,
-            unitPrice: 185000,
+            unitPrice: 185_000,
           },
         ]}
       />

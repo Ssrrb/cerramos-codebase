@@ -1,23 +1,17 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import Image from "next/image";
 import { Badge } from "@repo/design-system/components/ui/badge";
 import { Button } from "@repo/design-system/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@repo/design-system/components/ui/dropdown-menu";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
+import Image from "next/image";
 import {
   formatDeliveryIncludedLabel,
   formatProductStatusLabel,
   formatProductUnitPriceLabel,
   type ProductTableRow,
 } from "@/lib/products";
+import { ProductRowActions } from "./product-row-actions";
 
 export const columns: ColumnDef<ProductTableRow>[] = [
   {
@@ -67,7 +61,9 @@ export const columns: ColumnDef<ProductTableRow>[] = [
       );
     },
     cell: ({ row }) => (
-      <Badge variant={row.original.status === "active" ? "default" : "secondary"}>
+      <Badge
+        variant={row.original.status === "active" ? "default" : "secondary"}
+      >
         {formatProductStatusLabel(row.original.status)}
       </Badge>
     ),
@@ -75,7 +71,8 @@ export const columns: ColumnDef<ProductTableRow>[] = [
   {
     accessorKey: "unitPrice",
     header: "Precio",
-    cell: ({ row }) => `Gs. ${formatProductUnitPriceLabel(row.original.unitPrice)}`,
+    cell: ({ row }) =>
+      `Gs. ${formatProductUnitPriceLabel(row.original.unitPrice)}`,
   },
   {
     accessorKey: "stock",
@@ -88,7 +85,8 @@ export const columns: ColumnDef<ProductTableRow>[] = [
   {
     accessorKey: "deliveryIncluded",
     header: "Delivery",
-    cell: ({ row }) => formatDeliveryIncludedLabel(row.original.deliveryIncluded),
+    cell: ({ row }) =>
+      formatDeliveryIncludedLabel(row.original.deliveryIncluded),
   },
   {
     accessorKey: "description",
@@ -96,27 +94,6 @@ export const columns: ColumnDef<ProductTableRow>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const product = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="h-8 w-8 p-0" variant="ghost">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(product.id)}
-            >
-              Copy product ID
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <ProductRowActions product={row.original} />,
   },
 ];

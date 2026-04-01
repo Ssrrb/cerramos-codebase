@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const { fetchMock, refreshMock } = vi.hoisted(() => ({
@@ -10,9 +16,15 @@ vi.stubGlobal("fetch", fetchMock);
 vi.stubGlobal(
   "ResizeObserver",
   class ResizeObserver {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
+    disconnect() {
+      // test stub
+    }
+    observe() {
+      // test stub
+    }
+    unobserve() {
+      // test stub
+    }
   }
 );
 vi.stubGlobal("URL", {
@@ -26,13 +38,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/image", () => ({
-  default: ({
-    alt,
-    src,
-  }: {
-    alt: string;
-    src: string;
-  }) => <img alt={alt} src={src} />,
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    /* biome-ignore lint/performance/noImgElement: test double for next/image */
+    <img alt={alt} height={1} src={src} width={1} />
+  ),
 }));
 
 import { AddProductForm } from "./add-product-form";
@@ -92,7 +101,7 @@ describe("add product form", () => {
       target: { value: "14", valueAsNumber: 14 },
     });
     fireEvent.change(screen.getByLabelText("Precio"), {
-      target: { value: "185000", valueAsNumber: 185000 },
+      target: { value: "185000", valueAsNumber: 185_000 },
     });
 
     const file = new File(["image"], "licuadora.png", { type: "image/png" });
@@ -105,25 +114,33 @@ describe("add product form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/products/image-upload", {
-        body: JSON.stringify({
-          contentType: "image/png",
-          fileName: "licuadora.png",
-          size: 5,
-        }),
-        headers: {
-          "content-type": "application/json",
-        },
-        method: "POST",
-      })
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        "/api/products/image-upload",
+        {
+          body: JSON.stringify({
+            contentType: "image/png",
+            fileName: "licuadora.png",
+            size: 5,
+          }),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "POST",
+        }
+      )
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "https://upload.example.test", {
-      body: file,
-      headers: {
-        "content-type": "image/png",
-      },
-      method: "PUT",
-    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://upload.example.test",
+      {
+        body: file,
+        headers: {
+          "content-type": "image/png",
+        },
+        method: "PUT",
+      }
+    );
     expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/products", {
       body: JSON.stringify({
         category: "Electrodomesticos",
@@ -133,13 +150,78 @@ describe("add product form", () => {
         name: "Licuadora Cerramos",
         status: "draft",
         stock: 14,
-        unitPrice: 185000,
+        unitPrice: 185_000,
       }),
       headers: {
         "content-type": "application/json",
       },
       method: "POST",
     });
+
+    expect(refreshMock).toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  test("submits product edits without forcing an image re-upload", async () => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({
+        id: "product_1",
+        success: true,
+      }),
+      ok: true,
+    });
+
+    const onSuccess = vi.fn();
+
+    render(
+      <AddProductForm
+        mode="edit"
+        onSuccess={onSuccess}
+        product={{
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Descripcion original",
+          id: "product_1",
+          image: "https://cdn.example.test/licuadora.png",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }}
+      />
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Describe que hace especial a este producto."
+      ),
+      {
+        target: { value: "Licuadora premium actualizada para cocina diaria." },
+      }
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/products/product_1", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Licuadora premium actualizada para cocina diaria.",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "PATCH",
+      })
+    );
 
     expect(refreshMock).toHaveBeenCalled();
     expect(onSuccess).toHaveBeenCalled();
@@ -189,7 +271,7 @@ describe("add product form", () => {
       target: { value: "14", valueAsNumber: 14 },
     });
     fireEvent.change(screen.getByLabelText("Precio"), {
-      target: { value: "185000", valueAsNumber: 185000 },
+      target: { value: "185000", valueAsNumber: 185_000 },
     });
     const file = new File(["image"], "licuadora.png", { type: "image/png" });
     fireEvent.change(screen.getByLabelText("Imagen principal"), {
@@ -234,13 +316,78 @@ describe("add product form", () => {
   test("does not pass NaN to the stock input when the field is cleared", () => {
     render(<AddProductForm />);
 
-    fireEvent.change(screen.getAllByPlaceholderText("0")[0] as HTMLInputElement, {
-      target: { value: "", valueAsNumber: Number.NaN },
-    });
+    fireEvent.change(
+      screen.getAllByPlaceholderText("0")[0] as HTMLInputElement,
+      {
+        target: { value: "", valueAsNumber: Number.NaN },
+      }
+    );
 
-    expect((screen.getAllByPlaceholderText("0")[0] as HTMLInputElement).value).toBe("0");
+    expect(
+      (screen.getAllByPlaceholderText("0")[0] as HTMLInputElement).value
+    ).toBe("0");
     expect(consoleErrorSpy).not.toHaveBeenCalledWith(
       expect.stringContaining("Received NaN for the `value` attribute")
+    );
+  });
+
+  test("does not submit blob preview values as image object keys", async () => {
+    fetchMock.mockReset();
+    fetchMock
+      .mockResolvedValueOnce({
+        json: async () => ({
+          headers: {
+            "content-type": "image/png",
+          },
+          method: "PUT",
+          objectKey: "blob:preview-image",
+          url: "https://upload.example.test",
+        }),
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+      });
+
+    render(<AddProductForm />);
+
+    fireEvent.change(screen.getByPlaceholderText("Ej. Licuadora Oster 700W"), {
+      target: { value: "Licuadora Cerramos" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Describe que hace especial a este producto."
+      ),
+      {
+        target: { value: "Licuadora premium para tu cocina diaria." },
+      }
+    );
+    fireEvent.change(screen.getByLabelText("Stock"), {
+      target: { value: "14", valueAsNumber: 14 },
+    });
+    fireEvent.change(screen.getByLabelText("Precio"), {
+      target: { value: "185000", valueAsNumber: 185_000 },
+    });
+
+    const file = new File(["image"], "licuadora.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Imagen principal"), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("La imagen del producto es obligatoria.")
+      ).toBeDefined()
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).not.toHaveBeenNthCalledWith(
+      3,
+      "/api/products",
+      expect.anything()
     );
   });
 });

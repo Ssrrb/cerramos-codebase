@@ -1,12 +1,19 @@
 import { getSession } from "@repo/auth/server";
 import { database, schema } from "@repo/database";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
   normalizeProductImageObjectKey,
   productPayloadSchema,
 } from "@/lib/products";
 
-export const POST = async (request: Request) => {
+interface ProductRouteContext {
+  params: Promise<{
+    productId: string;
+  }>;
+}
+
+const getCommerceId = async () => {
   const session = await getSession();
 
   if (!session) {
@@ -18,6 +25,16 @@ export const POST = async (request: Request) => {
       { error: "Commerce context is required." },
       { status: 400 }
     );
+  }
+
+  return session.user.commerceId;
+};
+
+export const PATCH = async (request: Request, context: ProductRouteContext) => {
+  const commerceId = await getCommerceId();
+
+  if (commerceId instanceof NextResponse) {
+    return commerceId;
   }
 
   const body = (await request.json().catch(() => null)) as unknown;
@@ -50,25 +67,76 @@ export const POST = async (request: Request) => {
     );
   }
 
+  const { productId } = await context.params;
   const { imageObjectKey: _ignoredImageObjectKey, ...rest } = result.data;
   const images = {
     primary: imageObjectKey,
   };
 
   const [product] = await database
-    .insert(schema.product)
-    .values({
-      commerceId: session.user.commerceId,
+    .update(schema.product)
+    .set({
       ...rest,
       image: imageObjectKey,
       images,
     })
+    .where(
+      and(
+        eq(schema.product.commerceId, commerceId),
+        eq(schema.product.id, productId)
+      )
+    )
     .returning({
       id: schema.product.id,
     });
+
+  if (!product) {
+    return NextResponse.json({ error: "Product not found." }, { status: 404 });
+  }
 
   return NextResponse.json({
     id: product.id,
     success: true,
   });
+};
+
+export const DELETE = async (
+  _request: Request,
+  context: ProductRouteContext
+) => {
+  const commerceId = await getCommerceId();
+
+  if (commerceId instanceof NextResponse) {
+    return commerceId;
+  }
+
+  const { productId } = await context.params;
+
+  try {
+    const [product] = await database
+      .delete(schema.product)
+      .where(
+        and(
+          eq(schema.product.commerceId, commerceId),
+          eq(schema.product.id, productId)
+        )
+      )
+      .returning({
+        id: schema.product.id,
+      });
+
+    if (!product) {
+      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      id: product.id,
+      success: true,
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "No se pudo eliminar el producto." },
+      { status: 500 }
+    );
+  }
 };

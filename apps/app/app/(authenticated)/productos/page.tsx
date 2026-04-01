@@ -1,7 +1,7 @@
 import { requireCommerceContext } from "@repo/auth/server";
 import { database, schema } from "@repo/database";
-import { createSignedReadUrl } from "@repo/storage";
 import { desc, eq } from "drizzle-orm";
+import { normalizeProductImageObjectKey } from "@/lib/products";
 import { ProductsView } from "./products-view";
 
 const resolveProductImage = async (image: string) => {
@@ -18,11 +18,16 @@ const resolveProductImage = async (image: string) => {
     return image;
   }
 
-  return (
-    await createSignedReadUrl({
-      objectKey: image,
-    })
-  ).url;
+  const objectKey = normalizeProductImageObjectKey(
+    image,
+    process.env.GCS_BUCKET_NAME
+  );
+
+  if (!objectKey) {
+    return "";
+  }
+
+  return `/api/products/image?objectKey=${encodeURIComponent(objectKey)}`;
 };
 
 const ProductsPage = async () => {
@@ -34,6 +39,7 @@ const ProductsPage = async () => {
       description: schema.product.description,
       id: schema.product.id,
       image: schema.product.image,
+      imageObjectKey: schema.product.image,
       name: schema.product.name,
       status: schema.product.status,
       stock: schema.product.stock,

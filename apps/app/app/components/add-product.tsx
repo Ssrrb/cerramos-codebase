@@ -22,8 +22,7 @@ const AddProduct = () => {
           <SheetHeader className="space-y-2 pr-8">
             <SheetTitle>Nuevo producto</SheetTitle>
             <SheetDescription>
-              Construye el producto paso a paso con componentes compartidos del
-              design system.
+              Agrega un nuevo producto o servicio a tu catalogo.
             </SheetDescription>
           </SheetHeader>
           <AddProductForm onSuccess={() => closeButtonRef.current?.click()} />

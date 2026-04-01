@@ -158,6 +158,7 @@ export const BasicsSection: Story = {
           imageName="image"
           imageUploadUrl="/api/products/image-upload"
           nameName="name"
+          priceName="unitPrice"
           statusName="status"
           statusOptions={statusOptions}
           stockName="stock"

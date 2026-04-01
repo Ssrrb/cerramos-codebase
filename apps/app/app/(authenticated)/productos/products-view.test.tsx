@@ -26,16 +26,17 @@ vi.mock("./columns", () => ({
 vi.mock("./data-table", () => ({
   DataTable: ({
     data,
-  }: {
-    data: Array<{
-      category: string;
-      deliveryIncluded: boolean;
-      image: string;
-      name: string;
-      status: string;
-      stock: number;
-    }>;
-  }) => {
+      }: {
+        data: Array<{
+          category: string;
+          deliveryIncluded: boolean;
+          image: string;
+          name: string;
+          status: string;
+          stock: number;
+          unitPrice: number;
+        }>;
+      }) => {
     const firstImage = data[0]?.image;
 
     return (
@@ -90,6 +91,7 @@ describe("ProductsView", () => {
             name: "Licuadora Cerramos",
             status: "active",
             stock: 14,
+            unitPrice: 185000,
           },
         ]}
       />

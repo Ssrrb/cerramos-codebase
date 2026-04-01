@@ -146,6 +146,7 @@ export const AddProductForm = ({ onSuccess }: AddProductFormProps) => {
           imageName="image"
           imageUploadUrl="/api/products/image-upload"
           nameName="name"
+          priceName="unitPrice"
           statusName="status"
           statusOptions={statusOptions}
           stockName="stock"

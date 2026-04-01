@@ -37,6 +37,7 @@ const ProductsPage = async () => {
       name: schema.product.name,
       status: schema.product.status,
       stock: schema.product.stock,
+      unitPrice: schema.product.unitPrice,
     })
     .from(schema.product)
     .where(eq(schema.product.commerceId, context.commerce.id))

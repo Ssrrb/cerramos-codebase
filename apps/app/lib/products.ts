@@ -64,6 +64,13 @@ export const addProductFormSchema = z.object({
     .trim()
     .min(1, { message: "El nombre del producto es obligatorio." })
     .max(80, { message: "El nombre debe tener 80 caracteres o menos." }),
+  unitPrice: z
+    .coerce
+    .number({
+      error: "Ingresa un precio valido.",
+    })
+    .int({ message: "El precio debe ser un numero entero." })
+    .min(0, { message: "El precio no puede ser negativo." }),
   status: z.enum(productStatusValues, {
     error: "Selecciona un estado valido.",
   }),
@@ -99,6 +106,13 @@ export const productPayloadSchema = z.object({
     .trim()
     .min(1, { message: "El nombre del producto es obligatorio." })
     .max(80, { message: "El nombre debe tener 80 caracteres o menos." }),
+  unitPrice: z
+    .coerce
+    .number({
+      error: "Ingresa un precio valido.",
+    })
+    .int({ message: "El precio debe ser un numero entero." })
+    .min(0, { message: "El precio no puede ser negativo." }),
   status: z.enum(productStatusValues, {
     error: "Selecciona un estado valido.",
   }),
@@ -130,6 +144,7 @@ export const defaultAddProductFormValues: AddProductFormValues = {
   name: "",
   status: "draft",
   stock: 0,
+  unitPrice: 0,
 };
 
 export const toProductPayload = (
@@ -142,6 +157,7 @@ export const toProductPayload = (
   name: values.name,
   status: values.status,
   stock: values.stock,
+  unitPrice: values.unitPrice,
 });
 
 export interface ProductTableRow {
@@ -153,6 +169,7 @@ export interface ProductTableRow {
   name: string;
   status: ProductStatus;
   stock: number;
+  unitPrice: number;
 }
 
 export const formatProductStatusLabel = (status: ProductStatus) => {
@@ -168,3 +185,6 @@ export const formatProductStatusLabel = (status: ProductStatus) => {
 
 export const formatDeliveryIncludedLabel = (deliveryIncluded: boolean) =>
   deliveryIncluded ? "Incluida" : "No incluida";
+
+export const formatProductUnitPriceLabel = (unitPrice: number) =>
+  new Intl.NumberFormat("es-PY").format(unitPrice);

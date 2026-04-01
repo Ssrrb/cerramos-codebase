@@ -99,6 +99,7 @@ describe("products route", () => {
           name: "",
           status: "draft",
           stock: -1,
+          unitPrice: -1,
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -116,6 +117,7 @@ describe("products route", () => {
     expect(payload.fieldErrors.name).toBeTruthy();
     expect(payload.fieldErrors.description).toBeTruthy();
     expect(payload.fieldErrors.stock).toBeTruthy();
+    expect(payload.fieldErrors.unitPrice).toBeTruthy();
     expect(payload.fieldErrors.imageObjectKey).toBeTruthy();
     expect(payload.fieldErrors.category).toBeTruthy();
     expect(insertMock).not.toHaveBeenCalled();
@@ -141,6 +143,7 @@ describe("products route", () => {
           name: "Licuadora Cerramos",
           status: "active",
           stock: 14,
+          unitPrice: 185000,
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -158,9 +161,13 @@ describe("products route", () => {
       deliveryIncluded: true,
       description: "Licuadora premium para tu cocina diaria.",
       image: "products/commerce_1/images/licuadora.png",
+      images: {
+        primary: "products/commerce_1/images/licuadora.png",
+      },
       name: "Licuadora Cerramos",
       status: "active",
       stock: 14,
+      unitPrice: 185000,
     });
   });
 });

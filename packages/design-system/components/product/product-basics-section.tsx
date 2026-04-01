@@ -8,6 +8,7 @@ import { ProductDeliveryToggle } from "@repo/design-system/components/product/pr
 import { ProductDescriptionField } from "@repo/design-system/components/product/product-description-field"
 import { ProductImageUpload } from "@repo/design-system/components/product/product-image-upload"
 import { ProductNameField } from "@repo/design-system/components/product/product-name-field"
+import { ProductPriceField } from "@repo/design-system/components/product/product-price-field"
 import { ProductStatusSelect } from "@repo/design-system/components/product/product-status-select"
 import { ProductStockField } from "@repo/design-system/components/product/product-stock-field"
 import type { ProductSelectOption } from "@repo/design-system/components/product/types"
@@ -22,6 +23,7 @@ type ProductBasicsSectionProps<TFieldValues extends FieldValues> = {
   imageName: FieldPath<TFieldValues>
   imageUploadUrl: string
   nameName: FieldPath<TFieldValues>
+  priceName: FieldPath<TFieldValues>
   statusName: FieldPath<TFieldValues>
   statusOptions: ProductSelectOption[]
   stockName: FieldPath<TFieldValues>
@@ -37,6 +39,7 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
   imageName,
   imageUploadUrl,
   nameName,
+  priceName,
   statusName,
   statusOptions,
   stockName,
@@ -70,13 +73,14 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
           />
         </div>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <ProductStatusSelect
           control={control}
           disabled={disabled}
           name={statusName}
           options={statusOptions}
         />
+        <ProductPriceField control={control} disabled={disabled} name={priceName} />
         <ProductStockField control={control} disabled={disabled} name={stockName} />
       </div>
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">

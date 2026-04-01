@@ -6,7 +6,8 @@ import { NewProductSheetButton } from "./new-product-sheet-button";
 interface ProductsViewProps {
   products: ProductTableRow[];
 }
-//TODO: Add a functionality to delete, edit and copy the links associated to products
+//TODO: Add a functionality to delete and edit products
+
 export const ProductsView = ({ products }: ProductsViewProps) => {
   return (
     <div className="space-y-8">

@@ -88,8 +88,11 @@ describe("add product form", () => {
         target: { value: "Licuadora premium para tu cocina diaria." },
       }
     );
-    fireEvent.change(screen.getByPlaceholderText("0"), {
+    fireEvent.change(screen.getByLabelText("Stock"), {
       target: { value: "14", valueAsNumber: 14 },
+    });
+    fireEvent.change(screen.getByLabelText("Precio"), {
+      target: { value: "185000", valueAsNumber: 185000 },
     });
 
     const file = new File(["image"], "licuadora.png", { type: "image/png" });
@@ -130,6 +133,7 @@ describe("add product form", () => {
         name: "Licuadora Cerramos",
         status: "draft",
         stock: 14,
+        unitPrice: 185000,
       }),
       headers: {
         "content-type": "application/json",
@@ -181,8 +185,11 @@ describe("add product form", () => {
         target: { value: "Licuadora premium para tu cocina diaria." },
       }
     );
-    fireEvent.change(screen.getByPlaceholderText("0"), {
+    fireEvent.change(screen.getByLabelText("Stock"), {
       target: { value: "14", valueAsNumber: 14 },
+    });
+    fireEvent.change(screen.getByLabelText("Precio"), {
+      target: { value: "185000", valueAsNumber: 185000 },
     });
     const file = new File(["image"], "licuadora.png", { type: "image/png" });
     fireEvent.change(screen.getByLabelText("Imagen principal"), {
@@ -227,11 +234,11 @@ describe("add product form", () => {
   test("does not pass NaN to the stock input when the field is cleared", () => {
     render(<AddProductForm />);
 
-    fireEvent.change(screen.getByPlaceholderText("0"), {
+    fireEvent.change(screen.getAllByPlaceholderText("0")[0] as HTMLInputElement, {
       target: { value: "", valueAsNumber: Number.NaN },
     });
 
-    expect((screen.getByPlaceholderText("0") as HTMLInputElement).value).toBe("0");
+    expect((screen.getAllByPlaceholderText("0")[0] as HTMLInputElement).value).toBe("0");
     expect(consoleErrorSpy).not.toHaveBeenCalledWith(
       expect.stringContaining("Received NaN for the `value` attribute")
     );

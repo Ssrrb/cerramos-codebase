@@ -15,6 +15,7 @@ import {
 import {
   formatDeliveryIncludedLabel,
   formatProductStatusLabel,
+  formatProductUnitPriceLabel,
   type ProductTableRow,
 } from "@/lib/products";
 
@@ -70,6 +71,11 @@ export const columns: ColumnDef<ProductTableRow>[] = [
         {formatProductStatusLabel(row.original.status)}
       </Badge>
     ),
+  },
+  {
+    accessorKey: "unitPrice",
+    header: "Precio",
+    cell: ({ row }) => `Gs. ${formatProductUnitPriceLabel(row.original.unitPrice)}`,
   },
   {
     accessorKey: "stock",

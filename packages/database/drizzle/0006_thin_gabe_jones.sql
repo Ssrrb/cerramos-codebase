@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "ProductLink_productId_key" ON "ProductLink" USING btree ("productId");

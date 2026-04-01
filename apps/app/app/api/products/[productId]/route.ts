@@ -133,7 +133,22 @@ export const DELETE = async (
       id: product.id,
       success: true,
     });
-  } catch {
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "23503"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "No puedes eliminar este producto mientras tenga links publicos asociados.",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "No se pudo eliminar el producto." },
       { status: 500 }

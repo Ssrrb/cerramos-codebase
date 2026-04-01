@@ -1,14 +1,23 @@
-import type { ProductTableRow } from "@/lib/products";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/design-system/components/ui/alert";
+import type { ProductWithLinkTableRow } from "@/lib/product-links";
 import { columns } from "./columns";
 import { DataTable } from "./data-table";
 import { NewProductSheetButton } from "./new-product-sheet-button";
 
 interface ProductsViewProps {
-  products: ProductTableRow[];
+  productLinksNotice?: string | null;
+  products: ProductWithLinkTableRow[];
 }
 //TODO: Add a functionality to delete and edit products
 
-export const ProductsView = ({ products }: ProductsViewProps) => {
+export const ProductsView = ({
+  productLinksNotice,
+  products,
+}: ProductsViewProps) => {
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-border/70 bg-muted/40 px-5 py-5 shadow-sm">
@@ -23,6 +32,12 @@ export const ProductsView = ({ products }: ProductsViewProps) => {
           </NewProductSheetButton>
         </div>
       </section>
+      {productLinksNotice ? (
+        <Alert>
+          <AlertTitle>Links publicos temporalmente deshabilitados</AlertTitle>
+          <AlertDescription>{productLinksNotice}</AlertDescription>
+        </Alert>
+      ) : null}
       {products.length > 0 ? (
         <DataTable columns={columns} data={products} />
       ) : (

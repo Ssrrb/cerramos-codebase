@@ -1,9 +1,11 @@
 "use client";
 
+import { Button } from "@repo/design-system/components/ui/button";
 import { Form } from "@repo/design-system/components/ui/form";
 import { cn } from "@repo/design-system/lib/utils";
+import { LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { CheckoutDeliveryStepSection } from "./checkout-delivery-step-section";
 import { CheckoutDetailsStepSection } from "./checkout-details-step-section";
@@ -100,41 +102,78 @@ const getDeliverySummary = (values: CheckoutDeliveryValues) => {
 
 interface CheckoutProgressiveFlowProps {
   className?: string;
+  deliveryEnabled?: boolean;
   defaultValues?: Partial<CheckoutDeliveryValues>;
   merchant: CheckoutMerchantSummary;
+  onSubmit?: (
+    values: CheckoutDeliveryValues
+  ) => Promise<string | null | void>;
   orderSummary: CheckoutOrderSummary;
   paymentRequired: boolean;
+  pickupEnabled?: boolean;
   processorSlot?: ReactNode;
   product: CheckoutProductSummary;
   secureLabel?: string;
+  submitLabel?: string;
 }
 
 function CheckoutProgressiveFlow({
   className,
+  deliveryEnabled = true,
   defaultValues,
   merchant,
+  onSubmit,
   orderSummary,
   paymentRequired,
+  pickupEnabled = true,
   processorSlot,
   product,
   secureLabel,
+  submitLabel = "Confirmar pedido",
 }: CheckoutProgressiveFlowProps) {
+  const fallbackMode =
+    !deliveryEnabled && pickupEnabled ? "pickup" : "delivery";
   const form = useForm<CheckoutDeliveryValues>({
     defaultValues: {
       ...defaultDeliveryValues,
       ...defaultValues,
+      mode: defaultValues?.mode ?? fallbackMode,
     },
     mode: "onTouched",
   });
 
   const [activeStep, setActiveStep] = useState<CheckoutStepId>("details");
   const [completedSteps, setCompletedSteps] = useState<CompletedSteps>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, startSubmitting] = useTransition();
 
   const formValues = useWatch({
     control: form.control,
   }) as CheckoutDeliveryValues;
 
   const deliveryMode = (formValues?.mode ?? "delivery") as CheckoutDeliveryMode;
+  const canSubmitCheckout =
+    Boolean(onSubmit) && (!paymentRequired || merchant.trustState === "verified");
+
+  useEffect(() => {
+    if (deliveryEnabled) {
+      return;
+    }
+
+    if (deliveryMode === "delivery" && pickupEnabled) {
+      form.setValue("mode", "pickup");
+    }
+  }, [deliveryEnabled, deliveryMode, form, pickupEnabled]);
+
+  useEffect(() => {
+    if (pickupEnabled) {
+      return;
+    }
+
+    if (deliveryMode === "pickup" && deliveryEnabled) {
+      form.setValue("mode", "delivery");
+    }
+  }, [deliveryEnabled, deliveryMode, form, pickupEnabled]);
 
   useEffect(() => {
     if (activeStep !== "details" || completedSteps.details) {
@@ -210,6 +249,7 @@ function CheckoutProgressiveFlow({
         content: (
           <CheckoutDetailsStepSection
             control={form.control}
+            disabled={isSubmitting}
             names={deliveryFieldNames}
           />
         ),
@@ -223,7 +263,10 @@ function CheckoutProgressiveFlow({
         content: (
           <CheckoutDeliveryStepSection
             control={form.control}
+            deliveryEnabled={deliveryEnabled}
+            disabled={isSubmitting}
             names={deliveryFieldNames}
+            pickupEnabled={pickupEnabled}
           />
         ),
       },
@@ -237,6 +280,40 @@ function CheckoutProgressiveFlow({
           : ["Este pedido se coordina sin pago online"],
         content: (
           <CheckoutPaymentSection
+            actionSlot={
+              canSubmitCheckout ? (
+                <div className="space-y-3">
+                  {submitError ? (
+                    <p className="text-destructive text-sm">{submitError}</p>
+                  ) : null}
+                  <Button
+                    className="w-full"
+                    disabled={isSubmitting}
+                    onClick={form.handleSubmit((values) => {
+                      setSubmitError(null);
+                      startSubmitting(async () => {
+                        try {
+                          const errorMessage = await onSubmit?.(values);
+                          setSubmitError(errorMessage ?? null);
+                        } catch {
+                          setSubmitError("No se pudo continuar con el checkout.");
+                        }
+                      });
+                    })}
+                    type="button"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <LoaderCircle className="size-4 animate-spin" />
+                        Creando pedido
+                      </>
+                    ) : (
+                      submitLabel
+                    )}
+                  </Button>
+                </div>
+              ) : null
+            }
             paymentRequired={paymentRequired}
             processorSlot={processorSlot}
             trustState={merchant.trustState}
@@ -248,10 +325,16 @@ function CheckoutProgressiveFlow({
       activeStep,
       completedSteps.delivery,
       completedSteps.details,
+      deliveryEnabled,
       form,
+      isSubmitting,
       merchant.trustState,
+      onSubmit,
       paymentRequired,
+      pickupEnabled,
       processorSlot,
+      submitLabel,
+      submitError,
     ]
   );
 

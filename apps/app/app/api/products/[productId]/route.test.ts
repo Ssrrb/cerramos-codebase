@@ -238,4 +238,34 @@ describe("product by id route", () => {
       error: "No se pudo eliminar el producto.",
     });
   });
+
+  test("returns 409 when the product still has public links", async () => {
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: "commerce_1",
+        id: "user_1",
+      },
+    });
+    deleteReturningMock.mockRejectedValue({
+      code: "23503",
+    });
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new Request("http://localhost/api/products/product_1", {
+        method: "DELETE",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "No puedes eliminar este producto mientras tenga links publicos asociados.",
+    });
+  });
 });

@@ -6,14 +6,17 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import Image from "next/image";
 import {
+  formatProductLinkStatusLabel,
+  type ProductWithLinkTableRow,
+} from "@/lib/product-links";
+import {
   formatDeliveryIncludedLabel,
   formatProductStatusLabel,
   formatProductUnitPriceLabel,
-  type ProductTableRow,
 } from "@/lib/products";
 import { ProductRowActions } from "./product-row-actions";
 
-export const columns: ColumnDef<ProductTableRow>[] = [
+export const columns: ColumnDef<ProductWithLinkTableRow>[] = [
   {
     accessorKey: "image",
     header: "Imagen",
@@ -46,6 +49,32 @@ export const columns: ColumnDef<ProductTableRow>[] = [
   {
     accessorKey: "name",
     header: "Nombre",
+  },
+  {
+    id: "publicLink",
+    header: "Link publico",
+    cell: ({ row }) => {
+      const productLink = row.original.productLink;
+
+      if (!productLink) {
+        return (
+          <span className="text-muted-foreground text-sm">Sin publicar</span>
+        );
+      }
+
+      return (
+        <div className="space-y-1">
+          <Badge
+            variant={productLink.status === "active" ? "default" : "secondary"}
+          >
+            {formatProductLinkStatusLabel(productLink.status)}
+          </Badge>
+          <p className="max-w-[15rem] truncate text-muted-foreground text-xs">
+            {productLink.publicPath}
+          </p>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "status",

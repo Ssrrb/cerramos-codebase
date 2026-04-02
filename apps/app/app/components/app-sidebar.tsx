@@ -1,3 +1,5 @@
+"use client";
+
 import type { ActiveCommerce } from "@repo/auth/utils";
 import {
   Calendar,
@@ -12,6 +14,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import AddCategory from "./AddCategory";
 import AddOrder from "./AddOrder";
 import AddUser from "./AddUser";
@@ -70,6 +73,16 @@ interface AppSidebarProps {
 }
 
 const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div aria-hidden className="hidden w-64 shrink-0 md:block" />;
+  }
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="py-4">

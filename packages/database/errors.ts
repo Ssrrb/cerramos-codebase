@@ -71,3 +71,11 @@ export const isUniqueConstraintError = (
     )
   );
 };
+
+export const isForeignKeyConstraintError = (error: unknown) => {
+  const candidates = [error, getErrorProperty(error, "cause")];
+
+  return candidates.some(
+    (candidate) => getErrorString(candidate, "code") === "23503"
+  );
+};

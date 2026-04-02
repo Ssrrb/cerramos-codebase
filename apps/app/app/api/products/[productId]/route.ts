@@ -1,5 +1,5 @@
 import { requireCommerceIdForRequest } from "@repo/auth/server";
-import { database, schema } from "@repo/database";
+import { database, isForeignKeyConstraintError, schema } from "@repo/database";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
@@ -117,12 +117,7 @@ export const DELETE = async (
       success: true,
     });
   } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "23503"
-    ) {
+    if (isForeignKeyConstraintError(error)) {
       return NextResponse.json(
         {
           error:

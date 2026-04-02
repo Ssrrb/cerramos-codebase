@@ -30,6 +30,18 @@ vi.mock("@repo/database", () => ({
     delete: deleteMock,
     update: updateMock,
   },
+  isForeignKeyConstraintError: (error: unknown) => {
+    if (!error || typeof error !== "object") {
+      return false;
+    }
+
+    const candidates = [
+      error,
+      "cause" in error ? error.cause : undefined,
+    ] as Array<Record<string, unknown> | undefined>;
+
+    return candidates.some((candidate) => candidate?.code === "23503");
+  },
   schema: {
     product: {
       commerceId: "product.commerceId",
@@ -247,6 +259,33 @@ describe("product by id route", () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     deleteReturningMock.mockRejectedValue({
       code: "23503",
+    });
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new Request("http://localhost/api/products/product_1", {
+        method: "DELETE",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "No puedes eliminar este producto mientras tenga links publicos asociados.",
+    });
+  });
+
+  test("returns 409 when the foreign key violation is wrapped in cause", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    deleteReturningMock.mockRejectedValue({
+      cause: {
+        code: "23503",
+      },
     });
 
     const { DELETE } = await import("./route");

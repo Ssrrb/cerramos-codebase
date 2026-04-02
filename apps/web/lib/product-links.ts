@@ -81,6 +81,13 @@ export interface CreateOrderResult {
   paymentRequired: boolean;
 }
 
+export class ProductLinkCheckoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ProductLinkCheckoutError";
+  }
+}
+
 const normalizePublicProductImageObjectKey = (value: string) => {
   const trimmedValue = value.trim();
 
@@ -283,15 +290,15 @@ export const createOrderFromProductLink = async (
   }
 
   if (payload.mode === "delivery" && !record.deliveryEnabled) {
-    throw new Error("Este link no permite delivery.");
+    throw new ProductLinkCheckoutError("Este link no permite delivery.");
   }
 
   if (payload.mode === "pickup" && !record.pickupEnabled) {
-    throw new Error("Este link no permite retiro.");
+    throw new ProductLinkCheckoutError("Este link no permite retiro.");
   }
 
   if (record.paymentRequired && record.trustState !== "verified") {
-    throw new Error(
+    throw new ProductLinkCheckoutError(
       "El pago online todavia no esta disponible para este link."
     );
   }

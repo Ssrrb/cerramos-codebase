@@ -33,6 +33,64 @@ vi.mock("@repo/auth/client", () => {
   };
 });
 
+vi.mock("@repo/design-system/components/registration", () => ({
+  SignInFormView: ({
+    callbackHref,
+    email,
+    error,
+    googleEnabled,
+    onEmailChange,
+    onGoogleClick,
+    onPasswordChange,
+    onSubmit,
+    onUseDifferentEmail,
+    password,
+    step,
+  }: {
+    callbackHref: string;
+    email: string;
+    error?: string | null;
+    googleEnabled?: boolean;
+    onEmailChange: (value: string) => void;
+    onGoogleClick: () => void;
+    onPasswordChange: (value: string) => void;
+    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+    onUseDifferentEmail: () => void;
+    password: string;
+    step: "email" | "password";
+  }) => (
+    <form onSubmit={onSubmit}>
+      <input
+        onChange={(event) => onEmailChange(event.target.value)}
+        placeholder="Email Address"
+        value={email}
+      />
+      {step === "password" ? (
+        <>
+          <input
+            onChange={(event) => onPasswordChange(event.target.value)}
+            placeholder="Password"
+            value={password}
+          />
+          <button onClick={onUseDifferentEmail} type="button">
+            Edit
+          </button>
+        </>
+      ) : null}
+      {error ? <p>{error}</p> : null}
+      {googleEnabled ? (
+        <button onClick={onGoogleClick} type="button">
+          Continue with Google
+        </button>
+      ) : null}
+      <a href={callbackHref}>Sign Up</a>
+      <button type="submit">
+        {step === "password" ? "Log In" : "Continue with Email"}
+      </button>
+    </form>
+  ),
+}));
+
 import * as authClientModule from "@repo/auth/client";
 import * as nextNavigationModule from "next/navigation";
 import { SignInForm } from "./sign-in-form";

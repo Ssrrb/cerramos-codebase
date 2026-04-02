@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   checkoutOrderPayloadSchema,
   createOrderFromProductLink,
+  ProductLinkCheckoutError,
 } from "@/lib/product-links";
 
 interface CreateOrderRouteContext {
@@ -51,7 +52,7 @@ export const POST = async (
       success: true,
     });
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof ProductLinkCheckoutError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

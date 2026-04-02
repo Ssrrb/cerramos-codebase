@@ -1,0 +1,345 @@
+---
+title: Paraguay Payments Model
+description: Operating model, commission structure, KYC/KYB requirements, and implementation plan for Cerramos in Paraguay.
+order: 7
+---
+
+## Summary
+
+Cerramos debe operar en Paraguay como una **capa de checkout, orquestación y operación comercial**, no como procesadora ni custodio de fondos de terceros.
+
+La recomendación para MVP es:
+
+- cada comercio opera con su propia cuenta o relación PSP
+- Cerramos mantiene el checkout dentro de su experiencia
+- Cerramos cobra su comisión al comercio sin convertirse en quien recibe primero el dinero del comprador
+
+Sí, Cerramos puede capturar una comisión por venta. La forma más segura para MVP es que esa comisión sea:
+
+- descontada por el PSP dentro de un modelo marketplace/split billing soportado por el proveedor, o
+- facturada aparte al comercio sobre volumen liquidado
+
+Lo que se debe evitar en MVP es:
+
+- que Cerramos reciba el monto bruto del comprador en una cuenta propia
+- que Cerramos mantenga saldos de terceros
+- que Cerramos liquide manualmente pagos a comercios desde su propia tesorería
+
+Ese modelo acerca a Cerramos a roles regulados de PSP, agregador o facilitador de pagos bajo la regulación paraguaya reciente.
+
+## Recommended operating model
+
+### Modelo recomendado para MVP
+
+- el comercio es el vendedor de registro
+- el comercio mantiene la titularidad del vínculo de cobro y de la cuenta de recepción
+- el PSP procesa el pago
+- Cerramos orquesta el checkout, el pedido, el estado operativo y la conciliación de referencias
+- Cerramos cobra una fee de plataforma al comercio
+
+### Por qué este modelo encaja con Cerramos
+
+La documentación del producto ya fija tres límites importantes:
+
+- Cerramos no es una pasarela de pagos propia
+- `payment` conserva ownership del estado del cobro
+- el panel interno del comercio coordina operación, pero no debe convertirse en un ledger financiero propio
+
+Este documento mantiene esa dirección y evita que el producto derive a un modelo de custodia no deseado.
+
+## Can Cerramos charge commission per sale?
+
+Sí, pero con una restricción operativa importante: la comisión debe estructurarse de forma que Cerramos no se convierta en custodio de fondos.
+
+### Estructuras recomendadas
+
+1. **Mejor opción**
+
+Cada comercio tiene su propia cuenta PSP y el proveedor soporta una lógica marketplace o split billing para separar:
+
+- monto del comercio
+- fee PSP
+- comisión Cerramos
+
+2. **Opción aceptable**
+
+Cada comercio tiene su propia cuenta PSP y Cerramos factura periódicamente su comisión sobre ventas liquidadas.
+
+3. **Opción a evitar en MVP**
+
+El comprador paga a Cerramos y Cerramos luego paga al comercio.
+
+Este último caso exige una revisión legal más profunda porque el BCP ya regula roles como PSP, agregador, facilitador y pasarela con mayor precisión.
+
+### Conclusión operativa
+
+La respuesta corta es:
+
+- **sí**, Cerramos puede cobrar comisión por venta
+- **no** debería hacerlo tomando posesión del dinero del comprador en MVP
+
+## Merchant onboarding flow
+
+El onboarding del comercio debe separarse del simple alta de usuario.
+
+### Flujo recomendado
+
+1. Crear usuario Cerramos.
+2. Crear perfil del comercio.
+3. Elegir tipo de entidad:
+   - persona física
+   - unipersonal
+   - EAS
+   - SRL
+   - SA
+   - otra persona jurídica
+4. Completar datos legales y comerciales.
+5. Cargar documentos de identidad y negocio.
+6. Registrar representante legal y beneficiarios finales cuando aplique.
+7. Conectar cuenta PSP y cuenta bancaria de cobro.
+8. Ejecutar revisión de riesgo.
+9. Activar métodos de pago de mayor riesgo solo cuando el comercio quede `verified`.
+
+### Estados mínimos de confianza
+
+- `pending_review`
+- `verified`
+- `limited`
+- `rejected`
+- `suspended`
+
+### Regla operativa
+
+Los comercios no verificados pueden operar solo en carriles de riesgo más bajo, por ejemplo:
+
+- pago en tienda
+- pago contra entrega
+
+El prepago con proveedor externo debe depender del estado de confianza.
+
+## Required verification data in Paraguay
+
+Los datos de comprador del checkout y los datos KYC/KYB del comercio no deben mezclarse. El checkout captura lo necesario para cerrar un pedido. La verificación del comercio captura lo necesario para habilitar cobro y operar con riesgo controlado.
+
+### A. Identidad de la persona operadora
+
+Para toda cuenta que administre un comercio:
+
+- nombre completo legal
+- fecha de nacimiento
+- nacionalidad
+- número de cédula paraguaya o pasaporte válido
+- teléfono móvil
+- email
+- dirección particular
+
+Documentos sugeridos:
+
+- cédula o pasaporte vigente
+- selfie o verificación biométrica, si el PSP o el flujo interno lo requieren
+- comprobante de domicilio cuando el caso lo justifique
+
+### B. Datos del comercio
+
+Para persona física o unipersonal:
+
+- nombre comercial
+- actividad económica
+- RUC cuando corresponda
+- dirección operativa
+- descripción de productos o servicios
+- web, Instagram, catálogo o canal comercial equivalente
+- política de cancelación y devoluciones
+- ticket promedio y volumen mensual estimado
+
+Para persona jurídica:
+
+- razón social
+- nombre comercial
+- tipo societario
+- RUC
+- domicilio legal
+- domicilio operativo
+- fecha de constitución
+- actividad económica
+- descripción comercial del negocio
+- web, redes o catálogo
+
+Documentos sugeridos para persona jurídica:
+
+- estatuto, contrato social o documento constitutivo
+- constancia o documentos de inscripción tributaria
+- documento que acredite representación legal vigente
+- cédula o pasaporte del representante legal
+
+### C. Beneficiarios finales y control
+
+Cuando el comercio sea persona jurídica, Cerramos debe capturar como mínimo:
+
+- nombre completo de cada beneficiario final relevante
+- documento de identidad
+- nacionalidad
+- domicilio
+- porcentaje de participación o base de control
+- rol dentro de la estructura
+
+Además, debe solicitarse constancia del registro administrativo de beneficiarios finales cuando corresponda bajo el marco paraguayo vigente.
+
+### D. Cuenta bancaria y cobro
+
+Para habilitar pagos y conciliación:
+
+- banco
+- tipo de cuenta
+- número de cuenta
+- moneda
+- nombre del titular
+- prueba de titularidad o documento equivalente
+
+Regla recomendada:
+
+- la cuenta bancaria debe pertenecer al mismo titular económico verificado, salvo excepción revisada manualmente
+
+### E. Perfil transaccional y riesgo
+
+Aunque la debida diligencia formal pueda recaer en el PSP o banco, Cerramos debe capturar señales mínimas para su propio modelo de riesgo:
+
+- categoría de producto o servicio
+- origen esperado de fondos
+- ticket promedio
+- volumen mensual esperado
+- zonas geográficas de venta y entrega
+- política de reembolsos
+- histórico de chargebacks o reclamos, si existe
+- si vende categorías restringidas
+
+## Compliance and risk controls
+
+### Controles que debe operar Cerramos
+
+- onboarding estructurado por tipo de entidad
+- revisión documental
+- estados de confianza y gating de métodos de pago
+- bitácora auditable de cambios de verificación
+- re-verificación al cambiar RUC, representante legal, beneficiarios finales o cuenta bancaria
+- congelamiento preventivo de nuevos links cobrables cuando la verificación quede vencida o inconsistente
+- alertas y escalamiento para actividad sospechosa
+
+### Controles que normalmente recaen en PSP o banco
+
+- procesamiento del instrumento de pago
+- captura de datos sensibles de tarjeta
+- liquidación de fondos
+- controles AML formales como sujeto obligado, cuando aplique
+- screening y monitoreo transaccional dentro de su perímetro regulado
+
+### Principio clave
+
+Cerramos debe correr un modelo de **plataforma no custodial**:
+
+- sin wallet propia
+- sin balance mantenido para terceros
+- sin cuenta concentradora de pagos de comercios en MVP
+
+## Pagopar implementation options
+
+### Opción 1: cuenta propia por comercio
+
+Cada comercio conecta su propia cuenta Pagopar o PSP equivalente.
+
+Ventajas:
+
+- menor ambigüedad regulatoria para Cerramos
+- separación clara entre software y cobro
+- mejor alineación con la arquitectura actual del producto
+
+Costo:
+
+- onboarding comercial más largo por comercio
+- dependencia de una buena experiencia de conexión PSP
+
+### Opción 2: modelo marketplace o split billing soportado por Pagopar
+
+Pagopar documenta un modelo de `comercio padre` y `comercio hijo` útil para marketplaces, donde el comercio padre puede capturar comisión por venta.
+
+Ventajas:
+
+- mejor experiencia de monetización por transacción
+- comisión más directa y automatizada
+
+Riesgo:
+
+- requiere validación comercial y legal actualizada con Pagopar antes de adoptarlo como contrato base
+
+### Opción 3: cobrar comisión por facturación posterior
+
+Si la separación de fee no puede resolverse dentro del PSP en el corto plazo:
+
+- el comercio cobra normalmente en su cuenta PSP
+- Cerramos calcula GMV liquidado
+- Cerramos factura su fee aparte
+
+Es menos elegante, pero es operacionalmente más segura para un MVP.
+
+## Test and rollout checklist
+
+Antes de habilitar pagos cobrables a gran escala:
+
+- confirmar por escrito con el PSP el modelo de cuenta y comisión soportado
+- validar qué paquete documental exige el PSP para producción
+- validar que los webhooks y conciliaciones no alteren estados sin idempotencia
+- probar gating de pagos para comercios `pending_review`, `limited` y `verified`
+- probar cambio de cuenta bancaria y re-verificación
+- probar expiración de pedidos con reversión o refund cuando el proveedor lo soporte
+- probar reportes con bruto, fee PSP, fee Cerramos y neto
+- probar exportes y auditoría de decisiones de verificación
+
+## Assumptions and open legal items
+
+### Supuestos operativos elegidos
+
+- Cerramos quiere monetizar con fee al comercio y no con recargo al comprador
+- Cerramos quiere seguir siendo una capa de software y no un custodio financiero
+- la prioridad es lanzar un MVP operable en Paraguay con la menor carga regulatoria razonable
+
+### Puntos que requieren confirmación legal o comercial
+
+- si un modelo de comisión descontada por transacción ubica a Cerramos dentro de un rol regulado adicional según la implementación exacta
+- si Pagopar mantiene para 2026 el mismo carril marketplace o split billing documentado en su material legacy
+- qué umbral documental exige el PSP para producción por tipo de comercio
+- si Cerramos, aunque no sea custodio, debe ejecutar controles AML adicionales por su rol contractual y operativo concreto
+
+### Conclusión
+
+La decisión base para MVP debe ser:
+
+- **Cerramos no recibe ni liquida fondos de terceros**
+- **Cerramos habilita cobro mediante PSP externo**
+- **Cerramos cobra comisión sin asumir custodia**
+
+## Sources
+
+### Documentación interna de Cerramos
+
+- [Overview](/docs/content/docs/product/overview.mdx)
+- [Requirements](/docs/content/docs/product/requirements.mdx)
+- [Architecture](/docs/content/docs/product/architecture.mdx)
+- [API Design](/docs/content/docs/product/api-design.mdx)
+- [Pagopar docs](/docs/pagopar-docs)
+
+### Fuentes oficiales y de proveedor
+
+- [BCP: anuncio del reglamento para PSP, 22 de diciembre de 2025](https://www.bcp.gov.py/web/institucional/w/el-bcp-aprueba-nuevo-reglamento-para-proveedores-de-servicios-de-pago-en-el-sistema-nacional-de-pagos)
+- [BCP: Reglamento de definición de roles, registro, transparencia y seguridad para PSP](https://www.bcp.gov.py/documents/d/institucional/reglamento-de-definicion-de-roles-registro-y-transparencia-informativa-para-psp-pdf)
+- [BCP: Reglamento General del SIPAP, Resolución N.° 2, Acta N.° 12, 12 de marzo de 2026](https://www.bcp.gov.py/documents/d/institucional/resolucion-2-acta-12-pdf)
+- [SEPRELAD: Ley 1015/97 actualizada sobre prevención de lavado](https://www.seprelad.gov.py/transparencia/transparencia/ley10151997actualizada.pdf)
+- [SEPRELAD: reglamentación del registro administrativo de personas y estructuras jurídicas y beneficiarios finales](https://www.seprelad.gov.py/seprelad/ejecutivo-reglamenta-ley-que-crea-el-registro-administrativo-de-personas-y-estructuras-juridicas-n64)
+- [MEF: comunicados de la Dirección General de Personas y Estructuras Jurídicas y Beneficiarios Finales](https://www.mef.gov.py/es/dependencias/direcciones/direccion-general-personas-estructuras-juridicas-beneficiarios-finales/comunicados-boletines)
+- [MEF: comunicado sobre SIARA para SA y SRL, 25 de febrero de 2026](https://www.mef.gov.py/sites/default/files/2026-02/Comunicado_DGPEJBF_25_de_febrero_de_2026_0.pdf)
+- [MEF: preguntas frecuentes sobre registro de beneficiarios finales y SIARA](https://www.mef.gov.py/es/dependencias/direcciones/direccion-general-personas-estructuras-juridicas-beneficiarios-finales/pf)
+- [DNIT: inscripción al RUC](https://www.dnit.gov.py/en/web/portal-institucional/inscripcion-al-ruc)
+- [DNIT: documentos requeridos para la inscripción en el RUC](https://www.dnit.gov.py/documents/20123/357313/Documentos%2Brequeridos%2Bpara%2Bla%2BInscripci%C3%B3n%2Ben%2Bel%2BRUC%2B%281%29.pdf/a3b00888-c198-64cf-ab4c-c2d0d7c847f5?t=1737481439785.pdf)
+- [DNIT: modificación relevante para representante legal desde el 1 de agosto de 2025](https://www.dnit.gov.py/en/web/portal-institucional/w/dnit-modifica-aspectos-clave-del-ruc)
+- [Pagopar: Pagopar Login / modelo marketplace](https://soporte.pagopar.com/portal/es/kb/articles/pagopar-login-29-8-2020)
+- [Pagopar: integración de medios de pagos](https://soporte.pagopar.com/portal/es/kb/articles/api-integracion-medios-pagos)
+- [Pagopar: entornos y pase a producción](https://soporte.pagopar.com/portal/es/kb/articles/entornos-pase-a-producci%C3%B3n)

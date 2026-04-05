@@ -1,10 +1,11 @@
+import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   deleteMock,
   deleteReturningMock,
   deleteWhereMock,
-  getSessionMock,
+  requireCommerceIdForRequestMock,
   updateMock,
   updateReturningMock,
   updateSetMock,
@@ -13,7 +14,7 @@ const {
   deleteMock: vi.fn(),
   deleteReturningMock: vi.fn(),
   deleteWhereMock: vi.fn(),
-  getSessionMock: vi.fn(),
+  requireCommerceIdForRequestMock: vi.fn(),
   updateMock: vi.fn(),
   updateReturningMock: vi.fn(),
   updateSetMock: vi.fn(),
@@ -21,13 +22,25 @@ const {
 }));
 
 vi.mock("@repo/auth/server", () => ({
-  getSession: getSessionMock,
+  requireCommerceIdForRequest: requireCommerceIdForRequestMock,
 }));
 
 vi.mock("@repo/database", () => ({
   database: {
     delete: deleteMock,
     update: updateMock,
+  },
+  isForeignKeyConstraintError: (error: unknown) => {
+    if (!error || typeof error !== "object") {
+      return false;
+    }
+
+    const candidates = [
+      error,
+      "cause" in error ? error.cause : undefined,
+    ] as Array<Record<string, unknown> | undefined>;
+
+    return candidates.some((candidate) => candidate?.code === "23503");
   },
   schema: {
     product: {
@@ -40,7 +53,7 @@ vi.mock("@repo/database", () => ({
 describe("product by id route", () => {
   beforeEach(() => {
     vi.resetModules();
-    getSessionMock.mockReset();
+    requireCommerceIdForRequestMock.mockReset();
     updateMock.mockReset();
     updateSetMock.mockReset();
     updateWhereMock.mockReset();
@@ -68,12 +81,7 @@ describe("product by id route", () => {
   });
 
   test("updates a product for the authenticated commerce", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     updateReturningMock.mockResolvedValue([{ id: "product_1" }]);
 
     const { PATCH } = await import("./route");
@@ -119,13 +127,36 @@ describe("product by id route", () => {
     });
   });
 
-  test("returns 404 when the product does not exist during update", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
+  test("returns auth errors from the shared commerce resolver", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue(
+      NextResponse.json(
+        { error: "Commerce context is required." },
+        { status: 400 }
+      )
+    );
+
+    const { PATCH } = await import("./route");
+    const response = await PATCH(
+      new Request("http://localhost/api/products/product_1", {
+        body: JSON.stringify({}),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Commerce context is required.",
     });
+  });
+
+  test("returns 404 when the product does not exist during update", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     updateReturningMock.mockResolvedValue([]);
 
     const { PATCH } = await import("./route");
@@ -158,12 +189,7 @@ describe("product by id route", () => {
   });
 
   test("deletes a product for the authenticated commerce", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     deleteReturningMock.mockResolvedValue([{ id: "product_1" }]);
 
     const { DELETE } = await import("./route");
@@ -186,12 +212,7 @@ describe("product by id route", () => {
   });
 
   test("returns 404 when the product does not exist during delete", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     deleteReturningMock.mockResolvedValue([]);
 
     const { DELETE } = await import("./route");
@@ -213,12 +234,7 @@ describe("product by id route", () => {
   });
 
   test("returns 500 json when product deletion throws unexpectedly", async () => {
-    getSessionMock.mockResolvedValue({
-      user: {
-        commerceId: "commerce_1",
-        id: "user_1",
-      },
-    });
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
     deleteReturningMock.mockRejectedValue(new Error("db exploded"));
 
     const { DELETE } = await import("./route");
@@ -236,6 +252,92 @@ describe("product by id route", () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       error: "No se pudo eliminar el producto.",
+    });
+  });
+
+  test("returns 409 when the product still has public links", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    deleteReturningMock.mockRejectedValue({
+      code: "23503",
+    });
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new Request("http://localhost/api/products/product_1", {
+        method: "DELETE",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "No puedes eliminar este producto mientras tenga links publicos asociados.",
+    });
+  });
+
+  test("returns 409 when the foreign key violation is wrapped in cause", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    deleteReturningMock.mockRejectedValue({
+      cause: {
+        code: "23503",
+      },
+    });
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new Request("http://localhost/api/products/product_1", {
+        method: "DELETE",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error:
+        "No puedes eliminar este producto mientras tenga links publicos asociados.",
+    });
+  });
+
+  test("updates a product when commerce id is resolved from the database instead of the session cookie", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+    updateReturningMock.mockResolvedValue([{ id: "product_db_resolved" }]);
+
+    const { PATCH } = await import("./route");
+    const response = await PATCH(
+      new Request("http://localhost/api/products/product_1", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Licuadora premium para tu cocina diaria.",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      id: "product_db_resolved",
+      success: true,
     });
   });
 });

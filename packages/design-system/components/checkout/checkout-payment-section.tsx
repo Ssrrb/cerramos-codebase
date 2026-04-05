@@ -24,6 +24,7 @@ import { cn } from "@repo/design-system/lib/utils"
 import type { CheckoutTrustState } from "./types"
 
 interface CheckoutPaymentSectionProps {
+  actionSlot?: ReactNode
   className?: string
   paymentRequired: boolean
   processorSlot?: ReactNode
@@ -31,6 +32,7 @@ interface CheckoutPaymentSectionProps {
 }
 
 function CheckoutPaymentSection({
+  actionSlot,
   className,
   paymentRequired,
   processorSlot,
@@ -95,6 +97,7 @@ function CheckoutPaymentSection({
             </EmptyHeader>
           </Empty>
         )}
+        {actionSlot ? <div className="mt-4">{actionSlot}</div> : null}
       </CardContent>
       <CardFooter className="border-t border-border/70 pt-6">
         <p className="text-muted-foreground text-sm leading-relaxed">

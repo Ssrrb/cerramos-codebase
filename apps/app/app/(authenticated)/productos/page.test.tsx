@@ -6,8 +6,10 @@ const {
   fromMock,
   whereMock,
   orderByMock,
+  isMissingRelationErrorMock,
 } = vi.hoisted(() => ({
   fromMock: vi.fn(),
+  isMissingRelationErrorMock: vi.fn(() => false),
   orderByMock: vi.fn(),
   requireCommerceContextMock: vi.fn(),
   selectMock: vi.fn(),
@@ -22,6 +24,7 @@ vi.mock("@repo/database", () => ({
   database: {
     select: selectMock,
   },
+  isMissingRelationError: isMissingRelationErrorMock,
   schema: {
     product: {
       category: "product.category",
@@ -35,6 +38,22 @@ vi.mock("@repo/database", () => ({
       status: "product.status",
       stock: "product.stock",
       unitPrice: "product.unitPrice",
+    },
+    productLink: {
+      commerceId: "productLink.commerceId",
+      createdAt: "productLink.createdAt",
+      deliveryEnabled: "productLink.deliveryEnabled",
+      description: "productLink.description",
+      expiresAt: "productLink.expiresAt",
+      id: "productLink.id",
+      imageUrl: "productLink.imageUrl",
+      paymentRequired: "productLink.paymentRequired",
+      pickupEnabled: "productLink.pickupEnabled",
+      productId: "productLink.productId",
+      slug: "productLink.slug",
+      status: "productLink.status",
+      title: "productLink.title",
+      unitPrice: "productLink.unitPrice",
     },
   },
 }));
@@ -64,41 +83,43 @@ describe("products page", () => {
     whereMock.mockImplementation(() => ({
       orderBy: orderByMock,
     }));
-    orderByMock.mockResolvedValue([
-      {
-        category: "Electrodomesticos",
-        deliveryIncluded: false,
-        description: "Descripcion",
-        id: "product_1",
-        image: "products/commerce_1/images/object.png",
-        name: "Licuadora Cerramos",
-        status: "active",
-        stock: 14,
-        unitPrice: 185_000,
-      },
-      {
-        category: "Electrodomesticos",
-        deliveryIncluded: false,
-        description: "Descripcion",
-        id: "product_2",
-        image: "imagenes-cerramos/products/commerce_1/images/bucket-object.png",
-        name: "Bucket prefixed",
-        status: "draft",
-        stock: 1,
-        unitPrice: 99_000,
-      },
-      {
-        category: "Electrodomesticos",
-        deliveryIncluded: false,
-        description: "Descripcion",
-        id: "product_3",
-        image: "/productos/legacy.png",
-        name: "Legacy",
-        status: "draft",
-        stock: 1,
-        unitPrice: 50_000,
-      },
-    ]);
+    orderByMock
+      .mockResolvedValueOnce([
+        {
+          category: "Electrodomesticos",
+          deliveryIncluded: false,
+          description: "Descripcion",
+          id: "product_1",
+          image: "products/commerce_1/images/object.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        },
+        {
+          category: "Electrodomesticos",
+          deliveryIncluded: false,
+          description: "Descripcion",
+          id: "product_2",
+          image: "imagenes-cerramos/products/commerce_1/images/bucket-object.png",
+          name: "Bucket prefixed",
+          status: "draft",
+          stock: 1,
+          unitPrice: 99_000,
+        },
+        {
+          category: "Electrodomesticos",
+          deliveryIncluded: false,
+          description: "Descripcion",
+          id: "product_3",
+          image: "/productos/legacy.png",
+          name: "Legacy",
+          status: "draft",
+          stock: 1,
+          unitPrice: 50_000,
+        },
+      ])
+      .mockResolvedValueOnce([]);
     const { default: ProductsPage } = await import("./page");
     const rendered = await ProductsPage();
 

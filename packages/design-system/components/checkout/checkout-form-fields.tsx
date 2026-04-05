@@ -145,15 +145,19 @@ function CheckoutTextareaField<TFieldValues extends FieldValues>({
 
 interface CheckoutDeliveryModeFieldProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
+  deliveryEnabled?: boolean;
   disabled?: boolean;
   name: FieldPath<TFieldValues>;
+  pickupEnabled?: boolean;
   rules?: RegisterOptions<TFieldValues, FieldPath<TFieldValues>>;
 }
 
 function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
   control,
+  deliveryEnabled = true,
   disabled,
   name,
+  pickupEnabled = true,
   rules,
 }: CheckoutDeliveryModeFieldProps<TFieldValues>) {
   return (
@@ -161,8 +165,14 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => {
+        const availableModes = [
+          deliveryEnabled ? "delivery" : null,
+          pickupEnabled ? "pickup" : null,
+        ].filter(Boolean) as CheckoutDeliveryMode[];
         const currentValue =
-          (field.value as CheckoutDeliveryMode | undefined) ?? "delivery";
+          (field.value as CheckoutDeliveryMode | undefined) ??
+          availableModes[0] ??
+          "delivery";
 
         return (
           <Field data-invalid={fieldState.invalid}>
@@ -180,15 +190,23 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
                 value={currentValue}
                 variant="outline"
               >
-                <ToggleGroupItem className="flex-1" value="delivery">
-                  Delivery
-                </ToggleGroupItem>
-                <ToggleGroupItem className="flex-1" value="pickup">
-                  Retiro
-                </ToggleGroupItem>
+                {deliveryEnabled ? (
+                  <ToggleGroupItem className="flex-1" value="delivery">
+                    Delivery
+                  </ToggleGroupItem>
+                ) : null}
+                {pickupEnabled ? (
+                  <ToggleGroupItem className="flex-1" value="pickup">
+                    Retiro
+                  </ToggleGroupItem>
+                ) : null}
               </ToggleGroup>
               <FieldDescription>
-                Elegí cómo el comercio debe preparar este pedido.
+                {deliveryEnabled && pickupEnabled
+                  ? "Elegí cómo el comercio debe preparar este pedido."
+                  : deliveryEnabled
+                    ? "Este link solo permite delivery."
+                    : "Este link solo permite retiro."}
               </FieldDescription>
               <FieldError errors={[fieldState.error]} />
             </FieldContent>

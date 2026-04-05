@@ -33,6 +33,8 @@
     "db:studio": "bun run --cwd packages/database db:studio",
     "migrate": "bun run db:generate && bun run db:migrate",
     "migrate:deploy": "bun run db:migrate",
+    "hermes:pr-review": "bash ./scripts/hermes-pr-review.sh",
+    "hermes:devops": "bash ./scripts/hermes-devops.sh",
     "clean": "git clean -xdf node_modules",
     "release": "npm publish"
   },

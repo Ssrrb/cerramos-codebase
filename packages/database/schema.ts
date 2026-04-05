@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
   boolean,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -235,33 +236,6 @@ export const verification = pgTable(
   ]
 );
 
-export const productLink = pgTable(
-  "ProductLink",
-  {
-    id: cuidPrimaryKey(),
-    commerceId: text("commerceId")
-      .notNull()
-      .references(() => commerce.id, { onDelete: "cascade" }),
-    slug: text("slug").notNull(),
-    title: text("title").notNull(),
-    description: text("description"),
-    imageUrl: text("imageUrl"),
-    currency: text("currency").notNull().default("PYG"),
-    unitPrice: integer("unitPrice").notNull(),
-    status: productLinkStatusEnum("status").notNull().default("draft"),
-    paymentRequired: boolean("paymentRequired").notNull().default(false),
-    pickupEnabled: boolean("pickupEnabled").notNull().default(true),
-    deliveryEnabled: boolean("deliveryEnabled").notNull().default(true),
-    expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-  (table) => [
-    uniqueIndex("ProductLink_slug_key").on(table.slug),
-    index("ProductLink_commerceId_idx").on(table.commerceId),
-  ]
-);
-
 export const product = pgTable(
   "Product",
   {
@@ -281,7 +255,53 @@ export const product = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("Product_commerceId_idx").on(table.commerceId)]
+  (table) => [
+    index("Product_commerceId_idx").on(table.commerceId),
+    uniqueIndex("Product_id_commerceId_key").on(table.id, table.commerceId),
+  ]
+);
+
+export const productLink = pgTable(
+  "ProductLink",
+  {
+    id: cuidPrimaryKey(),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "cascade" }),
+    productId: text("productId").notNull(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description"),
+    imageUrl: text("imageUrl"),
+    currency: text("currency").notNull().default("PYG"),
+    unitPrice: integer("unitPrice").notNull(),
+    status: productLinkStatusEnum("status").notNull().default("draft"),
+    paymentRequired: boolean("paymentRequired").notNull().default(false),
+    pickupEnabled: boolean("pickupEnabled").notNull().default(true),
+    deliveryEnabled: boolean("deliveryEnabled").notNull().default(true),
+    expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.productId, table.commerceId],
+      foreignColumns: [product.id, product.commerceId],
+      name: "ProductLink_productId_commerceId_Product_id_commerceId_fk",
+    }).onDelete("restrict"),
+    uniqueIndex("ProductLink_commerceId_slug_key").on(
+      table.commerceId,
+      table.slug
+    ),
+    uniqueIndex("ProductLink_productId_key").on(table.productId),
+    index("ProductLink_productId_idx").on(table.productId),
+    index("ProductLink_commerceId_idx").on(table.commerceId),
+    index("ProductLink_commerceId_slug_status_idx").on(
+      table.commerceId,
+      table.slug,
+      table.status
+    ),
+  ]
 );
 
 export const productVariantOption = pgTable(
@@ -407,9 +427,15 @@ export const orderItem = pgTable(
     orderId: text("orderId")
       .notNull()
       .references(() => order.id, { onDelete: "cascade" }),
+    productId: text("productId")
+      .notNull()
+      .references(() => product.id, { onDelete: "restrict" }),
     productLinkId: text("productLinkId")
       .notNull()
       .references(() => productLink.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    imageUrl: text("imageUrl"),
     quantity: integer("quantity").notNull().default(1),
     unitPrice: integer("unitPrice").notNull(),
     totalPrice: integer("totalPrice").notNull(),
@@ -418,6 +444,7 @@ export const orderItem = pgTable(
   },
   (table) => [
     index("OrderItem_orderId_idx").on(table.orderId),
+    index("OrderItem_productId_idx").on(table.productId),
     index("OrderItem_productLinkId_idx").on(table.productLinkId),
   ]
 );

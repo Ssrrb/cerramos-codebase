@@ -46,6 +46,103 @@ vi.mock("@repo/auth/client", () => ({
   },
 }));
 
+vi.mock("@repo/design-system/components/registration", () => ({
+  SignUpFormView: ({
+    email,
+    error,
+    googleEnabled,
+    name,
+    onBack,
+    onEmailChange,
+    onGoogleClick,
+    onNameChange,
+    onPasswordChange,
+    onSubmit,
+    onUsageChange,
+    password,
+    step,
+    usage,
+  }: {
+    email: string;
+    error?: string | null;
+    googleEnabled?: boolean;
+    name: string;
+    onBack: () => void;
+    onEmailChange: (value: string) => void;
+    onGoogleClick: () => void;
+    onNameChange: (value: string) => void;
+    onPasswordChange: (value: string) => void;
+    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+    onUsageChange: (value: "business" | "explore") => void;
+    password: string;
+    step: "setup" | "account";
+    usage: "business" | "explore";
+  }) => (
+    <form onSubmit={onSubmit}>
+      {step === "setup" ? (
+        <>
+          <label>
+            Trabajo en proyectos comerciales
+            <input
+              checked={usage === "business"}
+              name="usage"
+              onChange={() => onUsageChange("business")}
+              type="radio"
+            />
+          </label>
+          <label>
+            Trabajo en proyectos personales
+            <input
+              checked={usage === "explore"}
+              name="usage"
+              onChange={() => onUsageChange("explore")}
+              type="radio"
+            />
+          </label>
+          <button type="submit">Continue</button>
+        </>
+      ) : (
+        <>
+          <label>
+            Tu nombre
+            <input
+              aria-label="Tu nombre"
+              onChange={(event) => onNameChange(event.target.value)}
+              value={name}
+            />
+          </label>
+          <label>
+            Email de trabajo
+            <input
+              aria-label="Email de trabajo"
+              onChange={(event) => onEmailChange(event.target.value)}
+              value={email}
+            />
+          </label>
+          <label>
+            Contrasena
+            <input
+              aria-label="Contrasena"
+              onChange={(event) => onPasswordChange(event.target.value)}
+              value={password}
+            />
+          </label>
+          {error ? <p>{error}</p> : null}
+          {googleEnabled ? (
+            <button onClick={onGoogleClick} type="button">
+              Continuar con Google
+            </button>
+          ) : null}
+          <button type="button" onClick={onBack}>
+            Back
+          </button>
+          <button type="submit">Create Account</button>
+        </>
+      )}
+    </form>
+  ),
+}));
+
 import { SignUpForm } from "./sign-up-form";
 
 describe("sign-up form", () => {

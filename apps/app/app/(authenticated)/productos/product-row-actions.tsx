@@ -22,10 +22,11 @@ import { LoaderCircle, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProductSheetContent } from "@/app/components/product-sheet-content";
-import type { ProductTableRow } from "@/lib/products";
+import type { ProductWithLinkTableRow } from "@/lib/product-links";
+import { ProductLinkSheetContent } from "./product-link-sheet-content";
 
 interface ProductRowActionsProps {
-  product: ProductTableRow;
+  product: ProductWithLinkTableRow;
 }
 
 export const ProductRowActions = ({ product }: ProductRowActionsProps) => {
@@ -33,6 +34,7 @@ export const ProductRowActions = ({ product }: ProductRowActionsProps) => {
   const [deleteRequested, setDeleteRequested] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isProductLinkSheetOpen, setIsProductLinkSheetOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -89,35 +91,53 @@ export const ProductRowActions = ({ product }: ProductRowActionsProps) => {
   return (
     <>
       <Sheet onOpenChange={setIsEditSheetOpen} open={isEditSheetOpen}>
-        <DropdownMenu onOpenChange={setIsMenuOpen} open={isMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button className="h-8 w-8 p-0" variant="ghost">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onSelect={(event) => {
-                event.preventDefault();
-                setIsMenuOpen(false);
-                setIsEditSheetOpen(true);
-              }}
-            >
-              Editar producto
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onSelect={() => {
-                setIsMenuOpen(false);
-                setDeleteRequested(true);
-              }}
-            >
-              Eliminar producto
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Sheet
+          onOpenChange={setIsProductLinkSheetOpen}
+          open={isProductLinkSheetOpen}
+        >
+          <DropdownMenu onOpenChange={setIsMenuOpen} open={isMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button className="h-8 w-8 p-0" variant="ghost">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsMenuOpen(false);
+                  setIsEditSheetOpen(true);
+                }}
+              >
+                Editar producto
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setIsMenuOpen(false);
+                  setIsProductLinkSheetOpen(true);
+                }}
+              >
+                {product.productLink ? "Editar link publico" : "Publicar link"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => {
+                  setIsMenuOpen(false);
+                  setDeleteRequested(true);
+                }}
+              >
+                Eliminar producto
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ProductLinkSheetContent
+            product={product}
+            productLink={product.productLink}
+          />
+        </Sheet>
         <ProductSheetContent
           description="Actualiza la informacion visible y operativa de este producto."
           mode="edit"

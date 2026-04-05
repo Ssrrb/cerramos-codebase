@@ -23,15 +23,19 @@ import type { CheckoutDeliveryMode } from "./types";
 interface CheckoutDeliveryStepSectionProps<TFieldValues extends FieldValues> {
   className?: string;
   control: Control<TFieldValues>;
+  deliveryEnabled?: boolean;
   disabled?: boolean;
   names: CheckoutDeliveryFieldNames<TFieldValues>;
+  pickupEnabled?: boolean;
 }
 
 function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
   className,
   control,
+  deliveryEnabled = true,
   disabled,
   names,
+  pickupEnabled = true,
 }: CheckoutDeliveryStepSectionProps<TFieldValues>) {
   const deliveryMode = useWatch({
     control,
@@ -52,8 +56,10 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
         <FieldGroup>
           <CheckoutDeliveryModeField
             control={control}
+            deliveryEnabled={deliveryEnabled}
             disabled={disabled}
             name={names.mode}
+            pickupEnabled={pickupEnabled}
             rules={{
               required: "Elegí cómo querés recibir el pedido.",
             }}

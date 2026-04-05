@@ -36,6 +36,20 @@
       "when": 1774500000000,
       "tag": "0004_repeatable_product_contract",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775070696149,
+      "tag": "0005_complex_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775071861886,
+      "tag": "0006_thin_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

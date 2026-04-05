@@ -43,6 +43,11 @@ export interface CheckoutOrderSummary {
 
 export type CheckoutDeliveryMode = "delivery" | "pickup";
 
+export interface CheckoutDeliveryModeAvailability {
+  delivery: boolean;
+  pickup: boolean;
+}
+
 export interface CheckoutDeliveryValues {
   addressLine1: string;
   addressLine2?: string;

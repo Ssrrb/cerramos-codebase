@@ -1,5 +1,5 @@
-import { getSession } from "@repo/auth/server";
-import { database, schema } from "@repo/database";
+import { requireCommerceIdForRequest } from "@repo/auth/server";
+import { database, isForeignKeyConstraintError, schema } from "@repo/database";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
@@ -13,25 +13,8 @@ interface ProductRouteContext {
   }>;
 }
 
-const getCommerceId = async () => {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!session.user.commerceId) {
-    return NextResponse.json(
-      { error: "Commerce context is required." },
-      { status: 400 }
-    );
-  }
-
-  return session.user.commerceId;
-};
-
 export const PATCH = async (request: Request, context: ProductRouteContext) => {
-  const commerceId = await getCommerceId();
+  const commerceId = await requireCommerceIdForRequest();
 
   if (commerceId instanceof NextResponse) {
     return commerceId;
@@ -104,7 +87,7 @@ export const DELETE = async (
   _request: Request,
   context: ProductRouteContext
 ) => {
-  const commerceId = await getCommerceId();
+  const commerceId = await requireCommerceIdForRequest();
 
   if (commerceId instanceof NextResponse) {
     return commerceId;
@@ -133,7 +116,17 @@ export const DELETE = async (
       id: product.id,
       success: true,
     });
-  } catch {
+  } catch (error) {
+    if (isForeignKeyConstraintError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "No puedes eliminar este producto mientras tenga links publicos asociados.",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "No se pudo eliminar el producto." },
       { status: 500 }

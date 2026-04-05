@@ -1,0 +1,100 @@
+name: PR Quality
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      web: ${{ steps.filter.outputs.web }}
+      database: ${{ steps.filter.outputs.database }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app:
+              - 'apps/app/**'
+              - 'packages/auth/**'
+              - 'packages/database/**'
+              - 'packages/design-system/**'
+              - 'packages/notifications/**'
+              - 'packages/security/**'
+              - 'packages/storage/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/auth/**'
+              - 'packages/cms/**'
+              - 'packages/database/**'
+              - 'packages/design-system/**'
+              - 'packages/email/**'
+              - 'packages/internationalization/**'
+              - 'packages/rate-limit/**'
+              - 'packages/security/**'
+              - 'packages/seo/**'
+              - 'packages/storage/**'
+            database:
+              - 'packages/database/**'
+              - 'apps/app/app/api/**'
+              - 'apps/web/app/api/**'
+            shared:
+              - 'package.json'
+              - 'bun.lock'
+              - 'turbo.json'
+              - '.github/workflows/**'
+
+  app-quality:
+    needs: changes
+    if: needs.changes.outputs.app == 'true' || needs.changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run app tests
+        run: bun run --filter app test
+      - name: Run app typecheck
+        run: bun run --filter app typecheck
+
+  web-quality:
+    needs: changes
+    if: needs.changes.outputs.web == 'true' || needs.changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run web tests
+        run: bun run --filter web test
+      - name: Run web typecheck
+        run: bun run --filter web typecheck
+
+  database-quality:
+    needs: changes
+    if: needs.changes.outputs.database == 'true' || needs.changes.outputs.shared == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Run database tests
+        run: bun run --filter @repo/database test
+      - name: Run database typecheck
+        run: bun run --filter @repo/database typecheck

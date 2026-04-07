@@ -287,6 +287,7 @@ describe("web product links", () => {
       orderId: "order_1",
       paymentIntentId: "payment_1",
       paymentRequired: true,
+      upayFormId: "payment_1",
     });
 
     const orderInsert = insertedValues.find(({ table }) => table === "order");
@@ -385,6 +386,7 @@ describe("web product links", () => {
       orderId: "order_1",
       paymentIntentId: null,
       paymentRequired: false,
+      upayFormId: null,
     });
     expect(insertedTables).not.toContain("paymentIntent");
   });

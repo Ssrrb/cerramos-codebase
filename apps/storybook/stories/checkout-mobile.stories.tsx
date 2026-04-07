@@ -1,4 +1,6 @@
+import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutProgressiveFlow } from "@repo/design-system/components/checkout/checkout-progressive-flow";
+import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import type {
   CheckoutDeliveryValues,
   CheckoutMerchantSummary,
@@ -6,6 +8,7 @@ import type {
   CheckoutProductSummary,
 } from "@repo/design-system/components/checkout/types";
 import type { Meta, StoryObj } from "@storybook/react";
+import type { ReactNode } from "react";
 
 const merchantVerified: CheckoutMerchantSummary = {
   name: "Casa Nube",
@@ -62,26 +65,6 @@ const paymentReadyValues: CheckoutDeliveryValues = {
   reference: "Portón negro frente a la farmacia",
 };
 
-const MockPaymentProcessor = () => (
-  <div className="flex flex-col gap-3">
-    <div className="flex items-center justify-between rounded-2xl border border-border/70 bg-background px-3 py-2">
-      <span className="font-medium text-foreground text-sm">Pagopar uPay</span>
-      <span className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-        Demo
-      </span>
-    </div>
-    <div className="rounded-2xl border border-border/70 border-dashed bg-background/75 px-4 py-5">
-      <p className="font-medium text-foreground text-sm">
-        Componente embebido del procesador
-      </p>
-      <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
-        Acá vive el iframe o widget certificado para capturar el pago sin salir
-        de Cerramos.
-      </p>
-    </div>
-  </div>
-);
-
 const orderSummary: CheckoutOrderSummary = {
   title: "Tu pedido",
   badgeLabel: "Checkout seguro",
@@ -102,20 +85,29 @@ const CheckoutStory = ({
   defaultValues,
   merchant,
   paymentRequired,
-  processorReady,
+  paymentStage = "idle",
 }: {
   defaultValues?: Partial<CheckoutDeliveryValues>;
   merchant: CheckoutMerchantSummary;
   paymentRequired: boolean;
-  processorReady?: boolean;
+  paymentStage?: CheckoutPaymentStage;
 }) => {
+  let processorSlot: ReactNode;
+
+  if (paymentStage === "initializing") {
+    processorSlot = <CheckoutUpayCardLoader formId={null} />;
+  } else if (paymentStage === "ready") {
+    processorSlot = <CheckoutUpayCardLoader formId="demo-upay-form-id" />;
+  }
+
   return (
     <CheckoutProgressiveFlow
       defaultValues={defaultValues}
       merchant={merchant}
       orderSummary={orderSummary}
       paymentRequired={paymentRequired}
-      processorSlot={processorReady ? <MockPaymentProcessor /> : undefined}
+      paymentStage={paymentStage}
+      processorSlot={processorSlot}
       product={product}
     />
   );
@@ -179,7 +171,18 @@ export const PaymentProcessorReady: Story = {
       defaultValues={paymentReadyValues}
       merchant={merchantVerified}
       paymentRequired
-      processorReady
+      paymentStage="ready"
+    />
+  ),
+};
+
+export const PaymentInitializing: Story = {
+  render: () => (
+    <CheckoutStory
+      defaultValues={paymentReadyValues}
+      merchant={merchantVerified}
+      paymentRequired
+      paymentStage="initializing"
     />
   ),
 };

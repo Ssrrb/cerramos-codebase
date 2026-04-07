@@ -79,6 +79,7 @@ export interface CreateOrderResult {
   orderId: string;
   paymentIntentId: string | null;
   paymentRequired: boolean;
+  upayFormId: string | null;
 }
 
 export class ProductLinkCheckoutError extends Error {
@@ -122,6 +123,7 @@ export const getPublicProductLinkCheckout = cache(
           commerceId: string;
           commerceName: string;
           commerceSlug: string;
+          currency: string;
           defaultOrderExpiryHours: number;
           deliveryEnabled: boolean;
           description: string | null;
@@ -430,6 +432,7 @@ export const createOrderFromProductLink = async (
       orderId: order.id,
       paymentIntentId,
       paymentRequired: record.paymentRequired,
+      upayFormId: paymentIntentId,
     };
   });
 };

@@ -16,7 +16,10 @@ import {
   CheckoutMobileSummaryBar,
   CheckoutOrderSummaryPanel,
 } from "./checkout-order-summary-panel";
-import { CheckoutPaymentSection } from "./checkout-payment-section";
+import {
+  CheckoutPaymentSection,
+  type CheckoutPaymentStage,
+} from "./checkout-payment-section";
 import {
   CheckoutVerticalStepper,
   type CheckoutVerticalStepperStep,
@@ -102,14 +105,15 @@ const getDeliverySummary = (values: CheckoutDeliveryValues) => {
 
 interface CheckoutProgressiveFlowProps {
   className?: string;
-  deliveryEnabled?: boolean;
   defaultValues?: Partial<CheckoutDeliveryValues>;
+  deliveryEnabled?: boolean;
   merchant: CheckoutMerchantSummary;
   onSubmit?: (
     values: CheckoutDeliveryValues
-  ) => Promise<string | null | void>;
+  ) => Promise<string | null | undefined>;
   orderSummary: CheckoutOrderSummary;
   paymentRequired: boolean;
+  paymentStage?: CheckoutPaymentStage;
   pickupEnabled?: boolean;
   processorSlot?: ReactNode;
   product: CheckoutProductSummary;
@@ -125,6 +129,7 @@ function CheckoutProgressiveFlow({
   onSubmit,
   orderSummary,
   paymentRequired,
+  paymentStage = "idle",
   pickupEnabled = true,
   processorSlot,
   product,
@@ -153,7 +158,23 @@ function CheckoutProgressiveFlow({
 
   const deliveryMode = (formValues?.mode ?? "delivery") as CheckoutDeliveryMode;
   const canSubmitCheckout =
-    Boolean(onSubmit) && (!paymentRequired || merchant.trustState === "verified");
+    Boolean(onSubmit) &&
+    (!paymentRequired || merchant.trustState === "verified");
+  const paymentSummaryLines = useMemo(() => {
+    if (!paymentRequired) {
+      return ["Este pedido se coordina sin pago online"];
+    }
+
+    if (paymentStage === "ready") {
+      return ["Pedido creado, completá el pago"];
+    }
+
+    if (paymentStage === "initializing") {
+      return ["Pedido creado, preparando pago seguro"];
+    }
+
+    return ["Vas a continuar al pago seguro"];
+  }, [paymentRequired, paymentStage]);
 
   useEffect(() => {
     if (deliveryEnabled) {
@@ -275,9 +296,7 @@ function CheckoutProgressiveFlow({
         title: "Pago",
         isCompleted: false,
         isVisible: !!completedSteps.delivery || activeStep === "payment",
-        summaryLines: paymentRequired
-          ? ["Pago listo para finalizar"]
-          : ["Este pedido se coordina sin pago online"],
+        summaryLines: paymentSummaryLines,
         content: (
           <CheckoutPaymentSection
             actionSlot={
@@ -296,7 +315,9 @@ function CheckoutProgressiveFlow({
                           const errorMessage = await onSubmit?.(values);
                           setSubmitError(errorMessage ?? null);
                         } catch {
-                          setSubmitError("No se pudo continuar con el checkout.");
+                          setSubmitError(
+                            "No se pudo continuar con el checkout."
+                          );
                         }
                       });
                     })}
@@ -315,6 +336,7 @@ function CheckoutProgressiveFlow({
               ) : null
             }
             paymentRequired={paymentRequired}
+            paymentStage={paymentStage}
             processorSlot={processorSlot}
             trustState={merchant.trustState}
           />
@@ -331,10 +353,13 @@ function CheckoutProgressiveFlow({
       merchant.trustState,
       onSubmit,
       paymentRequired,
+      paymentStage,
+      paymentSummaryLines,
       pickupEnabled,
       processorSlot,
       submitLabel,
       submitError,
+      canSubmitCheckout,
     ]
   );
 

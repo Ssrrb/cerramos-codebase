@@ -50,6 +50,7 @@ export const POST = async (
       paymentIntentId: order.paymentIntentId,
       paymentRequired: order.paymentRequired,
       success: true,
+      upayFormId: order.upayFormId,
     });
   } catch (error) {
     if (error instanceof ProductLinkCheckoutError) {

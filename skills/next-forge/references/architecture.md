@@ -57,11 +57,11 @@ Notes:
 
 ### app (Port 3000)
 
-The main authenticated product surface. This repo currently uses Better Auth with first-party session routes in `apps/app/app/api/auth/[...all]/route.ts`. It imports shared capabilities from packages like `@repo/database`, `@repo/collaboration`, `@repo/notifications`, and `@repo/security`.
+The main authenticated product surface. This repo uses Better Auth with first-party session routes in `apps/app/app/api/auth/[...all]/route.ts`. Product-owned API handlers also live here, including product and product-link routes under `apps/app/app/api/products/*` and `apps/app/app/api/product-links/*`. Collaboration auth lives in `apps/app/app/api/collaboration/auth/route.ts`.
 
 ### web (Port 3001)
 
-The public marketing site. It uses `@repo/cms`, `@repo/internationalization`, `@repo/seo`, `@repo/security`, and analytics/observability packages.
+The public marketing site. It uses `@repo/cms`, `@repo/internationalization`, `@repo/seo`, `@repo/security`, and analytics/observability packages. This repo also exposes public commerce helpers here, including checkout order creation in `apps/web/app/api/buy/[commerceSlug]/[productLinkSlug]/orders/route.ts` and product-link image handling in `apps/web/app/api/product-link-images/route.ts`.
 
 ### api (Port 3002)
 
@@ -87,6 +87,7 @@ Repo-specific defaults worth remembering:
 - `@repo/database` uses Drizzle + Neon serverless driver
 - `@repo/auth` uses Better Auth, not Clerk
 - `@repo/payments` currently exposes a PagoPar/uPay-oriented adapter, not Stripe
+- `apps/app` and `apps/web` both own business routes; not every API belongs under `apps/api`
 
 ## Package Naming
 

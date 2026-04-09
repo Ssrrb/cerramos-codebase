@@ -2,7 +2,7 @@
   "name": "docs",
   "private": true,
   "scripts": {
-    "dev": "bun ./node_modules/mintlify/index.js dev --port 3004",
+    "dev": "bash ../../scripts/dev-docs.sh",
     "lint": "bun ./node_modules/mintlify/index.js broken-links"
   },
   "devDependencies": {

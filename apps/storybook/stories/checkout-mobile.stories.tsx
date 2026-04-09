@@ -8,7 +8,7 @@ import type {
   CheckoutProductSummary,
 } from "@repo/design-system/components/checkout/types";
 import type { Meta, StoryObj } from "@storybook/react";
-import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 const merchantVerified: CheckoutMerchantSummary = {
   name: "Casa Nube",
@@ -34,35 +34,15 @@ const product: CheckoutProductSummary = {
 };
 
 const defaultDeliveryValues: CheckoutDeliveryValues = {
-  recipientName: "",
-  email: "",
-  phone: "",
-  mode: "delivery",
-  city: "",
-  addressLine1: "",
-  addressLine2: "",
-  reference: "",
-  notes: "",
-};
-
-const completedDetailsValues: CheckoutDeliveryValues = {
-  ...defaultDeliveryValues,
   recipientName: "Camila Ferreira",
   email: "camila@cerramos.com",
   phone: "0981 123 456",
-};
-
-const pickupValues: CheckoutDeliveryValues = {
-  ...completedDetailsValues,
-  mode: "pickup",
-};
-
-const paymentReadyValues: CheckoutDeliveryValues = {
-  ...completedDetailsValues,
   mode: "delivery",
   city: "Asunción",
   addressLine1: "Av. España 742 casi Perú",
+  addressLine2: "Barrio Jara",
   reference: "Portón negro frente a la farmacia",
+  notes: "",
 };
 
 const orderSummary: CheckoutOrderSummary = {
@@ -81,37 +61,87 @@ const orderSummary: CheckoutOrderSummary = {
     "El estado del pago y la confirmación comercial del pedido siguen siendo procesos separados.",
 };
 
-const CheckoutStory = ({
-  defaultValues,
-  merchant,
-  paymentRequired,
-  paymentStage = "idle",
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+
+function ProgressiveCheckoutStory({
+  defaultValues = defaultDeliveryValues,
+  merchant = merchantVerified,
+  paymentRequired = true,
 }: {
   defaultValues?: Partial<CheckoutDeliveryValues>;
-  merchant: CheckoutMerchantSummary;
-  paymentRequired: boolean;
-  paymentStage?: CheckoutPaymentStage;
-}) => {
-  let processorSlot: ReactNode;
+  merchant?: CheckoutMerchantSummary;
+  paymentRequired?: boolean;
+}) {
+  const [paymentStage, setPaymentStage] =
+    useState<CheckoutPaymentStage>("idle");
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+  const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
 
-  if (paymentStage === "initializing") {
-    processorSlot = <CheckoutUpayCardLoader formId={null} />;
-  } else if (paymentStage === "ready") {
-    processorSlot = <CheckoutUpayCardLoader formId="demo-upay-form-id" />;
-  }
+  useEffect(() => {
+    if (paymentStage !== "initializing") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPaymentStage("ready");
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [paymentStage]);
+
+  const handleReset = () => {
+    setPaymentStage("idle");
+    setOrderReference(null);
+    setIsOrderConfirmed(false);
+  };
 
   return (
     <CheckoutProgressiveFlow
+      confirmationMessage="Registramos el pedido, simulamos el cobro exitoso y el comercio seguirá la confirmación operativa por separado."
       defaultValues={defaultValues}
+      isOrderConfirmed={isOrderConfirmed}
       merchant={merchant}
+      onPaymentConfirm={async () => {
+        await wait(1000);
+        setIsOrderConfirmed(true);
+        return null;
+      }}
+      onReset={handleReset}
+      onSubmit={async () => {
+        await wait(900);
+
+        if (!paymentRequired) {
+          setOrderReference("ord_storybook_checkout");
+          setIsOrderConfirmed(true);
+          return null;
+        }
+
+        setOrderReference("ord_storybook_checkout");
+        setPaymentStage("initializing");
+        return null;
+      }}
+      orderReference={orderReference}
       orderSummary={orderSummary}
+      paymentActionLabel="Simular pago aprobado"
       paymentRequired={paymentRequired}
       paymentStage={paymentStage}
-      processorSlot={processorSlot}
+      processorSlot={
+        paymentRequired ? (
+          <CheckoutUpayCardLoader
+            formId={paymentStage === "ready" ? "storybook-upay-form-id" : null}
+          />
+        ) : undefined
+      }
       product={product}
+      submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
     />
   );
-};
+}
 
 const meta = {
   title: "checkout/Progressive Checkout",
@@ -125,79 +155,21 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const DefaultFirstStep: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={defaultDeliveryValues}
-      merchant={merchantVerified}
-      paymentRequired
-    />
-  ),
+export const InteractiveFlow: Story = {
+  render: () => <ProgressiveCheckoutStory />,
 };
 
-export const DetailsCompletedDeliveryActive: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={completedDetailsValues}
-      merchant={merchantVerified}
-      paymentRequired
-    />
-  ),
-};
-
-export const PickupMode: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={pickupValues}
-      merchant={merchantVerified}
-      paymentRequired
-    />
-  ),
-};
-
-export const PaymentUnavailable: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={paymentReadyValues}
-      merchant={merchantPending}
-      paymentRequired
-    />
-  ),
-};
-
-export const PaymentProcessorReady: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={paymentReadyValues}
-      merchant={merchantVerified}
-      paymentRequired
-      paymentStage="ready"
-    />
-  ),
-};
-
-export const PaymentInitializing: Story = {
-  render: () => (
-    <CheckoutStory
-      defaultValues={paymentReadyValues}
-      merchant={merchantVerified}
-      paymentRequired
-      paymentStage="initializing"
-    />
-  ),
-};
-
-export const MobileSummaryDrawer: Story = {
+export const MobileInteractiveFlow: Story = {
   parameters: {
     viewport: {
       defaultViewport: "mobile1",
     },
   },
+  render: () => <ProgressiveCheckoutStory />,
+};
+
+export const PaymentUnavailable: Story = {
   render: () => (
-    <CheckoutStory
-      defaultValues={completedDetailsValues}
-      merchant={merchantVerified}
-      paymentRequired
-    />
+    <ProgressiveCheckoutStory merchant={merchantPending} paymentRequired />
   ),
 };

@@ -1,8 +1,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card";
@@ -29,6 +27,7 @@ type CheckoutPaymentStage = "idle" | "initializing" | "ready";
 interface CheckoutPaymentSectionProps {
   actionSlot?: ReactNode;
   className?: string;
+  orderReference?: string | null;
   paymentRequired: boolean;
   paymentStage?: CheckoutPaymentStage;
   processorSlot?: ReactNode;
@@ -38,6 +37,7 @@ interface CheckoutPaymentSectionProps {
 function CheckoutPaymentSection({
   actionSlot,
   className,
+  orderReference,
   paymentRequired,
   paymentStage = "idle",
   processorSlot,
@@ -47,21 +47,17 @@ function CheckoutPaymentSection({
   const isProcessorInitializing = paymentStage === "initializing";
   const isProcessorReady = paymentStage === "ready";
   let paymentStateMeta = {
-    eyebrow: "Próximo paso",
-    title: "Vas a continuar al pago seguro",
-    description:
-      "Primero creamos el pedido y después cargamos el componente certificado de Pagopar uPay dentro de este checkout.",
+    title: "Pago seguro",
+    description: "Vas a continuar al pago después de crear el pedido.",
     icon: CreditCardIcon,
     panelClassName:
-      "border border-dashed border-border/70 bg-muted/20 px-5 py-6",
+      "border border-dashed border-border/70 bg-muted/20 px-5 py-5",
   };
 
   if (isProcessorInitializing) {
     paymentStateMeta = {
-      eyebrow: "Inicializando pago",
-      title: "Pedido creado, preparando el cobro seguro",
-      description:
-        "Estamos dejando listo el componente certificado de Pagopar uPay para que completes la tarjeta sin salir de Cerramos.",
+      title: "Preparando pago",
+      description: "Estamos cargando el formulario seguro.",
       icon: LoaderCircleIcon,
       panelClassName:
         "border border-border/70 bg-[color-mix(in_oklab,var(--color-background)_88%,var(--color-muted)_12%)] p-4",
@@ -70,10 +66,8 @@ function CheckoutPaymentSection({
 
   if (isProcessorReady) {
     paymentStateMeta = {
-      eyebrow: "Pago seguro listo",
-      title: "Pedido creado, completá el pago",
-      description:
-        "La tarjeta se ingresa y se procesa únicamente dentro del componente certificado de Pagopar uPay.",
+      title: "Completá el pago",
+      description: "Ingresá tu tarjeta en el formulario seguro.",
       icon: LockKeyholeIcon,
       panelClassName:
         "border border-border/70 bg-[color-mix(in_oklab,var(--color-background)_92%,var(--color-muted)_8%)] p-4",
@@ -95,13 +89,10 @@ function CheckoutPaymentSection({
         </div>
         <div className="min-w-0 space-y-2">
           <div className="space-y-1">
-            <p className="font-medium text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
-              {paymentStateMeta.eyebrow}
-            </p>
             <h3 className="font-medium text-base text-foreground">
               {paymentStateMeta.title}
             </h3>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-muted-foreground text-sm">
               {paymentStateMeta.description}
             </p>
           </div>
@@ -110,11 +101,10 @@ function CheckoutPaymentSection({
           ) : (
             <div className="rounded-[1rem] border border-border/70 bg-background/80 px-4 py-3">
               <p className="font-medium text-foreground text-sm">
-                Pagopar uPay embebido
+                Formulario de pago
               </p>
-              <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
-                La marca, el número de tarjeta y la captura del pago se
-                resuelven dentro del iframe certificado del proveedor.
+              <p className="mt-1 text-muted-foreground text-sm">
+                Se carga dentro del checkout cuando el pedido está listo.
               </p>
             </div>
           )}
@@ -134,8 +124,7 @@ function CheckoutPaymentSection({
             Pago online no disponible
           </EmptyTitle>
           <EmptyDescription className="w-full text-left">
-            Este comercio todavía no habilitó el cobro embebido con Pagopar
-            uPay.
+            Este comercio no tiene pago embebido disponible.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -150,34 +139,30 @@ function CheckoutPaymentSection({
             <WalletMinimalIcon />
           </EmptyMedia>
           <EmptyTitle className="w-full text-left text-base">
-            Este pedido no requiere pago online
+            Sin pago online
           </EmptyTitle>
           <EmptyDescription className="w-full text-left">
-            El comercio va a coordinar el cobro después de confirmar el pedido.
+            El cobro se coordina con el comercio.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
   }
 
-  let footerCopy =
-    "Primero se crea el pedido y luego se carga el componente certificado del proveedor para completar el cobro dentro de Cerramos.";
-
-  if (!(paymentRequired && isVerified)) {
-    footerCopy =
-      "El estado del pago y la confirmación comercial del pedido siguen siendo procesos separados.";
-  } else if (isProcessorReady) {
-    footerCopy =
-      "Completar el pago no reemplaza la confirmación operativa del comercio. Cerramos seguirá mostrando ambos estados por separado.";
-  }
-
   return (
     <Card className={cn("gap-0 rounded-[1.75rem] border-border/70", className)}>
       <CardHeader className="gap-1.5">
-        <CardDescription>Pago</CardDescription>
         <CardTitle className="text-base">Finalizá el checkout</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
+        {orderReference ? (
+          <div className="mb-4 rounded-[1.25rem] border border-border/70 bg-muted/20 px-4 py-3">
+            <p className="font-medium text-foreground text-sm">Pedido creado</p>
+            <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
+              {orderReference}
+            </p>
+          </div>
+        ) : null}
         {paymentContent}
         {actionSlot ? (
           <div
@@ -186,12 +171,12 @@ function CheckoutPaymentSection({
             {actionSlot}
           </div>
         ) : null}
+        {paymentRequired && isVerified ? (
+          <p className="mt-4 text-muted-foreground text-xs">
+            Tus datos de pago se cargan en un formulario seguro del proveedor.
+          </p>
+        ) : null}
       </CardContent>
-      <CardFooter className="border-border/70 border-t pt-6">
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          {footerCopy}
-        </p>
-      </CardFooter>
     </Card>
   );
 }

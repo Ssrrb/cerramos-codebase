@@ -13,6 +13,8 @@
 
 next-forge is modular, but this repo has already diverged from the original starter. Distinguish between starter defaults and current-repo defaults before recommending changes.
 
+For large changes in this repo, read the relevant product docs under `docs/content/docs/product/` first so the recommendation fits the current product boundaries.
+
 ### Database / ORM
 
 **Current repo default**: Drizzle + Neon serverless + PostgreSQL
@@ -44,6 +46,7 @@ Do not tell users to update Clerk components unless you first clarify that Clerk
 To swap:
 - replace or extend `packages/payments/`
 - update `apps/api/app/webhooks/payments/route.ts`
+- inspect any checkout flows under `apps/web/app/api/buy/*` and authenticated product/payment flows under `apps/app/app/api/*`
 - update any app-level payment status handling that assumes current enum values
 
 If introducing Stripe, add the Stripe SDK and webhook verification flow explicitly rather than assuming it already exists.
@@ -136,6 +139,7 @@ BETTER_AUTH_URL="https://app.yourdomain.com"
 3. Export a clear public API.
 4. Add `keys.ts` if the package owns env vars.
 5. Compose that package's env schema into the consuming apps' `env.ts`.
+6. Keep the change incremental instead of redistributing responsibilities across many packages at once.
 
 This last step matters in this repo because env composition is app-specific.
 
@@ -152,7 +156,11 @@ Check:
 
 ### Adding API Routes
 
-Add routes in `apps/api/app/` when the endpoint should live on the dedicated API surface. For app-specific authenticated routes, `apps/app/app/api/` may still be the correct location.
+Add routes in the surface that owns the behavior:
+
+- `apps/api/app/` for health checks, cron jobs, and inbound webhooks
+- `apps/app/app/api/` for authenticated product and dashboard operations
+- `apps/web/app/api/` for public commerce, product-link, and marketing-adjacent handlers
 
 ### Adding Auth Endpoints
 

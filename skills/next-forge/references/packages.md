@@ -97,11 +97,11 @@ Do not reference Prisma schema files or Prisma Client for this repo.
 **Current behavior**:
 - The package is intentionally thin
 - Webhook verification uses `PAGOPAR_WEBHOOK_SECRET`
-- `apps/api/app/webhooks/payments/route.ts` logs, normalizes, and tracks inbound payment events
+- `apps/api/app/webhooks/payments/route.ts` verifies signatures, normalizes events, logs them, and forwards analytics when configured
 
 **Swappable to**: Stripe, Paddle, Lemon Squeezy, or a fuller PagoPar implementation
 
-When advising changes, mention both the package and the webhook route in `apps/api`.
+When advising changes, mention both the package and the webhook route in `apps/api`. Also inspect any order-creation or checkout flows in `apps/web` and `apps/app` before assuming the provider only touches webhooks.
 
 ## Email (`@repo/email`)
 
@@ -110,6 +110,10 @@ When advising changes, mention both the package and the webhook route in `apps/a
 **Templates**: `packages/email/templates`
 
 Preview and development happen through `apps/email`, not inside the package itself.
+
+**Env vars**:
+- `RESEND_TOKEN`
+- `RESEND_FROM`
 
 ## CMS (`@repo/cms`)
 
@@ -139,6 +143,11 @@ Holds error parsing, logging, and observability glue used by apps. In webhook an
 
 Shared storage abstraction package. Verify the exported API in the package before suggesting upload usage because storage integrations are often customized per repo.
 
+**Important env detail**:
+- `GCS_BUCKET_NAME` is required by the package schema
+- `GOOGLE_APPLICATION_CREDENTIALS` is optional locally
+- `GOOGLE_CLOUD_PROJECT` may also be required depending on runtime environment
+
 ## Security (`@repo/security`)
 
 Shared security helpers and env validation. The `web` app imports `@arcjet/next`, and both `web` and `app` consume package-level security behavior.
@@ -163,9 +172,14 @@ Shared outbound or cross-app webhook utilities. For inbound webhooks, point user
 
 Shared notifications package used by the authenticated app. Check package exports and consuming components when the user asks how feeds or triggers are wired.
 
+**Env vars**:
+- `KNOCK_SECRET_API_KEY`
+- `NEXT_PUBLIC_KNOCK_API_KEY`
+- `NEXT_PUBLIC_KNOCK_FEED_CHANNEL_ID`
+
 ## Collaboration (`@repo/collaboration`)
 
-Shared real-time collaboration package used by the authenticated app. The active route for auth lives in `apps/app/app/api/collaboration/auth/route.ts`.
+Shared real-time collaboration package used by the authenticated app. The active route for auth lives in `apps/app/app/api/collaboration/auth/route.ts`, and it relies on `@repo/auth/server` plus `LIVEBLOCKS_SECRET`.
 
 ## AI (`@repo/ai`)
 

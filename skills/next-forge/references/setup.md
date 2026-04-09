@@ -35,7 +35,7 @@ This repo is an existing Bun-powered Turborepo. Prefer answering from the checke
 
 ### Database
 
-Set `DATABASE_URL` for `@repo/database`. In development, `packages/database/keys.ts` falls back to `postgresql://postgres:postgres@127.0.0.1:5432/postgres`, but production requires an explicit value.
+Set `DATABASE_URL` for `@repo/database`. In development, `packages/database/keys.ts` falls back to `postgresql://postgres:postgres@127.0.0.1:5432/postgres`, but Drizzle commands and production deployments still require an explicit value.
 
 Typical local placement:
 
@@ -54,6 +54,10 @@ NEXT_PUBLIC_WEB_URL="http://localhost:3001"
 NEXT_PUBLIC_API_URL="http://localhost:3002"
 NEXT_PUBLIC_DOCS_URL="http://localhost:3004"
 ```
+
+Notes:
+- `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_WEB_URL` fall back to localhost values in development through `packages/next-config/keys.ts`.
+- `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_DOCS_URL` are optional.
 
 ## Optional Environment Variables
 
@@ -76,7 +80,8 @@ NEXT_PUBLIC_AUTH_AFTER_SIGN_UP_URL="/"
 ```
 
 Notes:
-- `BETTER_AUTH_SECRET` is required outside development.
+- `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` both have development fallbacks in `packages/auth/keys.ts`.
+- `BETTER_AUTH_URL` falls back to `NEXT_PUBLIC_APP_URL` before defaulting to `http://localhost:3000` in development.
 - Google auth is enabled only when both Google vars are present.
 - The Better Auth handler lives in `apps/app/app/api/auth/[...all]/route.ts`.
 
@@ -106,6 +111,7 @@ BASEHUB_TOKEN=""
 ### Email (`@repo/email`)
 
 ```bash
+RESEND_FROM=""
 RESEND_TOKEN=""
 ```
 
@@ -159,8 +165,8 @@ FLAGS_SECRET=""
 ### Notifications (`@repo/notifications`)
 
 ```bash
-KNOCK_API_KEY=""
-NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY=""
+KNOCK_SECRET_API_KEY=""
+NEXT_PUBLIC_KNOCK_API_KEY=""
 NEXT_PUBLIC_KNOCK_FEED_CHANNEL_ID=""
 ```
 
@@ -217,6 +223,16 @@ Relevant files:
 - `packages/auth/server.ts`
 - `packages/auth/handlers.ts`
 - `apps/app/app/api/auth/[...all]/route.ts`
+
+Prefer reading `packages/auth/keys.ts` before answering "which auth env vars are required?" because the package provides development fallbacks that differ from production requirements.
+
+## Route Ownership Notes
+
+When the user asks where to add or debug a route, use this split:
+
+- `apps/app/app/api/*` for authenticated product operations such as products, product links, and collaboration auth
+- `apps/web/app/api/*` for public checkout and media routes
+- `apps/api/app/*` for health checks, cron handlers, and inbound webhooks
 
 Notes:
 - Sessions, accounts, and verifications live in the shared database schema.

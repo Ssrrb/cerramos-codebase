@@ -1,4 +1,0 @@
-interface:
-  display_name: "Next Forge"
-  short_description: "Guide for next-forge workspaces"
-  default_prompt: "Use $next-forge to help me work in this next-forge codebase."

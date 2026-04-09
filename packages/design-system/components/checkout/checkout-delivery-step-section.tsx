@@ -79,11 +79,10 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
                 />
                 <CheckoutInputField
                   control={control}
-                  description="Opcional, útil para edificio, piso o barrio."
                   disabled={disabled}
-                  label="Complemento"
+                  label="Barrio"
                   name={names.addressLine2}
-                  placeholder="Torre 2, piso 4"
+                  placeholder="Obrero"
                 />
               </div>
               <CheckoutInputField
@@ -123,7 +122,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
             disabled={disabled}
             label="Notas"
             name={names.notes}
-            placeholder="Si no atiendo, escribime por WhatsApp."
+            placeholder="Torre 2, Dpto 204."
           />
         </FieldGroup>
       </CardContent>

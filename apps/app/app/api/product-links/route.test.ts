@@ -38,7 +38,6 @@ vi.mock("@repo/database", () => ({
     product: {
       commerceId: "product.commerceId",
       id: "product.id",
-      image: "product.image",
       status: "product.status",
     },
     productLink: {
@@ -132,7 +131,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "draft",
       },
     ]);
@@ -172,7 +170,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -212,7 +209,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -255,7 +251,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -296,7 +291,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -348,7 +342,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -387,7 +380,6 @@ describe("product links route", () => {
       deliveryEnabled: true,
       description: "Oferta publica",
       expiresAt: null,
-      imageUrl: "products/commerce_1/images/mate.png",
       paymentRequired: true,
       pickupEnabled: true,
       productId: "product_1",
@@ -403,7 +395,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);
@@ -443,7 +434,6 @@ describe("product links route", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         id: "product_1",
-        image: "products/commerce_1/images/mate.png",
         status: "active",
       },
     ]);

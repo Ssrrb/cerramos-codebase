@@ -42,8 +42,12 @@ const commerceTable = {
 };
 const productTable = {
   id: "product.id",
-  image: "product.image",
+  primaryImageId: "product.primaryImageId",
   status: "product.status",
+};
+const productImageTable = {
+  id: "productImage.id",
+  objectKey: "productImage.objectKey",
 };
 const productLinkTable = {
   commerceId: "productLink.commerceId",
@@ -52,7 +56,6 @@ const productLinkTable = {
   description: "productLink.description",
   expiresAt: "productLink.expiresAt",
   id: "productLink.id",
-  imageUrl: "productLink.imageUrl",
   paymentRequired: "productLink.paymentRequired",
   pickupEnabled: "productLink.pickupEnabled",
   productId: "productLink.productId",
@@ -101,6 +104,7 @@ vi.mock("@repo/database", () => ({
     orderStatusHistory: orderStatusHistoryTable,
     paymentIntent: paymentIntentTable,
     product: productTable,
+    productImage: productImageTable,
     productLink: productLinkTable,
   },
 }));
@@ -115,10 +119,9 @@ const baseRecord = {
   deliveryEnabled: true,
   description: "Server description",
   expiresAt: null,
-  imageUrl: "/server-image.png",
+  imageObjectKey: "products/commerce_1/images/mate.png",
   paymentRequired: true,
   pickupEnabled: true,
-  productImage: null,
   productId: "product_1",
   productLinkId: "link_1",
   productStatus: "active" as const,
@@ -220,7 +223,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        imageUrl:
+        imageObjectKey:
           "/api/products/image?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
       },
     ]);
@@ -236,13 +239,13 @@ describe("web product links", () => {
     );
   });
 
-  test("prefers the stored product link image over a stale current product image", async () => {
+  test("ignores deprecated product link image data and uses the canonical primary image", async () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
+        imageObjectKey: "products/commerce_1/images/current.png",
         imageUrl:
-          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fcurrent.png",
-        productImage: "products/commerce_1/images/old.png",
+          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fold.png",
       },
     ]);
 
@@ -261,7 +264,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        imageUrl: "products/commerce_1/images/mate.png",
+        imageObjectKey: "products/commerce_1/images/mate.png",
       },
     ]);
 
@@ -283,7 +286,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        imageUrl:
+        imageObjectKey:
           "/api/product-link-images?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
       },
     ]);
@@ -308,7 +311,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        imageUrl:
+        imageObjectKey:
           "https://storage.googleapis.com/imagenes-cerramos/products/commerce_1/images/mate.png?X-Goog-Algorithm=GOOG4-RSA-SHA256",
       },
     ]);
@@ -499,7 +502,7 @@ describe("web product links", () => {
     });
     expect(orderItemInsert?.values).toMatchObject({
       description: "Server description",
-      imageUrl: "/server-image.png",
+      imageObjectKey: "products/commerce_1/images/mate.png",
       productId: "product_1",
       productLinkId: "link_1",
       title: "Server title",
@@ -520,7 +523,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        imageUrl:
+        imageObjectKey:
           "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
       },
     ]);
@@ -586,7 +589,7 @@ describe("web product links", () => {
     );
 
     expect(orderItemInsert?.values).toMatchObject({
-      imageUrl: "products/commerce_1/images/mate.png",
+      imageObjectKey: "products/commerce_1/images/mate.png",
     });
   });
 

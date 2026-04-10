@@ -1,0 +1,18 @@
+---
+title: Security
+description: Shared request protection and security-oriented infrastructure.
+type: reference
+product: Security
+summary: How security helpers are shared across repo surfaces.
+related:
+  - /docs/packages/security/application
+  - /docs/packages/security/dependencies
+  - /docs/packages/security/headers
+  - /docs/packages/security/ip-geolocation
+  - /docs/packages/security/rate-limiting
+---
+
+`@repo/security` centralizes shared security helpers, middleware, and configuration.
+
+It does not own auth session logic in `@repo/auth` or route-specific authorization policy in apps.
+Use it for shared protection primitives, not feature-level business rules.

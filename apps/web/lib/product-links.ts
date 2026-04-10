@@ -124,20 +124,18 @@ const normalizeCheckoutProductImageUrl = (imageUrl: string | null) => {
 };
 
 const resolveCheckoutProductImage = (
-  ...candidates: Array<string | null | undefined>
+  candidate: string | null | undefined
 ): { imageReference: string | null; imageUrl: string | null } => {
-  for (const candidate of candidates) {
-    const normalizedReference = normalizeStoredProductImageReference(
-      candidate,
-      process.env.GCS_BUCKET_NAME
-    );
+  const normalizedReference = normalizeStoredProductImageReference(
+    candidate,
+    process.env.GCS_BUCKET_NAME
+  );
 
-    if (normalizedReference) {
-      return {
-        imageReference: normalizedReference,
-        imageUrl: normalizeCheckoutProductImageUrl(normalizedReference),
-      };
-    }
+  if (normalizedReference) {
+    return {
+      imageReference: normalizedReference,
+      imageUrl: normalizeCheckoutProductImageUrl(normalizedReference),
+    };
   }
 
   return {
@@ -162,10 +160,9 @@ export const getPublicProductLinkCheckout = cache(
           deliveryEnabled: boolean;
           description: string | null;
           expiresAt: Date | null;
-          imageUrl: string | null;
+          imageObjectKey: string | null;
           paymentRequired: boolean;
           pickupEnabled: boolean;
-          productImage: string | null;
           productId: string;
           productLinkId: string;
           productLinkStatus: "active" | "draft" | "expired" | "inactive";
@@ -194,10 +191,9 @@ export const getPublicProductLinkCheckout = cache(
           deliveryEnabled: schema.productLink.deliveryEnabled,
           description: schema.productLink.description,
           expiresAt: schema.productLink.expiresAt,
-          imageUrl: schema.productLink.imageUrl,
+          imageObjectKey: schema.productImage.objectKey,
           paymentRequired: schema.productLink.paymentRequired,
           pickupEnabled: schema.productLink.pickupEnabled,
-          productImage: schema.product.image,
           productId: schema.product.id,
           productLinkId: schema.productLink.id,
           productStatus: schema.product.status,
@@ -218,6 +214,10 @@ export const getPublicProductLinkCheckout = cache(
         .innerJoin(
           schema.product,
           eq(schema.product.id, schema.productLink.productId)
+        )
+        .innerJoin(
+          schema.productImage,
+          eq(schema.productImage.id, schema.product.primaryImageId)
         )
         .where(eq(schema.commerce.slug, commerceSlug));
     } catch (error) {
@@ -244,10 +244,7 @@ export const getPublicProductLinkCheckout = cache(
       return null;
     }
 
-    const productImage = resolveCheckoutProductImage(
-      record.imageUrl,
-      record.productImage
-    );
+    const productImage = resolveCheckoutProductImage(record.imageObjectKey);
 
     return {
       commerceId: record.commerceId,
@@ -430,7 +427,7 @@ export const createOrderFromProductLink = async (
 
     await tx.insert(schema.orderItem).values({
       description: record.description,
-      imageUrl: record.imageReference,
+      imageObjectKey: record.imageReference,
       orderId: order.id,
       productId: record.productId,
       productLinkId: record.productLinkId,

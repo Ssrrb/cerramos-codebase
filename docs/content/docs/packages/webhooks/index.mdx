@@ -1,0 +1,17 @@
+---
+title: Webhooks
+description: Shared webhook utilities and ownership boundaries.
+type: reference
+product: Webhooks
+summary: How webhook helpers are shared across the repo.
+related:
+  - /docs/apps/api
+  - /docs/packages/webhooks/inbound
+  - /docs/packages/webhooks/outbound
+---
+
+`@repo/webhooks` holds shared webhook utilities and provider-adjacent helpers.
+
+Keep concrete route ownership in `apps/api`.
+Keep payment-provider core behavior in `@repo/payments`.
+Use this package for reusable verification and support helpers.

@@ -8,6 +8,9 @@ summary: How file storage is configured with Vercel Blob.
 
 next-forge has a `storage` package that provides a simple wrapper around [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) for file storage.
 
+In this repo, `@repo/storage` owns shared storage abstractions and object-key helpers.
+Route ownership for media APIs and upload UX still belongs in the consuming app.
+
 ## Usage
 
 ### Server uploads

@@ -8,7 +8,11 @@ related:
   - /docs/packages/toolbar
 ---
 
-Feature flags (also known as feature toggles) allow you to control access to specific features in your application. next-forge provides a simple but powerful feature flag system that can be used to:
+Feature flags (also known as feature toggles) allow you to control access to specific features in your application. In this repo, `@repo/feature-flags` owns shared flag plumbing and developer tooling.
+
+Keep app-specific rollout decisions close to the owning feature unless they become cross-app conventions.
+
+next-forge provides a simple but powerful feature flag system that can be used to:
 
 - Roll out features gradually to users
 - A/B test new functionality

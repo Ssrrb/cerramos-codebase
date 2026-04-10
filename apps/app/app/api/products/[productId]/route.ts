@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { requireCommerceIdForRequest } from "@repo/auth/server";
 import { database, isForeignKeyConstraintError, schema } from "@repo/database";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
   normalizeProductImageObjectKey,
@@ -52,26 +53,76 @@ export const PATCH = async (request: Request, context: ProductRouteContext) => {
 
   const { productId } = await context.params;
   const { imageObjectKey: _ignoredImageObjectKey, ...rest } = result.data;
-  const images = {
-    primary: imageObjectKey,
-  };
 
-  const [product] = await database
-    .update(schema.product)
-    .set({
-      ...rest,
-      image: imageObjectKey,
-      images,
-    })
-    .where(
-      and(
-        eq(schema.product.commerceId, commerceId),
-        eq(schema.product.id, productId)
+  const product = await database.transaction(async (tx) => {
+    const [currentProduct] = await tx
+      .select({
+        id: schema.product.id,
+        primaryImageId: schema.product.primaryImageId,
+        primaryImageObjectKey: schema.productImage.objectKey,
+      })
+      .from(schema.product)
+      .innerJoin(
+        schema.productImage,
+        eq(schema.productImage.id, schema.product.primaryImageId)
       )
-    )
-    .returning({
-      id: schema.product.id,
-    });
+      .where(
+        and(
+          eq(schema.product.commerceId, commerceId),
+          eq(schema.product.id, productId)
+        )
+      );
+
+    if (!currentProduct) {
+      return null;
+    }
+
+    let nextPrimaryImageId = currentProduct.primaryImageId;
+
+    if (currentProduct.primaryImageObjectKey !== imageObjectKey) {
+      nextPrimaryImageId = randomUUID();
+
+      await tx.insert(schema.productImage).values({
+        id: nextPrimaryImageId,
+        objectKey: imageObjectKey,
+        position: 0,
+        productId,
+      });
+    }
+
+    const [updatedProduct] = await tx
+      .update(schema.product)
+      .set({
+        ...rest,
+        primaryImageId: nextPrimaryImageId,
+      })
+      .where(
+        and(
+          eq(schema.product.commerceId, commerceId),
+          eq(schema.product.id, productId)
+        )
+      )
+      .returning({
+        id: schema.product.id,
+      });
+
+    if (!updatedProduct) {
+      return null;
+    }
+
+    if (nextPrimaryImageId !== currentProduct.primaryImageId) {
+      await tx
+        .delete(schema.productImage)
+        .where(
+          and(
+            eq(schema.productImage.productId, productId),
+            ne(schema.productImage.id, nextPrimaryImageId)
+          )
+        );
+    }
+
+    return updatedProduct;
+  });
 
   if (!product) {
     return NextResponse.json({ error: "Product not found." }, { status: 404 });

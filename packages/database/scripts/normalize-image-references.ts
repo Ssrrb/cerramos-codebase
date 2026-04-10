@@ -24,13 +24,13 @@ const normalizeValue = (
   return normalized || null;
 };
 
-const [products, commerces, productLinks, orderItems] = await Promise.all([
+const [productImages, commerces, orderItems] = await Promise.all([
   database
     .select({
-      id: schema.product.id,
-      image: schema.product.image,
+      id: schema.productImage.id,
+      objectKey: schema.productImage.objectKey,
     })
-    .from(schema.product),
+    .from(schema.productImage),
   database
     .select({
       id: schema.commerce.id,
@@ -39,42 +39,35 @@ const [products, commerces, productLinks, orderItems] = await Promise.all([
     .from(schema.commerce),
   database
     .select({
-      id: schema.productLink.id,
-      imageUrl: schema.productLink.imageUrl,
-    })
-    .from(schema.productLink),
-  database
-    .select({
       id: schema.orderItem.id,
-      imageUrl: schema.orderItem.imageUrl,
+      imageObjectKey: schema.orderItem.imageObjectKey,
     })
     .from(schema.orderItem),
 ]);
 
-let normalizedProducts = 0;
+let normalizedProductImages = 0;
 let normalizedCommerces = 0;
-let normalizedProductLinks = 0;
 let normalizedOrderItems = 0;
 
-for (const product of products) {
+for (const productImage of productImages) {
   const normalizedImage = normalizeValue(
-    product.image,
+    productImage.objectKey,
     normalizeStoredProductImageReference
   );
 
-  if ((normalizedImage ?? "") === product.image) {
+  if ((normalizedImage ?? "") === productImage.objectKey) {
     continue;
   }
 
   await database
-    .update(schema.product)
+    .update(schema.productImage)
     .set({
-      image: normalizedImage ?? "",
+      objectKey: normalizedImage ?? "",
       updatedAt: new Date(),
     })
-    .where(eq(schema.product.id, product.id));
+    .where(eq(schema.productImage.id, productImage.id));
 
-  normalizedProducts += 1;
+  normalizedProductImages += 1;
 }
 
 for (const commerce of commerces) {
@@ -98,41 +91,20 @@ for (const commerce of commerces) {
   normalizedCommerces += 1;
 }
 
-for (const productLink of productLinks) {
-  const normalizedImageUrl = normalizeValue(
-    productLink.imageUrl,
-    normalizeStoredProductImageReference
-  );
-
-  if (normalizedImageUrl === productLink.imageUrl) {
-    continue;
-  }
-
-  await database
-    .update(schema.productLink)
-    .set({
-      imageUrl: normalizedImageUrl,
-      updatedAt: new Date(),
-    })
-    .where(eq(schema.productLink.id, productLink.id));
-
-  normalizedProductLinks += 1;
-}
-
 for (const orderItem of orderItems) {
   const normalizedImageUrl = normalizeValue(
-    orderItem.imageUrl,
+    orderItem.imageObjectKey,
     normalizeStoredProductImageReference
   );
 
-  if (normalizedImageUrl === orderItem.imageUrl) {
+  if (normalizedImageUrl === orderItem.imageObjectKey) {
     continue;
   }
 
   await database
     .update(schema.orderItem)
     .set({
-      imageUrl: normalizedImageUrl,
+      imageObjectKey: normalizedImageUrl,
     })
     .where(eq(schema.orderItem.id, orderItem.id));
 
@@ -141,9 +113,8 @@ for (const orderItem of orderItems) {
 
 console.log(
   [
-    `Normalized products: ${normalizedProducts}`,
+    `Normalized product images: ${normalizedProductImages}`,
     `Normalized commerce logos: ${normalizedCommerces}`,
-    `Normalized product link images: ${normalizedProductLinks}`,
     `Normalized order item images: ${normalizedOrderItems}`,
   ].join("\n")
 );

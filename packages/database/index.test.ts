@@ -11,6 +11,54 @@ const runDatabaseTest =
 const databaseTest = runDatabaseTest ? test : test.skip;
 const database = drizzle({ client: neon(keys().DATABASE_URL), schema });
 
+const insertProductWithPrimaryImage = async ({
+  commerceId,
+  description = "Descripcion",
+  name,
+  objectKey,
+  status = "active" as const,
+}: {
+  commerceId: string;
+  description?: string;
+  name: string;
+  objectKey: string;
+  status?: "active" | "draft" | "inactive";
+}) =>
+  database.transaction(async (tx) => {
+    const productId = `product_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const productImageId = `product_image_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+
+    const [product] = await tx
+      .insert(schema.product)
+      .values({
+        category: "Categoria",
+        commerceId,
+        deliveryIncluded: false,
+        description,
+        id: productId,
+        name,
+        primaryImageId: productImageId,
+        status,
+        stock: 10,
+        unitPrice: 1000,
+      })
+      .returning({ id: schema.product.id });
+
+    await tx.insert(schema.productImage).values({
+      id: productImageId,
+      objectKey,
+      position: 0,
+      productId,
+    });
+
+    return {
+      id: product.id,
+      primaryImageId: productImageId,
+    };
+  });
+
 databaseTest("Page CRUD", async () => {
   const name = `vitest-${Date.now()}`;
   const [insertedPage] = await database
@@ -53,36 +101,16 @@ databaseTest("ProductLink constraints", async () => {
       slug: `commerce-b-${suffix}`,
     })
     .returning({ id: schema.commerce.id });
-  const [productA] = await database
-    .insert(schema.product)
-    .values({
-      category: "Categoria",
-      commerceId: commerceA.id,
-      deliveryIncluded: false,
-      description: "Descripcion",
-      image: "",
-      images: {},
-      name: `Producto A ${suffix}`,
-      status: "active",
-      stock: 10,
-      unitPrice: 1000,
-    })
-    .returning({ id: schema.product.id });
-  const [productB] = await database
-    .insert(schema.product)
-    .values({
-      category: "Categoria",
-      commerceId: commerceB.id,
-      deliveryIncluded: false,
-      description: "Descripcion",
-      image: "",
-      images: {},
-      name: `Producto B ${suffix}`,
-      status: "active",
-      stock: 10,
-      unitPrice: 1000,
-    })
-    .returning({ id: schema.product.id });
+  const productA = await insertProductWithPrimaryImage({
+    commerceId: commerceA.id,
+    name: `Producto A ${suffix}`,
+    objectKey: `products/${commerceA.id}/images/product-a-${suffix}.png`,
+  });
+  const productB = await insertProductWithPrimaryImage({
+    commerceId: commerceB.id,
+    name: `Producto B ${suffix}`,
+    objectKey: `products/${commerceB.id}/images/product-b-${suffix}.png`,
+  });
 
   const baseLinkValues = {
     currency: "PYG" as const,
@@ -142,4 +170,46 @@ databaseTest("ProductLink constraints", async () => {
       slug: `link-${suffix}`,
     })
   ).resolves.toBeDefined();
+});
+
+databaseTest("ProductImage constraints", async () => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const [commerce] = await database
+    .insert(schema.commerce)
+    .values({
+      name: `Commerce ${suffix}`,
+      slug: `commerce-${suffix}`,
+    })
+    .returning({ id: schema.commerce.id });
+  const productA = await insertProductWithPrimaryImage({
+    commerceId: commerce.id,
+    name: `Producto A ${suffix}`,
+    objectKey: `products/${commerce.id}/images/product-a-${suffix}.png`,
+  });
+  const productB = await insertProductWithPrimaryImage({
+    commerceId: commerce.id,
+    name: `Producto B ${suffix}`,
+    objectKey: `products/${commerce.id}/images/product-b-${suffix}.png`,
+  });
+
+  await expect(
+    database.insert(schema.productImage).values({
+      objectKey: `products/${commerce.id}/images/product-a-secondary-${suffix}.png`,
+      position: 0,
+      productId: productA.id,
+    })
+  ).rejects.toMatchObject({
+    cause: { code: "23505" },
+  });
+
+  await expect(
+    database
+      .update(schema.product)
+      .set({
+        primaryImageId: productB.primaryImageId,
+      })
+      .where(eq(schema.product.id, productA.id))
+  ).rejects.toMatchObject({
+    cause: { code: "23503" },
+  });
 });

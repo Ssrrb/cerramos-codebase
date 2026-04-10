@@ -11,6 +11,9 @@ related:
 
 Authentication lives in `@repo/auth` and uses [Better Auth](https://better-auth.com/) on top of the shared `@repo/database` package.
 
+`@repo/auth` owns shared auth capabilities for the repo: server and client helpers, handlers, provider wiring, and reusable sign-in and sign-up components.
+It does not own app route mounting in `apps/app` or feature-specific authorization rules that belong with the owning domain.
+
 This repo ships with:
 
 - Better Auth for email/password, Google OAuth, and session management

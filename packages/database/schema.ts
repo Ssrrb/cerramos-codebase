@@ -251,14 +251,37 @@ export const product = pgTable(
     status: productStatusEnum("status").notNull().default("draft"),
     stock: integer("stock").notNull().default(0),
     deliveryIncluded: boolean("deliveryIncluded").notNull().default(false),
-    image: text("image").notNull().default(""),
-    images: jsonb("images").$type<Record<string, string>>().notNull(),
+    primaryImageId: text("primaryImageId").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     index("Product_commerceId_idx").on(table.commerceId),
+    index("Product_primaryImageId_idx").on(table.primaryImageId),
     uniqueIndex("Product_id_commerceId_key").on(table.id, table.commerceId),
+  ]
+);
+
+export const productImage = pgTable(
+  "ProductImage",
+  {
+    id: cuidPrimaryKey(),
+    productId: text("productId")
+      .notNull()
+      .references(() => product.id, { onDelete: "cascade" }),
+    objectKey: text("objectKey").notNull(),
+    position: integer("position").notNull().default(0),
+    altText: text("altText"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("ProductImage_productId_idx").on(table.productId),
+    uniqueIndex("ProductImage_productId_position_key").on(
+      table.productId,
+      table.position
+    ),
+    uniqueIndex("ProductImage_id_productId_key").on(table.id, table.productId),
   ]
 );
 
@@ -273,7 +296,6 @@ export const productLink = pgTable(
     slug: text("slug").notNull(),
     title: text("title").notNull(),
     description: text("description"),
-    imageUrl: text("imageUrl"),
     currency: text("currency").notNull().default("PYG"),
     unitPrice: integer("unitPrice").notNull(),
     status: productLinkStatusEnum("status").notNull().default("draft"),
@@ -436,7 +458,7 @@ export const orderItem = pgTable(
       .references(() => productLink.id, { onDelete: "restrict" }),
     title: text("title").notNull(),
     description: text("description"),
-    imageUrl: text("imageUrl"),
+    imageObjectKey: text("imageObjectKey"),
     quantity: integer("quantity").notNull().default(1),
     unitPrice: integer("unitPrice").notNull(),
     totalPrice: integer("totalPrice").notNull(),

@@ -16,7 +16,10 @@ next-forge exports the main app from the `apps/app` directory. It is designed to
 
 ## Overview
 
-The `app` application is the main user-facing application built on [Next.js](https://nextjs.org). It is designed to be a starting point for your own unique projects, containing all the core functionality you need.
+In this repo, `apps/app` is the merchant product surface.
+It owns auth entry, onboarding, authenticated operations, and app-owned routes tightly coupled to merchant workflows.
+
+It does not own public buyer flows in `apps/web`, API-only entrypoints in `apps/api`, or reusable infrastructure that belongs in `packages/*`.
 
 ## Features
 

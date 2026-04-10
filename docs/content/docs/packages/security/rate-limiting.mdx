@@ -11,6 +11,9 @@ related:
 
 Modern applications need rate limiting to protect against abuse, manage resources efficiently, and enable tiered API access. Without rate limiting, your application is vulnerable to brute force attacks, scraping, and potential service disruptions from excessive usage.
 
+In this repo, `@repo/rate-limit` owns the shared rate-limiting primitives and configuration.
+Route ownership and feature-specific throttling policy still belong to the consuming app or route.
+
 next-forge has a `rate-limit` package powered by [`@upstash/ratelimit`](https://github.com/upstash/ratelimit-js), a connectionless (HTTP-based) rate limiting library designed specifically for serverless and edge environments.
 
 ## Setting up
@@ -157,5 +160,4 @@ In the dashboard, you can find information on how many requests were accepted, h
 - **Multi-Region Support**: Distribute rate limiting across multiple Redis instances for global applications
 
 For detailed information about these features and their implementation, refer to the [Upstash Ratelimit documentation](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview).
-
 

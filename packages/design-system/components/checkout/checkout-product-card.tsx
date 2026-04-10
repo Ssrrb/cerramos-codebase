@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/design-system/components/ui/card"
-import { AspectRatio } from "@repo/design-system/components/ui/aspect-ratio"
 import { cn } from "@repo/design-system/lib/utils"
+import { CheckoutProductMedia } from "./checkout-product-media"
 import type { CheckoutProductSummary } from "./types"
 
 interface CheckoutProductCardProps {
@@ -26,16 +26,13 @@ function CheckoutProductCard({
         <CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="flex items-start gap-4">
-          <div className="w-24 shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-            <AspectRatio ratio={1}>
-              <img
-                alt={product.name}
-                className="size-full object-cover"
-                src={product.imageUrl}
-              />
-            </AspectRatio>
-          </div>
+        <div className="grid gap-4 md:grid-cols-[7rem_minmax(0,1fr)] md:items-start">
+          <CheckoutProductMedia
+            className="w-full md:w-28"
+            imageUrl={product.imageUrl}
+            name={product.name}
+            ratio={4 / 3}
+          />
           <p className="line-clamp-5 text-muted-foreground text-sm leading-relaxed">
             {product.description}
           </p>

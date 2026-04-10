@@ -3,6 +3,7 @@ import { slugifyCommerceName } from "@repo/auth/utils";
 import { database, schema } from "@repo/database";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { normalizeCommerceLogoObjectKey } from "@/lib/commerce";
 
 const findAvailableSlug = async (commerceName: string) => {
   const baseSlug = slugifyCommerceName(commerceName);
@@ -58,9 +59,17 @@ export const POST = async (request: Request) => {
 
   const body = (await request.json().catch(() => null)) as {
     commerceName?: unknown;
+    logoImageObjectKey?: unknown;
   } | null;
   const commerceName =
     typeof body?.commerceName === "string" ? body.commerceName.trim() : "";
+  const logoImageObjectKey =
+    typeof body?.logoImageObjectKey === "string"
+      ? normalizeCommerceLogoObjectKey(
+          body.logoImageObjectKey,
+          process.env.GCS_BUCKET_NAME
+        )
+      : "";
 
   if (commerceName.length < 2) {
     return NextResponse.json(
@@ -75,6 +84,7 @@ export const POST = async (request: Request) => {
   const [commerce] = await database
     .insert(schema.commerce)
     .values({
+      logoImageUrl: logoImageObjectKey || null,
       name: commerceName,
       slug,
     })

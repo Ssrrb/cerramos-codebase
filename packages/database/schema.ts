@@ -116,6 +116,7 @@ export const commerce = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     legalName: text("legalName"),
+    logoImageUrl: text("logoImageUrl"),
     trustState: commerceTrustStateEnum("trustState")
       .notNull()
       .default("pending_review"),

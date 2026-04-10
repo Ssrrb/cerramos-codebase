@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
+  existsSyncMock,
   getSignedUrlMock,
   deleteMock,
   fileMock,
@@ -8,6 +9,7 @@ const {
   storageMock,
   storageConstructorMock,
 } = vi.hoisted(() => {
+  const existsSyncMock = vi.fn(() => false);
   const getSignedUrlMock = vi.fn();
   const deleteMock = vi.fn();
   const fileMock = vi.fn(() => ({
@@ -24,6 +26,7 @@ const {
   return {
     bucketMock,
     deleteMock,
+    existsSyncMock,
     fileMock,
     getSignedUrlMock,
     storageConstructorMock: vi.fn((options?: unknown) => ({
@@ -43,6 +46,10 @@ vi.mock("@google-cloud/storage", () => ({
   },
 }));
 
+vi.mock("node:fs", () => ({
+  existsSync: existsSyncMock,
+}));
+
 vi.mock("server-only", () => ({}));
 
 describe("@repo/storage", () => {
@@ -58,6 +65,8 @@ describe("@repo/storage", () => {
     fileMock.mockClear();
     getSignedUrlMock.mockReset();
     deleteMock.mockReset();
+    existsSyncMock.mockReset();
+    existsSyncMock.mockReturnValue(false);
   });
 
   test("builds a deterministic object key shape", async () => {
@@ -134,6 +143,7 @@ describe("@repo/storage", () => {
 
   test("uses the configured credential file when present", async () => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/cerramos-service-account.json";
+    existsSyncMock.mockImplementation((path) => path === "/tmp/cerramos-service-account.json");
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
     const { createSignedUploadUrl } = await import("./index");
 
@@ -146,6 +156,31 @@ describe("@repo/storage", () => {
       keyFilename: "/tmp/cerramos-service-account.json",
       projectId: undefined,
     });
+  });
+
+  test("falls back to a matching credential file in the workspace when an absolute path is stale", async () => {
+    process.env.GOOGLE_APPLICATION_CREDENTIALS =
+      "/Users/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json";
+    existsSyncMock.mockImplementation(
+      (path) => path === "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
+    );
+    getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
+    const processCwdSpy = vi
+      .spyOn(process, "cwd")
+      .mockReturnValue("/home/sebastian/Desktop/cerramos-codebase/apps/web");
+    const { createSignedUploadUrl } = await import("./index");
+
+    await createSignedUploadUrl({
+      contentType: "image/png",
+      objectKey: "products/commerce_1/images/object.png",
+    });
+
+    expect(storageConstructorMock).toHaveBeenCalledWith({
+      keyFilename: "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json",
+      projectId: undefined,
+    });
+
+    processCwdSpy.mockRestore();
   });
 
   test("deletes an object using the configured bucket", async () => {

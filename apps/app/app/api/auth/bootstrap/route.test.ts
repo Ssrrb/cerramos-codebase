@@ -39,6 +39,7 @@ vi.mock("@repo/database", () => ({
   schema: {
     commerce: {
       id: "commerce.id",
+      logoImageUrl: "commerce.logoImageUrl",
       name: "commerce.name",
       slug: "commerce.slug",
     },
@@ -143,7 +144,10 @@ describe("auth bootstrap route", () => {
     const { POST } = await import("./route");
     const response = await POST(
       new Request("http://localhost/api/auth/bootstrap", {
-        body: JSON.stringify({ commerceName: "Tienda Centro" }),
+        body: JSON.stringify({
+          commerceName: "Tienda Centro",
+          logoImageObjectKey: "commerces/user_1/logos/logo.png",
+        }),
         headers: {
           "content-type": "application/json",
         },
@@ -156,6 +160,7 @@ describe("auth bootstrap route", () => {
       slug: "tienda-centro",
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
+      logoImageUrl: "commerces/user_1/logos/logo.png",
       name: "Tienda Centro",
       slug: "tienda-centro",
     });

@@ -1,17 +1,17 @@
 import { createSignedReadUrl } from "@repo/storage";
 import { NextResponse } from "next/server";
-import { getPublicProductImageObjectKey } from "@/lib/product-links";
+import { getPublicCommerceLogoObjectKey } from "@/lib/commerce";
 
 export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const objectKey = getPublicProductImageObjectKey(
+  const objectKey = getPublicCommerceLogoObjectKey(
     searchParams.get("objectKey"),
     process.env.GCS_BUCKET_NAME
   );
 
   if (!objectKey) {
     return NextResponse.json(
-      { error: "Product image object key is required." },
+      { error: "Commerce logo object key is required." },
       { status: 400 }
     );
   }
@@ -23,7 +23,7 @@ export const GET = async (request: Request) => {
 
   if (!upstreamResponse.ok) {
     return NextResponse.json(
-      { error: "No se pudo cargar la imagen del producto." },
+      { error: "No se pudo cargar el logo del comercio." },
       { status: upstreamResponse.status }
     );
   }

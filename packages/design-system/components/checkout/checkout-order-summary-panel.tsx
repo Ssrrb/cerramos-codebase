@@ -1,4 +1,3 @@
-import { AspectRatio } from "@repo/design-system/components/ui/aspect-ratio";
 import {
   Drawer,
   DrawerContent,
@@ -10,6 +9,7 @@ import {
 import { Separator } from "@repo/design-system/components/ui/separator";
 import { cn } from "@repo/design-system/lib/utils";
 import { ReceiptTextIcon } from "lucide-react";
+import { CheckoutProductMedia } from "./checkout-product-media";
 import type { CheckoutOrderSummary, CheckoutProductSummary } from "./types";
 
 interface CheckoutSummaryContentProps {
@@ -37,24 +37,18 @@ function CheckoutSummaryContent({
         </div>
       </div>
 
-      <div className="mt-5 flex items-start gap-4">
-        <div className="w-20 shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-muted/35">
-          <AspectRatio ratio={1}>
-            {/* biome-ignore lint/performance/noImgElement: shared design-system preview uses a plain image source string. */}
-            <img
-              alt={product.name}
-              className="size-full object-cover"
-              height={80}
-              src={product.imageUrl}
-              width={80}
-            />
-          </AspectRatio>
-        </div>
-        <div className="min-w-0">
+      <div className="mt-5 space-y-4">
+        <CheckoutProductMedia
+          className="max-w-full"
+          imageUrl={product.imageUrl}
+          name={product.name}
+          ratio={4 / 3}
+        />
+        <div className="min-w-0 space-y-1">
           <p className="line-clamp-2 font-medium text-foreground text-sm">
             {product.name}
           </p>
-          <p className="mt-1 line-clamp-4 text-muted-foreground text-sm leading-relaxed">
+          <p className="line-clamp-4 text-muted-foreground text-sm leading-relaxed">
             {product.description}
           </p>
         </div>

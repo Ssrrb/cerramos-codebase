@@ -12,9 +12,9 @@ import {
   ShoppingBasket,
   User,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { resolveCommerceLogoImageSrc } from "@/lib/commerce";
 import AddCategory from "./AddCategory";
 import AddOrder from "./AddOrder";
 import AddUser from "./AddUser";
@@ -22,6 +22,7 @@ import AddProduct from "./add-product";
 import SidebarAccountMenu, {
   type SidebarAccountUser,
 } from "./sidebar-account-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Sheet, SheetTrigger } from "./ui/sheet";
 import {
   Sidebar,
@@ -68,12 +69,20 @@ const items = [
 ];
 
 interface AppSidebarProps {
-  activeCommerce: Pick<ActiveCommerce, "id" | "name" | "role" | "slug">;
+  activeCommerce: Pick<
+    ActiveCommerce,
+    "id" | "logoImageUrl" | "name" | "role" | "slug"
+  >;
   user: SidebarAccountUser;
 }
 
 const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
   const [isMounted, setIsMounted] = useState(false);
+  const commerceInitial = activeCommerce.name.trim().charAt(0).toUpperCase() || "C";
+  const commerceLogoSrc = resolveCommerceLogoImageSrc(
+    activeCommerce.logoImageUrl,
+    process.env.NEXT_PUBLIC_GCS_BUCKET_NAME ?? process.env.GCS_BUCKET_NAME
+  );
 
   useEffect(() => {
     setIsMounted(true);
@@ -90,7 +99,15 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/">
-                <Image alt="logo" height={20} src="/logo.svg" width={20} />
+                <Avatar className="size-5 rounded-md">
+                  <AvatarImage
+                    alt={activeCommerce.name}
+                    src={commerceLogoSrc ?? undefined}
+                  />
+                  <AvatarFallback className="rounded-md text-[0.65rem]">
+                    {commerceInitial}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="min-w-0">
                   <div className="truncate font-medium">
                     {activeCommerce.name}

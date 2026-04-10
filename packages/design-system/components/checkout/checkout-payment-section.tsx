@@ -99,7 +99,7 @@ function CheckoutPaymentSection({
           {processorSlot ? (
             <div className="pt-1">{processorSlot}</div>
           ) : (
-            <div className="rounded-[1rem] border border-border/70 bg-background/80 px-4 py-3">
+            <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
               <p className="font-medium text-foreground text-sm">
                 Formulario de pago
               </p>

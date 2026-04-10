@@ -157,6 +157,7 @@ export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null>
   const [activeCommerce] = await database
     .select({
       id: schema.commerce.id,
+      logoImageUrl: schema.commerce.logoImageUrl,
       name: schema.commerce.name,
       role: schema.user.role,
       slug: schema.commerce.slug,

@@ -14,9 +14,8 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@repo/design-system/components/ui/alert";
-import { Button } from "@repo/design-system/components/ui/button";
-import { CheckCircle2, ReceiptTextIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ReceiptTextIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface ProductLinkCheckoutClientProps {
   commerceSlug: string;
@@ -37,6 +36,11 @@ interface CreateOrderResponse {
   upayFormId: string | null;
 }
 
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+
 export const ProductLinkCheckoutClient = ({
   commerceSlug,
   deliveryEnabled,
@@ -47,17 +51,28 @@ export const ProductLinkCheckoutClient = ({
   product,
   productLinkSlug,
 }: ProductLinkCheckoutClientProps) => {
-  const [createdOrder, setCreatedOrder] = useState<CreateOrderResponse | null>(
-    null
-  );
-  const upayFormId = createdOrder?.upayFormId ?? createdOrder?.paymentIntentId;
-  let paymentStage: CheckoutPaymentStage = "idle";
+  const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+  const [paymentStage, setPaymentStage] =
+    useState<CheckoutPaymentStage>("idle");
+  const [upayFormId, setUpayFormId] = useState<string | null>(null);
 
-  if (paymentRequired && createdOrder) {
-    paymentStage = upayFormId ? "ready" : "initializing";
-  }
+  useEffect(() => {
+    if (paymentStage !== "initializing" || !upayFormId) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPaymentStage("ready");
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [paymentStage, upayFormId]);
+
   const paymentProcessorSlot = useMemo(() => {
-    if (!createdOrder?.paymentRequired) {
+    if (!paymentRequired || !orderReference) {
       return undefined;
     }
 
@@ -74,67 +89,36 @@ export const ProductLinkCheckoutClient = ({
         <div className="rounded-[1.25rem] border border-border/70 bg-background px-4 py-3">
           <p className="font-medium text-foreground text-sm">Referencia</p>
           <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
-            {createdOrder.orderId}
+            {orderReference}
           </p>
         </div>
         <CheckoutUpayCardLoader formId={upayFormId} />
       </div>
     );
-  }, [createdOrder, upayFormId]);
-
-  if (createdOrder && !createdOrder.paymentRequired) {
-    return (
-      <section className="min-h-dvh bg-muted/25 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl rounded-[2rem] border border-border/70 bg-background p-8 shadow-xs">
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-foreground text-background">
-                <CheckCircle2 className="size-6" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-2xl text-foreground">
-                  Pedido creado
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Tu pedido quedó registrado dentro de Cerramos.
-                </p>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-muted/20 px-4 py-4">
-              <p className="font-medium text-foreground text-sm">
-                ID del pedido
-              </p>
-              <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
-                {createdOrder.orderId}
-              </p>
-            </div>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              {createdOrder.paymentRequired
-                ? "El pedido quedó creado con un intento de pago pendiente. El siguiente paso es conectar el componente embebido del proveedor."
-                : "El comercio usará tus datos para coordinar la entrega o el retiro."}
-            </p>
-            <Button
-              onClick={() => setCreatedOrder(null)}
-              type="button"
-              variant="outline"
-            >
-              Crear otro pedido
-            </Button>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  }, [orderReference, paymentRequired, upayFormId]);
 
   return (
     <CheckoutProgressiveFlow
+      confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado."
       defaultValues={{
         mode: deliveryEnabled ? "delivery" : "pickup",
       }}
       deliveryEnabled={deliveryEnabled}
+      isOrderConfirmed={isOrderConfirmed}
       merchant={merchant}
+      onPaymentConfirm={async () => {
+        await wait(1000);
+        setIsOrderConfirmed(true);
+        return null;
+      }}
+      onReset={() => {
+        setIsOrderConfirmed(false);
+        setOrderReference(null);
+        setPaymentStage("idle");
+        setUpayFormId(null);
+      }}
       onSubmit={
-        createdOrder
+        orderReference
           ? undefined
           : async (values: CheckoutDeliveryValues) => {
               const response = await fetch(
@@ -177,10 +161,23 @@ export const ProductLinkCheckoutClient = ({
                 return errorPayload?.error ?? "No se pudo crear el pedido.";
               }
 
-              setCreatedOrder(payload as CreateOrderResponse);
+              const order = payload as CreateOrderResponse;
+              const resolvedUpayFormId =
+                order.upayFormId ?? order.paymentIntentId ?? null;
+
+              setOrderReference(order.orderId);
+
+              if (!order.paymentRequired) {
+                setIsOrderConfirmed(true);
+                return null;
+              }
+
+              setUpayFormId(resolvedUpayFormId);
+              setPaymentStage("initializing");
               return null;
             }
       }
+      orderReference={orderReference}
       orderSummary={orderSummary}
       paymentRequired={paymentRequired}
       paymentStage={paymentStage}

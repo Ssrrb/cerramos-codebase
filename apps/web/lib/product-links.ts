@@ -7,6 +7,7 @@ import {
 } from "@repo/database";
 import { cache } from "react";
 import { z } from "zod";
+import { normalizeCheckoutCommerceLogoUrl } from "@/lib/commerce";
 
 export const checkoutOrderPayloadSchema = z
   .object({
@@ -52,6 +53,7 @@ export type CheckoutOrderPayload = z.infer<typeof checkoutOrderPayloadSchema>;
 
 export interface ProductLinkCheckoutRecord {
   commerceId: string;
+  commerceLogoImageUrl: string | null;
   commerceName: string;
   commerceSlug: string;
   currency: string;
@@ -89,17 +91,55 @@ export class ProductLinkCheckoutError extends Error {
   }
 }
 
-const normalizePublicProductImageObjectKey = (value: string) => {
+const LEADING_SLASHES_PATTERN = /^\/+/u;
+const TRAILING_SLASHES_PATTERN = /\/+$/u;
+
+const trimLeadingSlashes = (value: string) =>
+  value.replace(LEADING_SLASHES_PATTERN, "");
+
+const PRODUCT_IMAGE_API_PATHNAMES = new Set([
+  "/api/product-link-images",
+  "/api/products/image",
+]);
+
+const normalizePublicProductImageObjectKey = (
+  value: string,
+  bucketName?: string
+) => {
   const trimmedValue = value.trim();
 
   if (
     !trimmedValue ||
-    trimmedValue.startsWith("/") ||
     trimmedValue.startsWith("blob:") ||
     trimmedValue.startsWith("data:") ||
     trimmedValue.startsWith("http://") ||
     trimmedValue.startsWith("https://")
   ) {
+    return "";
+  }
+
+  if (bucketName) {
+    const trimmedBucketName = bucketName
+      .trim()
+      .replace(TRAILING_SLASHES_PATTERN, "");
+
+    if (trimmedBucketName) {
+      const bucketPrefixes = [
+        `${trimmedBucketName}/`,
+        `gs://${trimmedBucketName}/`,
+      ];
+
+      for (const prefix of bucketPrefixes) {
+        if (trimmedValue.startsWith(prefix)) {
+          return normalizePublicProductImageObjectKey(
+            trimLeadingSlashes(trimmedValue.slice(prefix.length))
+          );
+        }
+      }
+    }
+  }
+
+  if (trimmedValue.startsWith("/")) {
     return "";
   }
 
@@ -113,6 +153,122 @@ const normalizePublicProductImageObjectKey = (value: string) => {
 const formatPriceLabel = (value: number) =>
   `Gs. ${new Intl.NumberFormat("es-PY").format(value)}`;
 
+const buildPublicProductImagePath = (objectKey: string) =>
+  `/api/product-link-images?objectKey=${encodeURIComponent(objectKey)}`;
+
+const extractProductImageObjectKeyFromUrl = (
+  value: string,
+  bucketName?: string
+): string => {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(value, "http://localhost");
+  } catch {
+    return "";
+  }
+
+  const objectKeySearchParam = parsedUrl.searchParams.get("objectKey");
+
+  if (objectKeySearchParam) {
+    return extractProductImageObjectKey(objectKeySearchParam, bucketName);
+  }
+
+  const trimmedPathname = trimLeadingSlashes(
+    decodeURIComponent(parsedUrl.pathname)
+  );
+  const directPathObjectKey = normalizePublicProductImageObjectKey(
+    trimmedPathname,
+    bucketName
+  );
+
+  if (directPathObjectKey) {
+    return directPathObjectKey;
+  }
+
+  if (!bucketName) {
+    return "";
+  }
+
+  const normalizedBucketName = bucketName
+    .trim()
+    .replace(TRAILING_SLASHES_PATTERN, "");
+
+  if (!normalizedBucketName) {
+    return "";
+  }
+
+  const storageApiPrefixes = [
+    `download/storage/v1/b/${normalizedBucketName}/o/`,
+    `storage/v1/b/${normalizedBucketName}/o/`,
+    `v0/b/${normalizedBucketName}/o/`,
+  ];
+
+  for (const prefix of storageApiPrefixes) {
+    if (trimmedPathname.startsWith(prefix)) {
+      return normalizePublicProductImageObjectKey(
+        trimLeadingSlashes(trimmedPathname.slice(prefix.length)),
+        bucketName
+      );
+    }
+  }
+
+  if (PRODUCT_IMAGE_API_PATHNAMES.has(parsedUrl.pathname)) {
+    return "";
+  }
+
+  return "";
+};
+
+const extractProductImageObjectKey = (
+  value: string,
+  bucketName?: string
+): string => {
+  const directObjectKey = normalizePublicProductImageObjectKey(
+    value,
+    bucketName
+  );
+
+  if (directObjectKey) {
+    return directObjectKey;
+  }
+
+  return extractProductImageObjectKeyFromUrl(value, bucketName);
+};
+
+const normalizeCheckoutProductImageUrl = (imageUrl: string | null) => {
+  if (!imageUrl) {
+    return null;
+  }
+
+  const objectKey = getPublicProductImageObjectKey(
+    imageUrl,
+    process.env.GCS_BUCKET_NAME
+  );
+
+  if (!objectKey) {
+    return imageUrl;
+  }
+
+  return buildPublicProductImagePath(objectKey);
+};
+
+const resolveCheckoutProductImageUrl = (
+  ...candidates: Array<string | null | undefined>
+) => {
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalizeCheckoutProductImageUrl(
+      candidate ?? null
+    );
+
+    if (normalizedCandidate) {
+      return normalizedCandidate;
+    }
+  }
+
+  return null;
+};
+
 export const getPublicProductLinkCheckout = cache(
   async (
     commerceSlug: string,
@@ -121,6 +277,7 @@ export const getPublicProductLinkCheckout = cache(
     let record:
       | {
           commerceId: string;
+          commerceLogoImageUrl: string | null;
           commerceName: string;
           commerceSlug: string;
           currency: string;
@@ -131,6 +288,7 @@ export const getPublicProductLinkCheckout = cache(
           imageUrl: string | null;
           paymentRequired: boolean;
           pickupEnabled: boolean;
+          productImage: string | null;
           productId: string;
           productLinkId: string;
           productLinkStatus: "active" | "draft" | "expired" | "inactive";
@@ -150,17 +308,19 @@ export const getPublicProductLinkCheckout = cache(
     try {
       [record] = await database
         .select({
-        commerceId: schema.commerce.id,
-        commerceName: schema.commerce.name,
-        commerceSlug: schema.commerce.slug,
-        currency: schema.productLink.currency,
-        defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
+          commerceId: schema.commerce.id,
+          commerceLogoImageUrl: schema.commerce.logoImageUrl,
+          commerceName: schema.commerce.name,
+          commerceSlug: schema.commerce.slug,
+          currency: schema.productLink.currency,
+          defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
           deliveryEnabled: schema.productLink.deliveryEnabled,
           description: schema.productLink.description,
           expiresAt: schema.productLink.expiresAt,
           imageUrl: schema.productLink.imageUrl,
           paymentRequired: schema.productLink.paymentRequired,
           pickupEnabled: schema.productLink.pickupEnabled,
+          productImage: schema.product.image,
           productId: schema.product.id,
           productLinkId: schema.productLink.id,
           productStatus: schema.product.status,
@@ -209,6 +369,9 @@ export const getPublicProductLinkCheckout = cache(
 
     return {
       commerceId: record.commerceId,
+      commerceLogoImageUrl: normalizeCheckoutCommerceLogoUrl(
+        record.commerceLogoImageUrl
+      ),
       commerceName: record.commerceName,
       commerceSlug: record.commerceSlug,
       currency: record.currency,
@@ -216,7 +379,10 @@ export const getPublicProductLinkCheckout = cache(
       deliveryEnabled: record.deliveryEnabled,
       description: record.description,
       expiresAt: record.expiresAt,
-      imageUrl: record.imageUrl,
+      imageUrl: resolveCheckoutProductImageUrl(
+        record.productImage,
+        record.imageUrl
+      ),
       paymentRequired: record.paymentRequired,
       pickupEnabled: record.pickupEnabled,
       productId: record.productId,
@@ -231,7 +397,7 @@ export const getPublicProductLinkCheckout = cache(
 
 export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
   merchant: {
-    avatarUrl: null,
+    avatarUrl: record.commerceLogoImageUrl,
     name: record.commerceName,
     trustState: record.trustState,
   },
@@ -265,16 +431,15 @@ export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
   },
 });
 
-export const getPublicProductImageObjectKey = (value: string | null) => {
+export const getPublicProductImageObjectKey = (
+  value: string | null,
+  bucketName?: string
+) => {
   if (!value) {
     return "";
   }
 
-  const searchParams = new URL(value, "http://localhost").searchParams;
-
-  return normalizePublicProductImageObjectKey(
-    searchParams.get("objectKey") ?? ""
-  );
+  return extractProductImageObjectKey(value.trim(), bucketName);
 };
 
 export const createOrderFromProductLink = async (

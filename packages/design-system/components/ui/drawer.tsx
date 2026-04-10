@@ -6,9 +6,24 @@ import { Drawer as DrawerPrimitive } from "vaul"
 import { cn } from "@repo/design-system/lib/utils"
 
 function Drawer({
+  autoFocus = true,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      autoFocus={autoFocus}
+      onOpenChange={(open) => {
+        if (open && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur()
+        }
+
+        onOpenChange?.(open)
+      }}
+      {...props}
+    />
+  )
 }
 
 function DrawerTrigger({
@@ -63,6 +78,7 @@ function DrawerContent({
           "data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm",
           className
         )}
+        tabIndex={-1}
         {...props}
       >
         <div className="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />

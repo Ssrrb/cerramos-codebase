@@ -17,7 +17,11 @@ const {
   andMock: vi.fn((...args: unknown[]) => ({ args, type: "and" })),
   databaseSelectMock: vi.fn(),
   databaseTransactionMock: vi.fn(),
-  eqMock: vi.fn((left: unknown, right: unknown) => ({ left, right, type: "eq" })),
+  eqMock: vi.fn((left: unknown, right: unknown) => ({
+    left,
+    right,
+    type: "eq",
+  })),
   selectFromMock: vi.fn(),
   selectJoinMock: vi.fn(),
   selectWhereMock: vi.fn(),
@@ -31,12 +35,14 @@ const {
 const commerceTable = {
   defaultOrderExpiryHours: "commerce.defaultOrderExpiryHours",
   id: "commerce.id",
+  logoImageUrl: "commerce.logoImageUrl",
   name: "commerce.name",
   slug: "commerce.slug",
   trustState: "commerce.trustState",
 };
 const productTable = {
   id: "product.id",
+  image: "product.image",
   status: "product.status",
 };
 const productLinkTable = {
@@ -101,6 +107,7 @@ vi.mock("@repo/database", () => ({
 
 const baseRecord = {
   commerceId: "commerce_1",
+  commerceLogoImageUrl: "commerces/user_1/logos/logo.png",
   commerceName: "Mate Shop",
   commerceSlug: "mate-shop",
   currency: "USD",
@@ -111,6 +118,7 @@ const baseRecord = {
   imageUrl: "/server-image.png",
   paymentRequired: true,
   pickupEnabled: true,
+  productImage: null,
   productId: "product_1",
   productLinkId: "link_1",
   productStatus: "active" as const,
@@ -173,6 +181,182 @@ describe("web product links", () => {
     expect(record).toBeNull();
   });
 
+  test("returns the commerce logo for checkout branding", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+
+    const { createCheckoutViewModel, getPublicProductLinkCheckout } =
+      await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.commerceLogoImageUrl).toBe(
+      "/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png"
+    );
+    expect(
+      record ? createCheckoutViewModel(record).merchant.avatarUrl : null
+    ).toBe("/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png");
+  });
+
+  test("keeps external commerce logo URLs untouched", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        commerceLogoImageUrl: "https://cdn.example.com/logo.png",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.commerceLogoImageUrl).toBe("https://cdn.example.com/logo.png");
+  });
+
+  test("normalizes stored internal product image URLs to the public checkout image route", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl:
+          "/api/products/image?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.imageUrl).toBe(
+      "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png"
+    );
+  });
+
+  test("prefers the current product image over a stale stored product link image", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl:
+          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fold.png",
+        productImage: "products/commerce_1/images/current.png",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.imageUrl).toBe(
+      "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fcurrent.png"
+    );
+  });
+
+  test("normalizes raw product image object keys to the public checkout image route", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl: "products/commerce_1/images/mate.png",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.imageUrl).toBe(
+      "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png"
+    );
+  });
+
+  test("normalizes bucket-prefixed product image URLs to the public checkout image route", async () => {
+    const originalBucketName = process.env.GCS_BUCKET_NAME;
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl:
+          "/api/product-link-images?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.imageUrl).toBe(
+      "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png"
+    );
+
+    process.env.GCS_BUCKET_NAME = originalBucketName;
+  });
+
+  test("normalizes absolute storage product image URLs to the public checkout image route", async () => {
+    const originalBucketName = process.env.GCS_BUCKET_NAME;
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl:
+          "https://storage.googleapis.com/imagenes-cerramos/products/commerce_1/images/mate.png?X-Goog-Algorithm=GOOG4-RSA-SHA256",
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.imageUrl).toBe(
+      "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png"
+    );
+
+    process.env.GCS_BUCKET_NAME = originalBucketName;
+  });
+
+  test("extracts object keys from both route URLs and raw values", async () => {
+    const originalBucketName = process.env.GCS_BUCKET_NAME;
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+
+    const { getPublicProductImageObjectKey } = await import("./product-links");
+
+    expect(
+      getPublicProductImageObjectKey("products/commerce_1/images/mate.png")
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      getPublicProductImageObjectKey(
+        "/api/product-link-images?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      getPublicProductImageObjectKey(
+        "https://storage.googleapis.com/imagenes-cerramos/products/commerce_1/images/mate.png?X-Goog-Algorithm=GOOG4-RSA-SHA256",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      getPublicProductImageObjectKey(
+        "/api/product-link-images?objectKey=https%3A%2F%2Fstorage.googleapis.com%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+
+    process.env.GCS_BUCKET_NAME = originalBucketName;
+  });
+
   test("hides expired and inactive products from public checkout resolution", async () => {
     selectWhereMock.mockResolvedValueOnce([
       {
@@ -222,8 +406,10 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([baseRecord]);
     txSelectWhereMock.mockResolvedValueOnce([]);
 
-    const insertedValues: Array<{ table: string; values: Record<string, unknown> }> =
-      [];
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
 
     txInsertMock.mockImplementation((table: { __name: string }) => ({
       values: (values: Record<string, unknown>) => {
@@ -269,19 +455,23 @@ describe("web product links", () => {
     );
 
     const { createOrderFromProductLink } = await import("./product-links");
-    const result = await createOrderFromProductLink("mate-shop", "mate-premium", {
-      addressLine1: "Buyer street",
-      addressLine2: "",
-      city: "Asuncion",
-      email: "buyer@example.com",
-      mode: "delivery",
-      notes: "Leave at reception",
-      phone: "0981000000",
-      recipientName: "Buyer Name",
-      reference: "Depto 2",
-      title: "Client title",
-      unitPrice: 10,
-    } as never);
+    const result = await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      {
+        addressLine1: "Buyer street",
+        addressLine2: "",
+        city: "Asuncion",
+        email: "buyer@example.com",
+        mode: "delivery",
+        notes: "Leave at reception",
+        phone: "0981000000",
+        recipientName: "Buyer Name",
+        reference: "Depto 2",
+        title: "Client title",
+        unitPrice: 10,
+      } as never
+    );
 
     expect(result).toEqual({
       orderId: "order_1",
@@ -370,17 +560,21 @@ describe("web product links", () => {
     );
 
     const { createOrderFromProductLink } = await import("./product-links");
-    const result = await createOrderFromProductLink("mate-shop", "mate-premium", {
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      email: "buyer@example.com",
-      mode: "pickup",
-      notes: "",
-      phone: "0981000000",
-      recipientName: "Buyer Name",
-      reference: "",
-    });
+    const result = await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      {
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        email: "buyer@example.com",
+        mode: "pickup",
+        notes: "",
+        phone: "0981000000",
+        recipientName: "Buyer Name",
+        reference: "",
+      }
+    );
 
     expect(result).toEqual({
       orderId: "order_1",
@@ -413,7 +607,9 @@ describe("web product links", () => {
         recipientName: "Buyer Name",
         reference: "",
       })
-    ).rejects.toThrow("El pago online todavia no esta disponible para este link.");
+    ).rejects.toThrow(
+      "El pago online todavia no esta disponible para este link."
+    );
   });
 
   test("rejects fulfillment modes disabled by the link", async () => {

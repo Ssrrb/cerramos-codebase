@@ -1,5 +1,6 @@
 import { requireCommerceContext } from "@repo/auth/server";
 import type { Metadata } from "next";
+import React from "react";
 import "./globals.css";
 import { cookies } from "next/headers";
 import AppSidebar from "@/app/components/app-sidebar";

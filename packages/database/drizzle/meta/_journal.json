@@ -50,6 +50,13 @@
       "when": 1775071861886,
       "tag": "0006_thin_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775692800000,
+      "tag": "0007_tan_logo_image",
+      "breakpoints": true
     }
   ]
 }

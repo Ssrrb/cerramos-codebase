@@ -1,6 +1,6 @@
 {
-  "id": "f8ee6c79-7311-4346-99cd-e734101da79f",
-  "prevId": "2f9ba63e-5679-43cb-905a-dbf5b70e32aa",
+  "id": "6750f60c-a9fd-4d67-b98a-65d7f8d3fcd6",
+  "prevId": "f8ee6c79-7311-4346-99cd-e734101da79f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -172,6 +172,12 @@
         },
         "legalName": {
           "name": "legalName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logoImageUrl": {
+          "name": "logoImageUrl",
           "type": "text",
           "primaryKey": false,
           "notNull": false

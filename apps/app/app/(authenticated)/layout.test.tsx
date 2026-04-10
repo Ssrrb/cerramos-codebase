@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import type { ReactNode } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -22,11 +23,11 @@ vi.mock("@/app/components/app-sidebar", () => ({
     activeCommerce,
     user,
   }: {
-    activeCommerce: { name: string; slug: string };
+    activeCommerce: { logoImageUrl?: string | null; name: string; slug: string };
     user: { email: string };
   }) => (
     <div data-testid="sidebar">
-      {user.email}:{activeCommerce.name}:{activeCommerce.slug}
+      {user.email}:{activeCommerce.name}:{activeCommerce.slug}:{activeCommerce.logoImageUrl ?? ""}
     </div>
   ),
 }));
@@ -76,6 +77,7 @@ test("uses authenticated commerce context to render the shell", async () => {
   requireCommerceContextMock.mockResolvedValue({
     commerce: {
       id: "commerce_1",
+      logoImageUrl: "https://cdn.example.com/logo.png",
       name: "Tienda Centro",
       role: "merchant_admin",
       slug: "tienda-centro",
@@ -95,7 +97,7 @@ test("uses authenticated commerce context to render the shell", async () => {
   render(await RootLayout({ children: <div>content</div> }));
 
   expect(screen.getByTestId("sidebar").textContent).toContain(
-    "owner@example.com:Tienda Centro:tienda-centro"
+    "owner@example.com:Tienda Centro:tienda-centro:https://cdn.example.com/logo.png"
   );
   expect(screen.getByTestId("navbar").textContent).toContain(
     "Tienda Centro:tienda-centro"

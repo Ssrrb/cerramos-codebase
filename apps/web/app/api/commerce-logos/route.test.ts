@@ -2,20 +2,20 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   createSignedReadUrlMock,
+  extractCommerceLogoObjectKeyMock,
   fetchMock,
-  getPublicCommerceLogoObjectKeyMock,
 } = vi.hoisted(() => ({
   createSignedReadUrlMock: vi.fn(),
+  extractCommerceLogoObjectKeyMock: vi.fn(),
   fetchMock: vi.fn(),
-  getPublicCommerceLogoObjectKeyMock: vi.fn(),
 }));
 
 vi.mock("@repo/storage", () => ({
   createSignedReadUrl: createSignedReadUrlMock,
 }));
 
-vi.mock("@/lib/commerce", () => ({
-  getPublicCommerceLogoObjectKey: getPublicCommerceLogoObjectKeyMock,
+vi.mock("@repo/storage/commerce-logo", () => ({
+  extractCommerceLogoObjectKey: extractCommerceLogoObjectKeyMock,
 }));
 
 vi.stubGlobal("fetch", fetchMock);
@@ -24,12 +24,12 @@ describe("public commerce logo route", () => {
   beforeEach(() => {
     vi.resetModules();
     createSignedReadUrlMock.mockReset();
+    extractCommerceLogoObjectKeyMock.mockReset();
     fetchMock.mockReset();
-    getPublicCommerceLogoObjectKeyMock.mockReset();
   });
 
   test("proxies a public commerce logo through the app origin", async () => {
-    getPublicCommerceLogoObjectKeyMock.mockReturnValue(
+    extractCommerceLogoObjectKeyMock.mockReturnValue(
       "commerces/user_1/logos/logo.png"
     );
     createSignedReadUrlMock.mockResolvedValue({
@@ -63,7 +63,7 @@ describe("public commerce logo route", () => {
   });
 
   test("returns 400 when object key is missing", async () => {
-    getPublicCommerceLogoObjectKeyMock.mockReturnValue("");
+    extractCommerceLogoObjectKeyMock.mockReturnValue("");
 
     const { GET } = await import("./route");
     const response = await GET(

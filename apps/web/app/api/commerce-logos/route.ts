@@ -1,11 +1,11 @@
 import { createSignedReadUrl } from "@repo/storage";
+import { extractCommerceLogoObjectKey } from "@repo/storage/commerce-logo";
 import { NextResponse } from "next/server";
-import { getPublicCommerceLogoObjectKey } from "@/lib/commerce";
 
 export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const objectKey = getPublicCommerceLogoObjectKey(
-    searchParams.get("objectKey"),
+  const objectKey = extractCommerceLogoObjectKey(
+    searchParams.get("objectKey") ?? "",
     process.env.GCS_BUCKET_NAME
   );
 

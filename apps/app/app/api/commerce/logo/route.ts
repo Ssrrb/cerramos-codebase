@@ -1,10 +1,10 @@
 import { requireCommerceContext } from "@repo/auth/server";
 import { createSignedReadUrl } from "@repo/storage";
-import { NextResponse } from "next/server";
 import {
   extractCommerceLogoObjectKey,
   normalizeCommerceLogoObjectKey,
-} from "@/lib/commerce";
+} from "@repo/storage/commerce-logo";
+import { NextResponse } from "next/server";
 
 export const GET = async (request: Request) => {
   const context = await requireCommerceContext();

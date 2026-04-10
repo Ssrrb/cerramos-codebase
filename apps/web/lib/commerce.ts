@@ -1,92 +1,7 @@
-const LEADING_SLASHES_PATTERN = /^\/+/u;
-const TRAILING_SLASHES_PATTERN = /\/+$/u;
-
-const PUBLIC_COMMERCE_LOGO_API_PATHNAMES = new Set(["/api/commerce-logos"]);
-
-const trimLeadingSlashes = (value: string) =>
-  value.replace(LEADING_SLASHES_PATTERN, "");
-
-export const normalizePublicCommerceLogoObjectKey = (
-  value: string,
-  bucketName?: string
-): string => {
-  const trimmedValue = value.trim();
-
-  if (
-    !trimmedValue ||
-    trimmedValue.startsWith("blob:") ||
-    trimmedValue.startsWith("data:") ||
-    trimmedValue.startsWith("http://") ||
-    trimmedValue.startsWith("https://")
-  ) {
-    return "";
-  }
-
-  if (bucketName) {
-    const trimmedBucketName = bucketName
-      .trim()
-      .replace(TRAILING_SLASHES_PATTERN, "");
-
-    if (trimmedBucketName) {
-      const bucketPrefixes = [
-        `${trimmedBucketName}/`,
-        `gs://${trimmedBucketName}/`,
-      ];
-
-      for (const prefix of bucketPrefixes) {
-        if (trimmedValue.startsWith(prefix)) {
-          return normalizePublicCommerceLogoObjectKey(
-            trimLeadingSlashes(trimmedValue.slice(prefix.length))
-          );
-        }
-      }
-    }
-  }
-
-  if (trimmedValue.startsWith("/")) {
-    return "";
-  }
-
-  if (!trimmedValue.startsWith("commerces/")) {
-    return "";
-  }
-
-  return trimmedValue;
-};
-
-const extractPublicCommerceLogoObjectKeyFromUrl = (
-  value: string,
-  bucketName?: string
-): string => {
-  let parsedUrl: URL;
-
-  try {
-    parsedUrl = new URL(value, "http://localhost");
-  } catch {
-    return "";
-  }
-
-  const objectKeySearchParam = parsedUrl.searchParams.get("objectKey");
-
-  if (objectKeySearchParam) {
-    return getPublicCommerceLogoObjectKey(objectKeySearchParam, bucketName);
-  }
-
-  if (PUBLIC_COMMERCE_LOGO_API_PATHNAMES.has(parsedUrl.pathname)) {
-    return "";
-  }
-
-  const directPathObjectKey = normalizePublicCommerceLogoObjectKey(
-    trimLeadingSlashes(decodeURIComponent(parsedUrl.pathname)),
-    bucketName
-  );
-
-  if (directPathObjectKey) {
-    return directPathObjectKey;
-  }
-
-  return "";
-};
+import {
+  extractCommerceLogoObjectKey,
+  normalizeStoredCommerceLogoReference,
+} from "@repo/storage/commerce-logo";
 
 export const getPublicCommerceLogoObjectKey = (
   value: string | null | undefined,
@@ -96,16 +11,7 @@ export const getPublicCommerceLogoObjectKey = (
     return "";
   }
 
-  const directObjectKey = normalizePublicCommerceLogoObjectKey(
-    value,
-    bucketName
-  );
-
-  if (directObjectKey) {
-    return directObjectKey;
-  }
-
-  return extractPublicCommerceLogoObjectKeyFromUrl(value, bucketName);
+  return extractCommerceLogoObjectKey(value, bucketName);
 };
 
 export const buildPublicCommerceLogoPath = (objectKey: string) =>
@@ -118,13 +24,17 @@ export const normalizeCheckoutCommerceLogoUrl = (
     return null;
   }
 
-  const objectKey = getPublicCommerceLogoObjectKey(
+  const normalizedReference = normalizeStoredCommerceLogoReference(
     value,
+    process.env.GCS_BUCKET_NAME
+  );
+  const objectKey = getPublicCommerceLogoObjectKey(
+    normalizedReference,
     process.env.GCS_BUCKET_NAME
   );
 
   if (!objectKey) {
-    return value;
+    return normalizedReference || value;
   }
 
   return buildPublicCommerceLogoPath(objectKey);

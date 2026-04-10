@@ -387,8 +387,7 @@ describe("product links route", () => {
       deliveryEnabled: true,
       description: "Oferta publica",
       expiresAt: null,
-      imageUrl:
-        "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
+      imageUrl: "products/commerce_1/images/mate.png",
       paymentRequired: true,
       pickupEnabled: true,
       productId: "product_1",

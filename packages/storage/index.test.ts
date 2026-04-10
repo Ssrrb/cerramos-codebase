@@ -9,7 +9,7 @@ const {
   storageMock,
   storageConstructorMock,
 } = vi.hoisted(() => {
-  const existsSyncMock = vi.fn(() => false);
+  const existsSyncMock = vi.fn<(path: string) => boolean>(() => false);
   const getSignedUrlMock = vi.fn();
   const deleteMock = vi.fn();
   const fileMock = vi.fn(() => ({
@@ -143,7 +143,9 @@ describe("@repo/storage", () => {
 
   test("uses the configured credential file when present", async () => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/cerramos-service-account.json";
-    existsSyncMock.mockImplementation((path) => path === "/tmp/cerramos-service-account.json");
+    existsSyncMock.mockImplementation(
+      (path: string) => path === "/tmp/cerramos-service-account.json"
+    );
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
     const { createSignedUploadUrl } = await import("./index");
 
@@ -162,7 +164,8 @@ describe("@repo/storage", () => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
       "/Users/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json";
     existsSyncMock.mockImplementation(
-      (path) => path === "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
+      (path: string) =>
+        path === "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
     );
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
     const processCwdSpy = vi
@@ -203,5 +206,67 @@ describe("@repo/storage", () => {
         objectKey: "products/commerce_1/images/object.png",
       })
     ).rejects.toThrow();
+  });
+
+  test("extracts product object keys from legacy route values and signed storage URLs", async () => {
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+    const { extractProductImageObjectKey, normalizeStoredProductImageReference } =
+      await import("./product-image");
+
+    expect(
+      extractProductImageObjectKey(
+        "/api/products/image?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      extractProductImageObjectKey(
+        "/api/product-link-images?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fproducts%2Fcommerce_1%2Fimages%2Fmate.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      extractProductImageObjectKey(
+        "https://storage.googleapis.com/imagenes-cerramos/products/commerce_1/images/mate.png?X-Goog-Algorithm=GOOG4-RSA-SHA256",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      normalizeStoredProductImageReference(
+        "/api/products/image?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("products/commerce_1/images/mate.png");
+    expect(
+      normalizeStoredProductImageReference(
+        "https://cdn.example.com/product.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("https://cdn.example.com/product.png");
+  });
+
+  test("extracts commerce logo object keys from public and app route URLs", async () => {
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
+    const { extractCommerceLogoObjectKey, normalizeStoredCommerceLogoReference } =
+      await import("./commerce-logo");
+
+    expect(
+      extractCommerceLogoObjectKey(
+        "/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("commerces/user_1/logos/logo.png");
+    expect(
+      extractCommerceLogoObjectKey(
+        "/api/commerce/logo?objectKey=gs%3A%2F%2Fimagenes-cerramos%2Fcommerces%2Fuser_1%2Flogos%2Flogo.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("commerces/user_1/logos/logo.png");
+    expect(
+      normalizeStoredCommerceLogoReference(
+        "https://cdn.example.com/logo.png",
+        process.env.GCS_BUCKET_NAME
+      )
+    ).toBe("https://cdn.example.com/logo.png");
   });
 });

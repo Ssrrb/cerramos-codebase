@@ -2,21 +2,21 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   createSignedReadUrlMock,
+  extractProductImageObjectKeyMock,
   fetchMock,
-  getPublicProductImageObjectKeyMock,
 } =
   vi.hoisted(() => ({
     createSignedReadUrlMock: vi.fn(),
+    extractProductImageObjectKeyMock: vi.fn(),
     fetchMock: vi.fn(),
-    getPublicProductImageObjectKeyMock: vi.fn(),
   }));
 
 vi.mock("@repo/storage", () => ({
   createSignedReadUrl: createSignedReadUrlMock,
 }));
 
-vi.mock("@/lib/product-links", () => ({
-  getPublicProductImageObjectKey: getPublicProductImageObjectKeyMock,
+vi.mock("@repo/storage/product-image", () => ({
+  extractProductImageObjectKey: extractProductImageObjectKeyMock,
 }));
 
 vi.stubGlobal("fetch", fetchMock);
@@ -24,13 +24,14 @@ vi.stubGlobal("fetch", fetchMock);
 describe("public product image route", () => {
   beforeEach(() => {
     vi.resetModules();
+    process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
     createSignedReadUrlMock.mockReset();
+    extractProductImageObjectKeyMock.mockReset();
     fetchMock.mockReset();
-    getPublicProductImageObjectKeyMock.mockReset();
   });
 
   test("proxies a public product image through the app origin", async () => {
-    getPublicProductImageObjectKeyMock.mockReturnValue(
+    extractProductImageObjectKeyMock.mockReturnValue(
       "products/commerce_1/images/object.png"
     );
     createSignedReadUrlMock.mockResolvedValue({
@@ -59,7 +60,7 @@ describe("public product image route", () => {
     expect(createSignedReadUrlMock).toHaveBeenCalledWith({
       objectKey: "products/commerce_1/images/object.png",
     });
-    expect(getPublicProductImageObjectKeyMock).toHaveBeenCalledWith(
+    expect(extractProductImageObjectKeyMock).toHaveBeenCalledWith(
       "products/commerce_1/images/object.png",
       process.env.GCS_BUCKET_NAME
     );
@@ -79,7 +80,7 @@ describe("public product image route", () => {
   });
 
   test("returns 400 when object key is missing", async () => {
-    getPublicProductImageObjectKeyMock.mockReturnValue("");
+    extractProductImageObjectKeyMock.mockReturnValue("");
     const { GET } = await import("./route");
     const response = await GET(
       new Request("http://localhost/api/product-link-images")
@@ -93,7 +94,7 @@ describe("public product image route", () => {
   });
 
   test("returns 400 when the incoming object key is invalid", async () => {
-    getPublicProductImageObjectKeyMock.mockReturnValue("");
+    extractProductImageObjectKeyMock.mockReturnValue("");
     const { GET } = await import("./route");
     const response = await GET(
       new Request(
@@ -101,7 +102,7 @@ describe("public product image route", () => {
       )
     );
 
-    expect(getPublicProductImageObjectKeyMock).toHaveBeenCalledWith(
+    expect(extractProductImageObjectKeyMock).toHaveBeenCalledWith(
       "https://example.com/bad.png",
       process.env.GCS_BUCKET_NAME
     );
@@ -110,7 +111,7 @@ describe("public product image route", () => {
   });
 
   test("returns the upstream error when the signed read target fails", async () => {
-    getPublicProductImageObjectKeyMock.mockReturnValue(
+    extractProductImageObjectKeyMock.mockReturnValue(
       "products/commerce_1/images/object.png"
     );
     createSignedReadUrlMock.mockResolvedValue({

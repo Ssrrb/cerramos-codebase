@@ -1,7 +1,7 @@
 import { requireCommerceContext } from "@repo/auth/server";
 import { createSignedReadUrl } from "@repo/storage";
+import { extractProductImageObjectKey } from "@repo/storage/product-image";
 import { NextResponse } from "next/server";
-import { normalizeProductImageObjectKey } from "@/lib/products";
 
 const buildProductImagePrefix = (commerceId: string) =>
   `products/${commerceId}/images/`;
@@ -10,7 +10,7 @@ export const GET = async (request: Request) => {
   const context = await requireCommerceContext();
   const { searchParams } = new URL(request.url);
   const rawObjectKey = searchParams.get("objectKey") ?? "";
-  const objectKey = normalizeProductImageObjectKey(
+  const objectKey = extractProductImageObjectKey(
     rawObjectKey,
     process.env.GCS_BUCKET_NAME
   );

@@ -1,4 +1,7 @@
+import { extractProductImageObjectKey as normalizeProductImageObjectKeyImpl } from "@repo/storage/product-image";
 import { z } from "zod";
+
+export const normalizeProductImageObjectKey = normalizeProductImageObjectKeyImpl;
 
 export const productStatusValues = ["active", "inactive", "draft"] as const;
 
@@ -139,52 +142,6 @@ export interface ProductTableRow {
   stock: number;
   unitPrice: number;
 }
-
-const LEADING_SLASHES_PATTERN = /^\/+/;
-
-const trimLeadingSlashes = (value: string) =>
-  value.replace(LEADING_SLASHES_PATTERN, "");
-
-export const normalizeProductImageObjectKey = (
-  value: string,
-  bucketName?: string
-) => {
-  const trimmedValue = value.trim();
-
-  if (
-    !trimmedValue ||
-    trimmedValue.startsWith("blob:") ||
-    trimmedValue.startsWith("data:") ||
-    trimmedValue.startsWith("http://") ||
-    trimmedValue.startsWith("https://") ||
-    trimmedValue.startsWith("/")
-  ) {
-    return "";
-  }
-
-  if (!bucketName) {
-    return trimmedValue;
-  }
-
-  const trimmedBucketName = bucketName.trim().replace(/\/+$/g, "");
-
-  if (!trimmedBucketName) {
-    return trimmedValue;
-  }
-
-  const bucketPrefixes = [
-    `${trimmedBucketName}/`,
-    `gs://${trimmedBucketName}/`,
-  ];
-
-  for (const prefix of bucketPrefixes) {
-    if (trimmedValue.startsWith(prefix)) {
-      return trimLeadingSlashes(trimmedValue.slice(prefix.length));
-    }
-  }
-
-  return trimmedValue;
-};
 
 export const defaultAddProductFormValues: AddProductFormValues = {
   category: productCategorySuggestions[0],

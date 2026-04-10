@@ -1,11 +1,11 @@
 import { createSignedReadUrl } from "@repo/storage";
+import { extractProductImageObjectKey } from "@repo/storage/product-image";
 import { NextResponse } from "next/server";
-import { getPublicProductImageObjectKey } from "@/lib/product-links";
 
 export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
-  const objectKey = getPublicProductImageObjectKey(
-    searchParams.get("objectKey"),
+  const objectKey = extractProductImageObjectKey(
+    searchParams.get("objectKey") ?? "",
     process.env.GCS_BUCKET_NAME
   );
 

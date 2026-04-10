@@ -360,8 +360,7 @@ describe("product link by id route", () => {
       deliveryEnabled: false,
       description: "Oferta ajustada",
       expiresAt: null,
-      imageUrl:
-        "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
+      imageUrl: "products/commerce_1/images/mate.png",
       paymentRequired: true,
       pickupEnabled: true,
       slug: "mate-vip",

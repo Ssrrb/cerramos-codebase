@@ -1,9 +1,9 @@
 import { getSession } from "@repo/auth/server";
 import { slugifyCommerceName } from "@repo/auth/utils";
 import { database, schema } from "@repo/database";
+import { normalizeCommerceLogoObjectKey } from "@repo/storage/commerce-logo";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { normalizeCommerceLogoObjectKey } from "@/lib/commerce";
 
 const findAvailableSlug = async (commerceName: string) => {
   const baseSlug = slugifyCommerceName(commerceName);

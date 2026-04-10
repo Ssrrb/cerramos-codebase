@@ -236,13 +236,13 @@ describe("web product links", () => {
     );
   });
 
-  test("prefers the current product image over a stale stored product link image", async () => {
+  test("prefers the stored product link image over a stale current product image", async () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
         imageUrl:
-          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fold.png",
-        productImage: "products/commerce_1/images/current.png",
+          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fcurrent.png",
+        productImage: "products/commerce_1/images/old.png",
       },
     ]);
 
@@ -513,6 +513,80 @@ describe("web product links", () => {
       orderId: "order_1",
       provider: "pagopar_upay",
       status: "pending",
+    });
+  });
+
+  test("stores canonical object keys in order snapshots when the checkout source is a legacy route URL", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageUrl:
+          "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
+      },
+    ]);
+    txSelectWhereMock.mockResolvedValueOnce([]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+
+        switch (table.__name) {
+          case "customer":
+            return {
+              returning: async () => [{ id: "customer_1" }],
+            };
+          case "deliveryInfo":
+            return {
+              returning: async () => [{ id: "delivery_1" }],
+            };
+          case "order":
+            return {
+              returning: async () => [{ id: "order_1" }],
+            };
+          case "paymentIntent":
+            return {
+              returning: async () => [{ id: "payment_1" }],
+            };
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+    await createOrderFromProductLink("mate-shop", "mate-premium", {
+      addressLine1: "Buyer street",
+      addressLine2: "",
+      city: "Asuncion",
+      email: "buyer@example.com",
+      mode: "delivery",
+      notes: "Leave at reception",
+      phone: "0981000000",
+      recipientName: "Buyer Name",
+      reference: "Depto 2",
+      title: "Client title",
+      unitPrice: 10,
+    } as never);
+
+    const orderItemInsert = insertedValues.find(
+      ({ table }) => table === "orderItem"
+    );
+
+    expect(orderItemInsert?.values).toMatchObject({
+      imageUrl: "products/commerce_1/images/mate.png",
     });
   });
 

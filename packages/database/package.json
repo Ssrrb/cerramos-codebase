@@ -10,6 +10,7 @@
     "db:clean": "bun run ./scripts/clean.ts",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "bun run ./scripts/migrate.ts",
+    "db:normalize-images": "bun run ./scripts/normalize-image-references.ts",
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
     "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
     "test": "NODE_ENV=test vitest run",

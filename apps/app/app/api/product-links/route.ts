@@ -8,7 +8,6 @@ import {
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
-  buildPublicProductImagePath,
   parseProductLinkExpiresAt,
   productLinkPayloadSchema,
   productLinksMigrationRequiredMessage,
@@ -158,9 +157,7 @@ export const POST = async (request: Request) => {
         deliveryEnabled: result.data.deliveryEnabled,
         description: result.data.description || null,
         expiresAt,
-        imageUrl: product.image
-          ? buildPublicProductImagePath(product.image)
-          : null,
+        imageUrl: product.image || null,
         paymentRequired: result.data.paymentRequired,
         pickupEnabled: result.data.pickupEnabled,
         productId: result.data.productId,

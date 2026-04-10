@@ -48,15 +48,18 @@ import { AddProductForm } from "./add-product-form";
 
 describe("add product form", () => {
   const consoleErrorSpy = vi.spyOn(console, "error");
+  const originalNextPublicBucketName = process.env.NEXT_PUBLIC_GCS_BUCKET_NAME;
 
   afterEach(() => {
     cleanup();
     consoleErrorSpy.mockReset();
+    process.env.NEXT_PUBLIC_GCS_BUCKET_NAME = originalNextPublicBucketName;
   });
 
   beforeEach(() => {
     fetchMock.mockReset();
     refreshMock.mockReset();
+    process.env.NEXT_PUBLIC_GCS_BUCKET_NAME = "imagenes-cerramos";
     fetchMock
       .mockResolvedValueOnce({
         json: async () => ({
@@ -223,6 +226,69 @@ describe("add product form", () => {
       })
     );
 
+    expect(refreshMock).toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  test("preserves legacy stored product image refs during edit submissions", async () => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({
+        id: "product_legacy",
+        success: true,
+      }),
+      ok: true,
+    });
+
+    const onSuccess = vi.fn();
+
+    render(
+      <AddProductForm
+        mode="edit"
+        onSuccess={onSuccess}
+        product={{
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Descripcion original",
+          id: "product_legacy",
+          image: "https://cdn.example.test/licuadora.png",
+          imageObjectKey:
+            "gs://imagenes-cerramos/products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/products/product_legacy",
+        {
+          body: JSON.stringify({
+            category: "Electrodomesticos",
+            deliveryIncluded: true,
+            description: "Descripcion original",
+            imageObjectKey: "products/commerce_1/images/licuadora.png",
+            name: "Licuadora Cerramos",
+            status: "active",
+            stock: 14,
+            unitPrice: 185_000,
+          }),
+          headers: {
+            "content-type": "application/json",
+          },
+          method: "PATCH",
+        }
+      )
+    );
+
+    expect(screen.queryByText("La imagen del producto es obligatoria.")).toBe(
+      null
+    );
     expect(refreshMock).toHaveBeenCalled();
     expect(onSuccess).toHaveBeenCalled();
   });

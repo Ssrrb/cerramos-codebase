@@ -1,6 +1,6 @@
-ALTER TABLE "Product" ADD COLUMN "primaryImageId" text;--> statement-breakpoint
-ALTER TABLE "OrderItem" ADD COLUMN "imageObjectKey" text;--> statement-breakpoint
-CREATE TABLE "ProductImage" (
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "primaryImageId" text;--> statement-breakpoint
+ALTER TABLE "OrderItem" ADD COLUMN IF NOT EXISTS "imageObjectKey" text;--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "ProductImage" (
 	"id" text PRIMARY KEY NOT NULL,
 	"productId" text NOT NULL,
 	"objectKey" text NOT NULL,
@@ -9,11 +9,26 @@ CREATE TABLE "ProductImage" (
 	"createdAt" timestamp (3) DEFAULT now() NOT NULL,
 	"updatedAt" timestamp (3) DEFAULT now() NOT NULL
 );--> statement-breakpoint
-ALTER TABLE "ProductImage" ADD CONSTRAINT "ProductImage_productId_Product_id_fk" FOREIGN KEY ("productId") REFERENCES "public"."Product"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "ProductImage_productId_idx" ON "ProductImage" USING btree ("productId");--> statement-breakpoint
-CREATE UNIQUE INDEX "ProductImage_productId_position_key" ON "ProductImage" USING btree ("productId","position");--> statement-breakpoint
-CREATE UNIQUE INDEX "ProductImage_id_productId_key" ON "ProductImage" USING btree ("id","productId");--> statement-breakpoint
-CREATE INDEX "Product_primaryImageId_idx" ON "Product" USING btree ("primaryImageId");--> statement-breakpoint
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1
+		FROM pg_constraint
+		WHERE conname = 'ProductImage_productId_Product_id_fk'
+	) THEN
+		ALTER TABLE "ProductImage"
+			ADD CONSTRAINT "ProductImage_productId_Product_id_fk"
+			FOREIGN KEY ("productId")
+			REFERENCES "public"."Product"("id")
+			ON DELETE cascade
+			ON UPDATE no action;
+	END IF;
+END
+$$;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ProductImage_productId_idx" ON "ProductImage" USING btree ("productId");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "ProductImage_productId_position_key" ON "ProductImage" USING btree ("productId","position");--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "ProductImage_id_productId_key" ON "ProductImage" USING btree ("id","productId");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "Product_primaryImageId_idx" ON "Product" USING btree ("primaryImageId");--> statement-breakpoint
 
 CREATE OR REPLACE FUNCTION normalize_product_image_reference(input text)
 RETURNS text
@@ -128,12 +143,22 @@ FROM resolved_order_images
 WHERE resolved_order_images.order_item_id = "OrderItem"."id"
   AND resolved_order_images.object_key IS NOT NULL;--> statement-breakpoint
 
-ALTER TABLE "Product"
-  ADD CONSTRAINT "Product_primaryImageId_id_ProductImage_id_productId_fk"
-  FOREIGN KEY ("primaryImageId", "id")
-  REFERENCES "public"."ProductImage"("id", "productId")
-  ON DELETE restrict
-  ON UPDATE no action
-  DEFERRABLE INITIALLY DEFERRED;--> statement-breakpoint
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT 1
+		FROM pg_constraint
+		WHERE conname = 'Product_primaryImageId_id_ProductImage_id_productId_fk'
+	) THEN
+		ALTER TABLE "Product"
+			ADD CONSTRAINT "Product_primaryImageId_id_ProductImage_id_productId_fk"
+			FOREIGN KEY ("primaryImageId", "id")
+			REFERENCES "public"."ProductImage"("id", "productId")
+			ON DELETE restrict
+			ON UPDATE no action
+			DEFERRABLE INITIALLY DEFERRED;
+	END IF;
+END
+$$;--> statement-breakpoint
 
 DROP FUNCTION normalize_product_image_reference(text);

@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { log } from "@repo/observability/log";
 import { keys } from "./keys";
 import {
   AUTH_COOKIE_PREFIX,
@@ -119,9 +120,20 @@ const getSignInUrl = () =>
 const getSessionState = cache(async (): Promise<SessionResult> => {
   const requestHeaders = await headers();
 
-  return betterAuthServer.api.getSession({
-    headers: requestHeaders,
-  });
+  try {
+    return await betterAuthServer.api.getSession({
+      headers: requestHeaders,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown session lookup failure";
+
+    log.warn("Better Auth session lookup failed", {
+      errorMessage,
+    });
+
+    return null;
+  }
 });
 
 const getSessionToken = cache(async () => {
@@ -144,11 +156,47 @@ export const requireSession = async () => {
   return session;
 };
 
+const resolveCommerceById = async (
+  commerceId: string,
+  role: ActiveCommerce["role"]
+): Promise<ActiveCommerce | null> => {
+  const [commerce] = await database
+    .select({
+      id: schema.commerce.id,
+      logoImageUrl: schema.commerce.logoImageUrl,
+      name: schema.commerce.name,
+      slug: schema.commerce.slug,
+    })
+    .from(schema.commerce)
+    .where(eq(schema.commerce.id, commerceId))
+    .limit(1);
+
+  if (!commerce) {
+    return null;
+  }
+
+  return {
+    ...commerce,
+    role,
+  };
+};
+
 export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null> => {
   const session = await getSessionState();
 
   if (!session?.user.id) {
     return null;
+  }
+
+  if (session.user.commerceId && session.user.role) {
+    const activeCommerce = await resolveCommerceById(
+      session.user.commerceId,
+      session.user.role
+    );
+
+    if (activeCommerce) {
+      return activeCommerce;
+    }
   }
 
   // Better Auth caches the session cookie payload, so commerceId can be stale
@@ -228,6 +276,25 @@ export const requireCommerceIdForRequest = async () => {
   }
 
   return activeCommerce.id;
+};
+
+export const requireCommerceContextForRequest = async () => {
+  const session = await getSessionState();
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const context = await getAuthenticatedAppContext();
+
+  if (!context) {
+    return NextResponse.json(
+      { error: "Commerce context is required." },
+      { status: 400 }
+    );
+  }
+
+  return context;
 };
 
 export const auth = async (): Promise<AuthContext> => {

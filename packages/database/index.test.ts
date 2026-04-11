@@ -1,6 +1,7 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { WebSocket } from "undici";
 import { expect, test } from "vitest";
 import { keys } from "./keys";
 import * as schema from "./schema";
@@ -9,7 +10,14 @@ const runDatabaseTest =
   process.env.RUN_DATABASE_TESTS === "1" && Boolean(process.env.DATABASE_URL);
 
 const databaseTest = runDatabaseTest ? test : test.skip;
-const database = drizzle({ client: neon(keys().DATABASE_URL), schema });
+neonConfig.webSocketConstructor ??= WebSocket;
+
+const database = drizzle({
+  client: new Pool({
+    connectionString: keys().DATABASE_URL,
+  }),
+  schema,
+});
 
 const insertProductWithPrimaryImage = async ({
   commerceId,

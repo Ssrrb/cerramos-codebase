@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { NextResponse } from "next/server";
 
-const { requireCommerceContextMock, createSignedReadUrlMock, fetchMock } =
+const { requireCommerceContextForRequestMock, createSignedReadUrlMock, fetchMock } =
   vi.hoisted(() => ({
     createSignedReadUrlMock: vi.fn(),
     fetchMock: vi.fn(),
-    requireCommerceContextMock: vi.fn(),
+    requireCommerceContextForRequestMock: vi.fn(),
   }));
 
 vi.mock("@repo/auth/server", () => ({
-  requireCommerceContext: requireCommerceContextMock,
+  requireCommerceContextForRequest: requireCommerceContextForRequestMock,
 }));
 
 vi.mock("@repo/storage", () => ({
@@ -21,13 +22,13 @@ describe("product image proxy route", () => {
   beforeEach(() => {
     vi.resetModules();
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
-    requireCommerceContextMock.mockReset();
+    requireCommerceContextForRequestMock.mockReset();
     createSignedReadUrlMock.mockReset();
     fetchMock.mockReset();
   });
 
   test("proxies an authorized product image through the app origin", async () => {
-    requireCommerceContextMock.mockResolvedValue({
+    requireCommerceContextForRequestMock.mockResolvedValue({
       commerce: {
         id: "commerce_1",
       },
@@ -71,7 +72,7 @@ describe("product image proxy route", () => {
   });
 
   test("rejects missing object keys", async () => {
-    requireCommerceContextMock.mockResolvedValue({
+    requireCommerceContextForRequestMock.mockResolvedValue({
       commerce: {
         id: "commerce_1",
       },
@@ -90,7 +91,7 @@ describe("product image proxy route", () => {
   });
 
   test("rejects image keys outside the merchant namespace", async () => {
-    requireCommerceContextMock.mockResolvedValue({
+    requireCommerceContextForRequestMock.mockResolvedValue({
       commerce: {
         id: "commerce_1",
       },
@@ -106,6 +107,25 @@ describe("product image proxy route", () => {
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
       error: "Forbidden",
+    });
+    expect(createSignedReadUrlMock).not.toHaveBeenCalled();
+  });
+
+  test("returns auth responses from the shared request helper", async () => {
+    requireCommerceContextForRequestMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
+
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request(
+        "http://localhost/api/products/image?objectKey=products/commerce_1/images/object.png"
+      )
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unauthorized",
     });
     expect(createSignedReadUrlMock).not.toHaveBeenCalled();
   });

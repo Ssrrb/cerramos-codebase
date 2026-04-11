@@ -4,6 +4,7 @@ const {
   existsSyncMock,
   getSignedUrlMock,
   deleteMock,
+  existsMock,
   fileMock,
   bucketMock,
   storageMock,
@@ -12,8 +13,10 @@ const {
   const existsSyncMock = vi.fn<(path: string) => boolean>(() => false);
   const getSignedUrlMock = vi.fn();
   const deleteMock = vi.fn();
+  const existsMock = vi.fn();
   const fileMock = vi.fn(() => ({
     delete: deleteMock,
+    exists: existsMock,
     getSignedUrl: getSignedUrlMock,
   }));
   const bucketMock = vi.fn(() => ({
@@ -27,6 +30,7 @@ const {
     bucketMock,
     deleteMock,
     existsSyncMock,
+    existsMock,
     fileMock,
     getSignedUrlMock,
     storageConstructorMock: vi.fn((options?: unknown) => ({
@@ -65,6 +69,7 @@ describe("@repo/storage", () => {
     fileMock.mockClear();
     getSignedUrlMock.mockReset();
     deleteMock.mockReset();
+    existsMock.mockReset();
     existsSyncMock.mockReset();
     existsSyncMock.mockReturnValue(false);
   });
@@ -139,6 +144,21 @@ describe("@repo/storage", () => {
       })
     );
     expect(result.url).toBe("https://read.example.test");
+  });
+
+  test("checks whether an object exists using the configured bucket", async () => {
+    existsMock.mockResolvedValue([true]);
+    const { objectExists } = await import("./index");
+
+    await expect(
+      objectExists({
+        objectKey: "products/commerce_1/images/object.png",
+      })
+    ).resolves.toBe(true);
+
+    expect(bucketMock).toHaveBeenCalledWith("cerramos-assets");
+    expect(fileMock).toHaveBeenCalledWith("products/commerce_1/images/object.png");
+    expect(existsMock).toHaveBeenCalledTimes(1);
   });
 
   test("uses the configured credential file when present", async () => {

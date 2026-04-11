@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { NextResponse } from "next/server";
 
-const { createSignedReadUrlMock, fetchMock, requireCommerceContextMock } =
+const { createSignedReadUrlMock, fetchMock, requireCommerceContextForRequestMock } =
   vi.hoisted(() => ({
     createSignedReadUrlMock: vi.fn(),
     fetchMock: vi.fn(),
-    requireCommerceContextMock: vi.fn(),
+    requireCommerceContextForRequestMock: vi.fn(),
   }));
 
 vi.mock("@repo/auth/server", () => ({
-  requireCommerceContext: requireCommerceContextMock,
+  requireCommerceContextForRequest: requireCommerceContextForRequestMock,
 }));
 
 vi.mock("@repo/storage", () => ({
@@ -23,8 +24,8 @@ describe("app commerce logo route", () => {
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
     createSignedReadUrlMock.mockReset();
     fetchMock.mockReset();
-    requireCommerceContextMock.mockReset();
-    requireCommerceContextMock.mockResolvedValue({
+    requireCommerceContextForRequestMock.mockReset();
+    requireCommerceContextForRequestMock.mockResolvedValue({
       commerce: {
         id: "commerce_1",
         logoImageUrl: "commerces/user_1/logos/logo.png",
@@ -95,6 +96,25 @@ describe("app commerce logo route", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({ error: "Forbidden" });
+    expect(createSignedReadUrlMock).not.toHaveBeenCalled();
+  });
+
+  test("returns auth responses from the shared request helper", async () => {
+    requireCommerceContextForRequestMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
+
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request(
+        "http://localhost/api/commerce/logo?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png"
+      )
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unauthorized",
+    });
     expect(createSignedReadUrlMock).not.toHaveBeenCalled();
   });
 });

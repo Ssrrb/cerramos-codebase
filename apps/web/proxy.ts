@@ -15,9 +15,12 @@ export const config = {
   // matcher tells Next.js which routes to run the middleware on. This runs the
   // middleware on all routes except for static assets and Posthog ingest
   matcher: [
-    "/((?!_next/static|_next/image|ingest|favicon.ico|.*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!api|_next/static|_next/image|ingest|favicon.ico|.*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
   ],
 };
+
+export const shouldBypassProxy = (pathname: string) =>
+  pathname.startsWith("/api/");
 
 const securityHeaders = env.FLAGS_SECRET
   ? securityMiddleware(noseconeOptionsWithToolbar)
@@ -55,6 +58,10 @@ const composedMiddleware = createNEMO(
 export default authMiddleware(async (_auth, request, event) => {
   // Run security headers first
   const headersResponse = securityHeaders();
+
+  if (shouldBypassProxy(request.nextUrl.pathname)) {
+    return headersResponse;
+  }
 
   // Then run composed middleware (i18n + arcjet)
   const middlewareResponse = await composedMiddleware(

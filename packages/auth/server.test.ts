@@ -129,6 +129,7 @@ describe("auth server commerce context", () => {
         id: "user_1",
         image: "https://example.com/avatar.png",
         name: "Sebastian",
+        role: "merchant_admin",
       },
     });
     limitMock.mockResolvedValue([
@@ -160,6 +161,7 @@ describe("auth server commerce context", () => {
         role: "merchant_admin",
       },
     });
+    expect(innerJoinMock).not.toHaveBeenCalled();
   });
 
   test("uses the database commerce link when the session commerce id is stale", async () => {
@@ -201,6 +203,7 @@ describe("auth server commerce context", () => {
         role: "merchant_admin",
       },
     });
+    expect(innerJoinMock).toHaveBeenCalledTimes(1);
   });
 
   test("redirects to onboarding when no linked commerce can be resolved", async () => {
@@ -243,6 +246,20 @@ describe("auth server commerce context", () => {
     const { requireCommerceIdForRequest } = await import("./server");
     const response = await requireCommerceIdForRequest();
 
+    expect(response).toBeInstanceOf(Response);
+    expect((response as Response).status).toBe(401);
+    await expect((response as Response).json()).resolves.toEqual({
+      error: "Unauthorized",
+    });
+  });
+
+  test("treats session lookup failures as unauthenticated request handlers", async () => {
+    getSessionMock.mockRejectedValue(new Error("database offline"));
+
+    const { getSession, requireCommerceIdForRequest } = await import("./server");
+    const response = await requireCommerceIdForRequest();
+
+    await expect(getSession()).resolves.toBeNull();
     expect(response).toBeInstanceOf(Response);
     expect((response as Response).status).toBe(401);
     await expect((response as Response).json()).resolves.toEqual({

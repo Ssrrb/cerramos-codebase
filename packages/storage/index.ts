@@ -33,6 +33,11 @@ export type DeleteObjectOptions = {
   objectKey: string;
 };
 
+export type ObjectExistsOptions = {
+  bucketName?: string;
+  objectKey: string;
+};
+
 export type SignedUploadTarget = {
   bucketName: string;
   contentType: string;
@@ -193,6 +198,19 @@ export const createSignedReadUrl = async ({
     objectKey,
     url,
   };
+};
+
+export const objectExists = async ({
+  bucketName,
+  objectKey,
+}: ObjectExistsOptions): Promise<boolean> => {
+  const storage = createStorageClient();
+  const [exists] = await storage
+    .bucket(getBucketName(bucketName))
+    .file(objectKey)
+    .exists();
+
+  return exists;
 };
 
 export const deleteObject = async ({

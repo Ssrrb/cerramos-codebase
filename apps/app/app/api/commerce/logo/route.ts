@@ -1,4 +1,4 @@
-import { requireCommerceContext } from "@repo/auth/server";
+import { requireCommerceContextForRequest } from "@repo/auth/server";
 import { createSignedReadUrl } from "@repo/storage";
 import {
   extractCommerceLogoObjectKey,
@@ -7,7 +7,12 @@ import {
 import { NextResponse } from "next/server";
 
 export const GET = async (request: Request) => {
-  const context = await requireCommerceContext();
+  const context = await requireCommerceContextForRequest();
+
+  if (context instanceof Response) {
+    return context;
+  }
+
   const { searchParams } = new URL(request.url);
   const rawObjectKey = searchParams.get("objectKey") ?? "";
   const objectKey = extractCommerceLogoObjectKey(

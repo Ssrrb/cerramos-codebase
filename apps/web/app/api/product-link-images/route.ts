@@ -46,6 +46,9 @@ export const GET = async (request: Request) => {
     let signedReadTarget: Awaited<ReturnType<typeof createSignedReadUrl>>;
 
     try {
+      // Keep the storage bucket private: the browser only talks to this route,
+      // while the server exchanges the canonical object key for a short-lived
+      // signed read URL.
       signedReadTarget = await createSignedReadUrl({ objectKey });
     } catch (error) {
       const message = parseError(error);
@@ -114,6 +117,8 @@ export const GET = async (request: Request) => {
       headers.set("cache-control", cacheControl);
     }
 
+    // Prevent other origins from embedding this proxied response directly. The
+    // checkout page consumes it as a same-origin asset.
     headers.set("Cross-Origin-Resource-Policy", "same-origin");
 
     return new Response(upstreamResponse.body, {

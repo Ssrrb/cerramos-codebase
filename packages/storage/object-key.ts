@@ -70,6 +70,9 @@ export const normalizeStorageObjectKey = ({
 }: NormalizeStorageObjectKeyOptions): string => {
   const trimmedValue = value.trim();
 
+  // Only persist canonical object keys here. Absolute paths, remote URLs, and
+  // inline blobs belong to higher-level callers and should not be rewritten as
+  // storage keys.
   if (
     !trimmedValue ||
     trimmedValue.startsWith("/") ||
@@ -105,6 +108,8 @@ const extractStorageObjectKeyFromUrl = ({
   const objectKeySearchParam = parsedUrl.searchParams.get("objectKey");
 
   if (objectKeySearchParam) {
+    // Our own image proxy routes round-trip the canonical key via `objectKey`,
+    // so prefer that over trying to infer a key from the pathname.
     return extractStorageObjectKey({
       allowedPrefixes,
       bucketName,
@@ -163,6 +168,8 @@ const extractStorageObjectKeyFromUrl = ({
     `v0/b/${normalizedBucketName}/o/`,
   ];
 
+  // Accept the common Google Cloud Storage REST URL shapes so older persisted
+  // references can be normalized back into a plain object key.
   for (const prefix of storageApiPrefixes) {
     if (trimmedPathname.startsWith(prefix)) {
       return normalizeStorageObjectKey({
@@ -210,6 +217,8 @@ export const normalizeStoredMediaReference = ({
   const objectKey = objectKeyExtractor(trimmedValue, bucketName);
 
   if (objectKey) {
+    // When we can recover a canonical key, prefer storing that instead of a
+    // signed URL or proxy URL so references remain stable across environments.
     return objectKey;
   }
 

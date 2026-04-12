@@ -120,6 +120,8 @@ const normalizeCheckoutProductImageUrl = (imageUrl: string | null) => {
     return normalizedReference || imageUrl;
   }
 
+  // Public checkout pages cannot rely on raw bucket URLs or signed URLs being
+  // stable, so canonical object keys are always rewritten through our proxy.
   return buildPublicProductImagePath(objectKey);
 };
 
@@ -217,6 +219,9 @@ export const getPublicProductLinkCheckout = cache(
         )
         .innerJoin(
           schema.productImage,
+          // Checkout requires a single display image. Joining through the
+          // product's primary image guarantees a deterministic asset for the
+          // public view model.
           eq(schema.productImage.id, schema.product.primaryImageId)
         )
         .where(eq(schema.commerce.slug, commerceSlug));

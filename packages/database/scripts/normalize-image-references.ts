@@ -24,6 +24,9 @@ const normalizeValue = (
   return normalized || null;
 };
 
+// Sweep the existing records once so the app can assume stored references are
+// canonical object keys instead of a mix of signed URLs, proxy URLs, and raw
+// bucket paths.
 const [productImages, commerces, orderItems] = await Promise.all([
   database
     .select({

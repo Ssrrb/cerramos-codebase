@@ -16,6 +16,10 @@ interface CheckoutMobileShellProps {
   paymentSlot: ReactNode
   product: CheckoutProductSummary
   secureLabel?: string
+  user?: {
+    name: string
+    avatarUrl?: string
+  } | null
 }
 
 function CheckoutMobileShell({
@@ -25,13 +29,14 @@ function CheckoutMobileShell({
   paymentSlot,
   product,
   secureLabel,
+  user,
 }: CheckoutMobileShellProps) {
   return (
     <section
       className={cn("min-h-dvh bg-muted/25 px-4 py-4 sm:px-6 sm:py-6", className)}
     >
       <div className="mx-auto flex w-full max-w-md flex-col gap-4">
-        <CheckoutHeader secureLabel={secureLabel} />
+        <CheckoutHeader secureLabel={secureLabel} user={user} />
         <CheckoutMerchantCard merchant={merchant} />
         <CheckoutProductCard product={product} />
         {deliverySlot}

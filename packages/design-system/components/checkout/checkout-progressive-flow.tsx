@@ -1,15 +1,6 @@
 "use client";
 
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "../ui/alert";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Form } from "../ui/form";
-import { cn } from "../../lib/utils";
-import {
   ArrowLeft,
   CheckCircle2,
   CreditCardIcon,
@@ -19,6 +10,11 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { cn } from "../../lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Form } from "../ui/form";
 import { CheckoutDeliveryStepSection } from "./checkout-delivery-step-section";
 import { CheckoutDetailsStepSection } from "./checkout-details-step-section";
 import type { CheckoutDeliveryFieldNames } from "./checkout-form-fields";
@@ -153,7 +149,12 @@ interface CheckoutProgressiveFlowProps {
   processorSlot?: ReactNode;
   product: CheckoutProductSummary;
   secureLabel?: string;
+  showHeader?: boolean;
   submitLabel?: string;
+  user?: {
+    name: string;
+    avatarUrl?: string;
+  } | null;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this shared checkout component intentionally centralizes the sequential form, order, payment, and confirmation states.
@@ -176,7 +177,9 @@ function CheckoutProgressiveFlow({
   processorSlot,
   product,
   secureLabel,
+  showHeader = true,
   submitLabel = "Confirmar pedido",
+  user,
 }: CheckoutProgressiveFlowProps) {
   const fallbackMode =
     !deliveryEnabled && pickupEnabled ? "pickup" : "delivery";
@@ -558,7 +561,9 @@ function CheckoutProgressiveFlow({
           )}
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
-            <CheckoutHeader secureLabel={secureLabel} />
+            {showHeader ? (
+              <CheckoutHeader secureLabel={secureLabel} user={user} />
+            ) : null}
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
               <div className="space-y-4 pb-24 sm:space-y-5 lg:space-y-6 lg:pb-0">
                 <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
@@ -644,7 +649,9 @@ function CheckoutProgressiveFlow({
         )}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
-          <CheckoutHeader secureLabel={secureLabel} />
+          {showHeader ? (
+            <CheckoutHeader secureLabel={secureLabel} user={user} />
+          ) : null}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
             <div className="space-y-4 pb-24 sm:space-y-5 md:pb-28 lg:space-y-6 lg:pb-0">
               <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">

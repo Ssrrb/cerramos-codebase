@@ -1,14 +1,20 @@
 import { cn } from "@repo/design-system/lib/utils";
 import { LockKeyholeIcon } from "lucide-react";
+import { CheckoutUserIdentity } from "./checkout-user-identity";
 
 interface CheckoutHeaderProps {
   className?: string;
   secureLabel?: string;
+  user?: {
+    name: string;
+    avatarUrl?: string;
+  } | null;
 }
 
 function CheckoutHeader({
   className,
   secureLabel = "Checkout seguro",
+  user,
 }: CheckoutHeaderProps) {
   return (
     <header
@@ -31,9 +37,12 @@ function CheckoutHeader({
             </span>
           </div>
         </div>
-        <div className="flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-muted-foreground text-xs">
-          <LockKeyholeIcon className="size-4" />
-          <span>{secureLabel}</span>
+        <div className="flex items-center gap-3">
+          <CheckoutUserIdentity user={user} />
+          <div className="flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-muted-foreground text-xs">
+            <LockKeyholeIcon className="size-4" />
+            <span>{secureLabel}</span>
+          </div>
         </div>
       </div>
     </header>

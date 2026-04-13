@@ -4,7 +4,6 @@ import {
   eq,
   gte,
   isMissingRelationError,
-  leftJoin,
   schema,
   sql,
 } from "@repo/database";

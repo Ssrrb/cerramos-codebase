@@ -9,6 +9,13 @@ import {
 } from "@repo/design-system/components/ui/field";
 import { FormField } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/design-system/components/ui/select";
 import { Textarea } from "@repo/design-system/components/ui/textarea";
 import {
   ToggleGroup,
@@ -49,6 +56,11 @@ interface CheckoutInputFieldProps<TFieldValues extends FieldValues> {
   type?: InputHTMLAttributes<HTMLInputElement>["type"];
 }
 
+interface CheckoutSelectFieldOption {
+  label: string;
+  value: string;
+}
+
 function CheckoutInputField<TFieldValues extends FieldValues>({
   autoComplete,
   control,
@@ -82,6 +94,69 @@ function CheckoutInputField<TFieldValues extends FieldValues>({
               type={type}
               value={typeof field.value === "string" ? field.value : ""}
             />
+            {description ? (
+              <FieldDescription>{description}</FieldDescription>
+            ) : null}
+            <FieldError errors={[fieldState.error]} />
+          </FieldContent>
+        </Field>
+      )}
+      rules={rules}
+    />
+  );
+}
+
+interface CheckoutSelectFieldProps<TFieldValues extends FieldValues> {
+  control: Control<TFieldValues>;
+  description?: string;
+  disabled?: boolean;
+  label: string;
+  name: FieldPath<TFieldValues>;
+  options: readonly CheckoutSelectFieldOption[];
+  placeholder?: string;
+  rules?: RegisterOptions<TFieldValues, FieldPath<TFieldValues>>;
+}
+
+function CheckoutSelectField<TFieldValues extends FieldValues>({
+  control,
+  description,
+  disabled,
+  label,
+  name,
+  options,
+  placeholder,
+  rules,
+}: CheckoutSelectFieldProps<TFieldValues>) {
+  const inputId = useId();
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+          <FieldContent>
+            <Select
+              disabled={disabled}
+              onValueChange={field.onChange}
+              value={typeof field.value === "string" ? field.value : undefined}
+            >
+              <SelectTrigger
+                aria-invalid={fieldState.invalid}
+                className="w-full"
+                id={inputId}
+              >
+                <SelectValue placeholder={placeholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {description ? (
               <FieldDescription>{description}</FieldDescription>
             ) : null}
@@ -165,6 +240,14 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => {
+        let modeDescription = "Este link solo permite retiro.";
+
+        if (deliveryEnabled && pickupEnabled) {
+          modeDescription = "Elegí cómo el comercio debe preparar este pedido.";
+        } else if (deliveryEnabled) {
+          modeDescription = "Este link solo permite delivery.";
+        }
+
         const availableModes = [
           deliveryEnabled ? "delivery" : null,
           pickupEnabled ? "pickup" : null,
@@ -201,13 +284,7 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
                   </ToggleGroupItem>
                 ) : null}
               </ToggleGroup>
-              <FieldDescription>
-                {deliveryEnabled && pickupEnabled
-                  ? "Elegí cómo el comercio debe preparar este pedido."
-                  : deliveryEnabled
-                    ? "Este link solo permite delivery."
-                    : "Este link solo permite retiro."}
-              </FieldDescription>
+              <FieldDescription>{modeDescription}</FieldDescription>
               <FieldError errors={[fieldState.error]} />
             </FieldContent>
           </Field>
@@ -218,4 +295,9 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
   );
 }
 
-export { CheckoutDeliveryModeField, CheckoutInputField, CheckoutTextareaField };
+export {
+  CheckoutDeliveryModeField,
+  CheckoutInputField,
+  CheckoutSelectField,
+  CheckoutTextareaField,
+};

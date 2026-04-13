@@ -18,6 +18,7 @@ import {
   CheckoutInputField,
   CheckoutTextareaField,
 } from "./checkout-form-fields";
+import { CheckoutLocationFields } from "./checkout-location-fields";
 import type { CheckoutDeliveryMode } from "./types";
 
 interface CheckoutDeliveryStepSectionProps<TFieldValues extends FieldValues> {
@@ -71,25 +72,12 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
           />
           {isDelivery ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <CheckoutInputField
-                  control={control}
-                  disabled={disabled}
-                  label="Ciudad"
-                  name={names.city}
-                  placeholder="Asunción"
-                  rules={{
-                    required: "Indicá la ciudad de entrega.",
-                  }}
-                />
-                <CheckoutInputField
-                  control={control}
-                  disabled={disabled}
-                  label="Barrio"
-                  name={names.addressLine2}
-                  placeholder="Obrero"
-                />
-              </div>
+              <CheckoutLocationFields
+                control={control}
+                disabled={disabled}
+                names={names}
+                requiredCityMessage="Indicá la ciudad de entrega."
+              />
               <CheckoutInputField
                 autoComplete="street-address"
                 control={control}

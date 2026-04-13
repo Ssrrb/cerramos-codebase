@@ -71,6 +71,13 @@
       "when": 1775857800000,
       "tag": "0009_drop_legacy_product_image_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776105785528,
+      "tag": "0010_unified_auth_profiles",
+      "breakpoints": true
     }
   ]
 }

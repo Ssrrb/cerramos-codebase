@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
+  type AnyPgColumn,
   boolean,
   foreignKey,
   index,
@@ -100,6 +101,8 @@ export const appUserRoleEnum = pgEnum("AppUserRole", [
   "operator",
 ]);
 
+export const merchantProfileRoleEnum = pgEnum("MerchantProfileRole", ["owner"]);
+
 export const page = pgTable(
   "Page",
   {
@@ -130,18 +133,28 @@ export const commerce = pgTable(
   (table) => [uniqueIndex("Commerce_slug_key").on(table.slug)]
 );
 
-export const customer = pgTable(
-  "Customer",
+export const customerProfile = pgTable(
+  "CustomerProfile",
   {
     id: cuidPrimaryKey(),
+    userId: text("userId").references((): AnyPgColumn => user.id, {
+      onDelete: "set null",
+    }),
     email: text("email"),
     name: text("name"),
     phone: text("phone"),
+    image: text("image"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [uniqueIndex("Customer_email_key").on(table.email)]
+  (table) => [
+    uniqueIndex("CustomerProfile_email_key").on(table.email),
+    uniqueIndex("CustomerProfile_userId_key").on(table.userId),
+    index("CustomerProfile_userId_idx").on(table.userId),
+  ]
 );
+
+export const customer = customerProfile;
 
 export const user = pgTable(
   "user",
@@ -151,9 +164,11 @@ export const user = pgTable(
     name: text("name"),
     emailVerified: boolean("emailVerified").notNull().default(false),
     image: text("image"),
+    // Compatibility mirrors for the existing auth/session code. These stop
+    // being the source of truth once profile-based reads are migrated.
     role: appUserRoleEnum("role").notNull().default("buyer"),
     commerceId: text("commerceId").references(() => commerce.id),
-    customerId: text("customerId").references(() => customer.id),
+    customerId: text("customerId").references(() => customerProfile.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -161,6 +176,34 @@ export const user = pgTable(
     uniqueIndex("user_email_key").on(table.email),
     index("user_commerceId_idx").on(table.commerceId),
     index("user_customerId_idx").on(table.customerId),
+  ]
+);
+
+export const merchantProfile = pgTable(
+  "MerchantProfile",
+  {
+    id: cuidPrimaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "cascade" }),
+    role: merchantProfileRoleEnum("role").notNull().default("owner"),
+    phone: text("phone"),
+    legalFullName: text("legalFullName"),
+    dateOfBirth: timestamp("dateOfBirth", { mode: "date", precision: 3 }),
+    nationality: text("nationality"),
+    governmentId: text("governmentId"),
+    residentialAddress: text("residentialAddress"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("MerchantProfile_userId_key").on(table.userId),
+    uniqueIndex("MerchantProfile_commerceId_key").on(table.commerceId),
+    index("MerchantProfile_userId_idx").on(table.userId),
+    index("MerchantProfile_commerceId_idx").on(table.commerceId),
   ]
 );
 
@@ -350,7 +393,7 @@ export const customerIdentity = pgTable(
     id: cuidPrimaryKey(),
     customerId: text("customerId")
       .notNull()
-      .references(() => customer.id, { onDelete: "cascade" }),
+      .references(() => customerProfile.id, { onDelete: "cascade" }),
     provider: customerIdentityProviderEnum("provider").notNull(),
     providerSubject: text("providerSubject").notNull(),
     passwordHash: text("passwordHash"),
@@ -371,7 +414,7 @@ export const customerConsent = pgTable(
     id: cuidPrimaryKey(),
     customerId: text("customerId")
       .notNull()
-      .references(() => customer.id, { onDelete: "cascade" }),
+      .references(() => customerProfile.id, { onDelete: "cascade" }),
     type: text("type").notNull(),
     granted: boolean("granted").notNull().default(false),
     grantedAt: timestamp("grantedAt", { mode: "date", precision: 3 }),
@@ -385,7 +428,7 @@ export const deliveryInfo = pgTable(
   "DeliveryInfo",
   {
     id: cuidPrimaryKey(),
-    customerId: text("customerId").references(() => customer.id, {
+    customerId: text("customerId").references(() => customerProfile.id, {
       onDelete: "set null",
     }),
     mode: deliveryModeEnum("mode").notNull(),
@@ -415,7 +458,7 @@ export const order = pgTable(
       .references(() => productLink.id, { onDelete: "restrict" }),
     customerId: text("customerId")
       .notNull()
-      .references(() => customer.id, { onDelete: "restrict" }),
+      .references(() => customerProfile.id, { onDelete: "restrict" }),
     deliveryInfoId: text("deliveryInfoId")
       .notNull()
       .references(() => deliveryInfo.id, { onDelete: "restrict" }),

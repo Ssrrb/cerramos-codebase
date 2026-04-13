@@ -4,16 +4,11 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@repo/design-system/components/ui/alert";
-import { Button } from "@repo/design-system/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@repo/design-system/components/ui/card";
-import { Form } from "@repo/design-system/components/ui/form";
-import { cn } from "@repo/design-system/lib/utils";
+} from "../ui/alert";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Form } from "../ui/form";
+import { cn } from "../../lib/utils";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -147,7 +142,7 @@ interface CheckoutProgressiveFlowProps {
   onPaymentConfirm?: () => Promise<string | null | undefined>;
   onReset?: () => void;
   onSubmit?: (
-    values: CheckoutDeliveryValues
+    values: CheckoutDeliveryValues & { quantity: number }
   ) => Promise<string | null | undefined>;
   orderReference?: string | null;
   orderSummary: CheckoutOrderSummary;
@@ -205,6 +200,13 @@ function CheckoutProgressiveFlow({
   const [isPaymentProcessing, startPaymentProcessing] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
+  const [quantity, setQuantity] = useState(() =>
+    Math.max(1, Math.min(product.quantity, Math.max(product.availableStock, 1)))
+  );
+  const initialQuantity = Math.max(
+    1,
+    Math.min(product.quantity, Math.max(product.availableStock, 1))
+  );
 
   const formValues = useWatch({
     control: form.control,
@@ -214,9 +216,18 @@ function CheckoutProgressiveFlow({
   const resolvedOrderReference = orderReference ?? localOrderReference;
   const isConfirmed = isOrderConfirmed || lifecycleState === "confirmed";
   const isLocked = isSubmitting || isPaymentProcessing || isConfirmed;
+  const isOutOfStock = product.availableStock <= 0;
   const canSubmitCheckout =
     Boolean(onSubmit) &&
-    (!paymentRequired || merchant.trustState === "verified");
+    (!paymentRequired || merchant.trustState === "verified") &&
+    !isOutOfStock;
+  const resolvedProduct = useMemo(
+    () => ({
+      ...product,
+      quantity,
+    }),
+    [product, quantity]
+  );
   const paymentSummaryLines = useMemo(() => {
     if (isConfirmed) {
       return ["Pago simulado como procesado", "Pedido confirmado"];
@@ -286,6 +297,12 @@ function CheckoutProgressiveFlow({
   }, [isOrderConfirmed]);
 
   useEffect(() => {
+    setQuantity((current) =>
+      Math.max(1, Math.min(current, Math.max(product.availableStock, 1)))
+    );
+  }, [product.availableStock]);
+
+  useEffect(() => {
     if (resolvedOrderReference && !isConfirmed) {
       setLifecycleState(paymentRequired ? "order_created" : "confirmed");
     }
@@ -325,7 +342,7 @@ function CheckoutProgressiveFlow({
       setLifecycleState("creating_order");
 
       try {
-        const errorMessage = await onSubmit?.(values);
+        const errorMessage = await onSubmit?.({ ...values, quantity });
 
         if (errorMessage) {
           setSubmitError(errorMessage);
@@ -387,6 +404,7 @@ function CheckoutProgressiveFlow({
           />
           <div className="flex justify-end">
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={handleContinueDetails}
               type="button"
@@ -412,8 +430,9 @@ function CheckoutProgressiveFlow({
             names={deliveryFieldNames}
             pickupEnabled={pickupEnabled}
           />
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={() => setActiveStep("details")}
               type="button"
@@ -423,6 +442,7 @@ function CheckoutProgressiveFlow({
               Volver
             </Button>
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={handleContinueDelivery}
               type="button"
@@ -451,9 +471,10 @@ function CheckoutProgressiveFlow({
                   <p className="text-destructive text-sm">{paymentError}</p>
                 ) : null}
                 <Button
-                  className="w-full"
+                  className="min-h-11 w-full"
                   disabled={
                     isLocked ||
+                    isOutOfStock ||
                     (paymentRequired && Boolean(resolvedOrderReference))
                   }
                   onClick={handleSubmitCheckout}
@@ -470,7 +491,7 @@ function CheckoutProgressiveFlow({
                 </Button>
                 {paymentRequired && resolvedOrderReference ? (
                   <Button
-                    className="w-full"
+                    className="min-h-11 w-full"
                     disabled={isLocked || paymentStage !== "ready"}
                     onClick={handleConfirmPayment}
                     type="button"
@@ -488,6 +509,12 @@ function CheckoutProgressiveFlow({
                       </>
                     )}
                   </Button>
+                ) : null}
+                {isOutOfStock ? (
+                  <p className="text-muted-foreground text-sm">
+                    Este producto se quedó sin stock y no puede continuar al
+                    checkout.
+                  </p>
                 ) : null}
               </div>
             ) : null
@@ -526,22 +553,22 @@ function CheckoutProgressiveFlow({
       <Form {...form}>
         <section
           className={cn(
-            "min-h-dvh bg-muted/25 px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
+            "min-h-dvh bg-muted/25 px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-6",
             className
           )}
         >
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:gap-6">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
             <CheckoutHeader secureLabel={secureLabel} />
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-              <div className="space-y-6 pb-24 lg:pb-0">
-                <div className="rounded-[1.75rem] border border-border/70 bg-background px-5 py-4 shadow-xs">
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+              <div className="space-y-4 pb-24 sm:space-y-5 lg:space-y-6 lg:pb-0">
+                <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
                   <CheckoutMerchantCard
                     className="px-0 py-0"
                     merchant={merchant}
                   />
                 </div>
                 <Card className="rounded-[2rem] border-border/70 shadow-xs">
-                  <CardHeader className="gap-4 pb-0">
+                  <CardHeader className="gap-4 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
                     <div className="flex size-14 items-center justify-center rounded-3xl bg-emerald-500 text-white">
                       <CheckCircle2 className="size-7" />
                     </div>
@@ -554,7 +581,7 @@ function CheckoutProgressiveFlow({
                       </CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
+                  <CardContent className="space-y-4 px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
                     <Alert className="rounded-[1.25rem] border-border/70 bg-muted/15">
                       <ReceiptTextIcon className="size-4" />
                       <AlertTitle>Pago procesado</AlertTitle>
@@ -577,7 +604,14 @@ function CheckoutProgressiveFlow({
                       </div>
                     ) : null}
                     {onReset ? (
-                      <Button onClick={onReset} type="button" variant="outline">
+                      <Button
+                        onClick={() => {
+                          setQuantity(initialQuantity);
+                          onReset?.();
+                        }}
+                        type="button"
+                        variant="outline"
+                      >
                         Crear otro pedido
                       </Button>
                     ) : null}
@@ -585,14 +619,16 @@ function CheckoutProgressiveFlow({
                 </Card>
               </div>
               <CheckoutOrderSummaryPanel
+                onQuantityChange={setQuantity}
                 orderSummary={orderSummary}
-                product={product}
+                product={resolvedProduct}
               />
             </div>
           </div>
           <CheckoutMobileSummaryBar
+            onQuantityChange={setQuantity}
             orderSummary={orderSummary}
-            product={product}
+            product={resolvedProduct}
           />
         </section>
       </Form>
@@ -603,21 +639,21 @@ function CheckoutProgressiveFlow({
     <Form {...form}>
       <section
         className={cn(
-          "min-h-dvh bg-muted/25 px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
+          "min-h-dvh bg-muted/25 px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-6",
           className
         )}
       >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:gap-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
           <CheckoutHeader secureLabel={secureLabel} />
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="space-y-6 pb-24 lg:pb-0">
-              <div className="rounded-[1.75rem] border border-border/70 bg-background px-5 py-4 shadow-xs">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+            <div className="space-y-4 pb-24 sm:space-y-5 md:pb-28 lg:space-y-6 lg:pb-0">
+              <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
                 <CheckoutMerchantCard
                   className="px-0 py-0"
                   merchant={merchant}
                 />
               </div>
-              <div className="rounded-[2rem] border border-border/70 bg-background p-4 shadow-xs sm:p-6">
+              <div className="rounded-[2rem] border border-border/70 bg-background p-3 shadow-xs sm:p-5 lg:p-6">
                 <CheckoutVerticalStepper
                   activeStep={activeStep}
                   onStepSelect={handleStepSelect}
@@ -626,14 +662,16 @@ function CheckoutProgressiveFlow({
               </div>
             </div>
             <CheckoutOrderSummaryPanel
+              onQuantityChange={setQuantity}
               orderSummary={orderSummary}
-              product={product}
+              product={resolvedProduct}
             />
           </div>
         </div>
         <CheckoutMobileSummaryBar
+          onQuantityChange={setQuantity}
           orderSummary={orderSummary}
-          product={product}
+          product={resolvedProduct}
         />
       </section>
     </Form>

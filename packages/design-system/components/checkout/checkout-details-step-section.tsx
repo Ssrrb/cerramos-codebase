@@ -32,14 +32,19 @@ function CheckoutDetailsStepSection<TFieldValues extends FieldValues>({
   names,
 }: CheckoutDetailsStepSectionProps<TFieldValues>) {
   return (
-    <Card className={cn("gap-0 rounded-[1.75rem] border-border/70", className)}>
-      <CardHeader className="gap-1.5">
+    <Card
+      className={cn(
+        "gap-0 rounded-[1.75rem] border-border/70 shadow-xs",
+        className
+      )}
+    >
+      <CardHeader className="gap-1.5 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
         <CardDescription>Mis datos</CardDescription>
         <CardTitle className="text-base">
           Te pedimos solo lo necesario para contactarte
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
         <FieldGroup>
           <CheckoutInputField
             autoComplete="name"
@@ -56,7 +61,7 @@ function CheckoutDetailsStepSection<TFieldValues extends FieldValues>({
               },
             }}
           />
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <CheckoutInputField
               autoComplete="email"
               control={control}
@@ -94,7 +99,7 @@ function CheckoutDetailsStepSection<TFieldValues extends FieldValues>({
           </div>
         </FieldGroup>
       </CardContent>
-      <CardFooter className="border-border/70 border-t pt-6">
+      <CardFooter className="px-5 pt-4 pb-5 sm:px-6 sm:pt-5 sm:pb-6">
         <p className="text-muted-foreground text-sm leading-relaxed">
           Usaremos estos datos solo para coordinar este pedido.
         </p>

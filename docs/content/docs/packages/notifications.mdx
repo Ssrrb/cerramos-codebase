@@ -8,6 +8,9 @@ summary: How in-app notifications are configured for users.
 
 next-forge offers a notifications package that allows you to send in-app notifications to your users. By default, it uses [Knock](https://knock.app/), a cross-channel notification platform that supports in-app, email, SMS, push, and chat notifications. Knock allows you to centralize your notification logic and templates in one place and [orchestrate complex workflows](https://docs.knock.app/designing-workflows/overview) with things like branching, batching, throttling, delays, and conditional sending.
 
+In this repo, `@repo/notifications` owns shared notification plumbing and UI helpers.
+Notifications are not the source of truth for operational state; triggering policy belongs with the owning app or domain flow.
+
 ## Setup
 
 To use the notifications package, you need to add the required environment variables to your project, as specified in the `packages/notifications/keys.ts` file.

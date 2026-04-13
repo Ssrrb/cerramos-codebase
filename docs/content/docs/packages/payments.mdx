@@ -13,6 +13,9 @@ related:
 
 Esta página describe la dirección de pagos de **este repo**, no el comportamiento por defecto de next-forge.
 
+`@repo/payments` es el boundary compartido para adaptadores de proveedor, normalización de estados y helpers de integración.
+Las rutas webhook siguen viviendo en `apps/api`, y el estado de pago no debe colapsarse dentro del estado del pedido.
+
 Cerramos está migrando desde Stripe hacia **Pagopar uPay** como procesadora principal de checkout.
 
 ## Dirección actual

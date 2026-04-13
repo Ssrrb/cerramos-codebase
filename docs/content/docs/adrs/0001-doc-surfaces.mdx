@@ -1,0 +1,39 @@
+---
+title: ADR 0001: Documentation Surfaces
+description: Why this repo keeps broad docs in `docs/` and only a few local READMEs.
+type: reference
+summary: Decision record for the internal docs split and the README budget.
+---
+
+## Status
+
+Accepted.
+
+## Decision
+
+- Internal cross-project knowledge lives in the root `docs/` workspace.
+- `apps/docs` is a separate Mintlify docs surface for public or external documentation.
+- The repo keeps a small fixed set of local `README.md` files only at true ownership boundaries.
+
+## Rationale
+
+The repo had too many scattered overview files describing adjacent folders in slightly different ways.
+That made boundary docs expensive to update and easy to ignore.
+
+Keeping broad knowledge in `docs/` gives one durable home for:
+
+- product scope
+- architecture
+- repo rules
+- package and app reference material
+
+Keeping only a few local READMEs makes folder-level guidance easier to trust and maintain.
+
+## Tradeoffs
+
+Two docs systems are acceptable only if the ownership boundary stays explicit:
+
+- root `docs/` is internal and cross-project
+- `apps/docs` is publishable and audience-facing
+
+This adds one conceptual split, but it removes many local docs and makes update responsibility clearer.

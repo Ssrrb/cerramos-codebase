@@ -1,12 +1,17 @@
 ---
 title: Configuration
-description: The next-config package, explained
+description: The shared Next.js configuration package and its ownership boundary.
 type: reference
 product: Next Config
 summary: How the shared Next.js configuration package works.
 related:
   - /docs/packages/next-config/bundle-analysis
 ---
+
+`@repo/next-config` centralizes shared Next.js configuration and env-key handling for the repo's Next-based apps.
+
+Keep multi-app defaults here.
+Keep app-specific runtime behavior in the owning app unless a second app needs the same configuration.
 
 The `next-config` package is a configuration package for Next.js. It is used to configure the Next.js app and is located in the `packages/next-config` directory.
 

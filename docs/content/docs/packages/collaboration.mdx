@@ -1,10 +1,13 @@
 ---
 title: Collaboration
-description: next-forge is multiplayer out of the box.
+description: How collaboration infrastructure fits this repo.
 type: reference
 product: Collaboration
 summary: How multiplayer collaboration works out of the box.
 ---
+
+In this repo, `@repo/collaboration` is optional infrastructure inherited from the starter.
+It should stay thin and must not become the source of truth for orders, payments, or merchant operations.
 
 next-forge maintains a `collaboration` package designed to provide real-time collaborative features to your apps. By default, we use [Liveblocks](https://liveblocks.io) as our collaboration engine. To showcase what you can do with this package, we've built a simple collaborative experience in the `app` application, featuring an avatar stack and live cursors.
 

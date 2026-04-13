@@ -6,7 +6,7 @@ product: Web
 summary: How the marketing website application works.
 related:
   - /docs/packages/seo/metadata
-  - /docs/packages/cms/overview
+  - /docs/packages/cms
 ---
 
 <Tip>The `web` application runs on port 3001. We recommend deploying it to `www.{yourdomain}.com`.</Tip>
@@ -15,12 +15,13 @@ next-forge comes with a default website application, which is located in the `ap
 
 ## Overview
 
-It's built on Next.js and Tailwind CSS, with some example pages scaffolded using [TWBlocks](https://www.twblocks.com/). It's designed for you to customize and extend to your needs, whether that means keeping the default pages or replacing them with your own.
+In this repo, `apps/web` is the public surface for marketing, localized pages, and buyer-facing checkout flows.
+It should stay separate from merchant operations in `apps/app` and API-only infrastructure in `apps/api`.
 
 ## Features
 
 - **Design System**: The app is connected to the [Design System](/docs/packages/design-system/components) and includes a variety of components, hooks, and utilities to help you get started.
-- **CMS**: The app is connected to the [CMS](/docs/packages/cms/overview) package to power your type-safe blog.
+- **CMS**: The app is connected to the [CMS](/docs/packages/cms) package to power content-driven public pages.
 - **SEO**: The app is connected to the [SEO](/docs/packages/seo/metadata) package which optimizes the site for search engines.
 - **Analytics**: The app is connected to the [Analytics](/docs/packages/analytics/product) package to track visitor behavior.
 - **Observability**: The app is connected to the [Observability](/docs/packages/observability/error-capture) package to track errors and performance.

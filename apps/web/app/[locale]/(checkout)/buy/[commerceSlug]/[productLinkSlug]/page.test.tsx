@@ -1,3 +1,4 @@
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -30,6 +31,7 @@ vi.mock("./product-link-checkout-client", () => ({
 
 const checkoutRecord = {
   commerceId: "commerce_1",
+  commerceLogoImageUrl: "https://cdn.example.com/logo.png",
   commerceName: "Mate Shop",
   commerceSlug: "mate-shop",
   currency: "PYG",

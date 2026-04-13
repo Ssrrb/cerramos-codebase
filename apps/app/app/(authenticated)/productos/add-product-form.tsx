@@ -11,7 +11,7 @@ import { Form } from "@repo/design-system/components/ui/form";
 import { AlertCircleIcon, LoaderCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
+import { type Resolver, type UseFormReturn, useForm } from "react-hook-form";
 import {
   type AddProductFormValues,
   addProductFormSchema,
@@ -141,18 +141,19 @@ export const AddProductForm = ({
   const initialValues = useMemo(() => toInitialFormValues(product), [product]);
   const form = useForm<AddProductFormValues>({
     defaultValues: initialValues,
-    resolver: zodResolver(addProductFormSchema),
+    resolver: zodResolver(addProductFormSchema) as Resolver<AddProductFormValues>,
   });
 
   useEffect(() => {
     form.reset(initialValues);
   }, [form, initialValues]);
 
-  const isEditing = mode === "edit" && product;
+  const isEditing = mode === "edit" && Boolean(product);
 
   const submitProduct = async (payload: ProductPayload) => {
+    const productId = product?.id;
     const response = await fetch(
-      isEditing ? `/api/products/${product.id}` : "/api/products",
+      isEditing && productId ? `/api/products/${productId}` : "/api/products",
       {
         body: JSON.stringify(payload),
         headers: {

@@ -2,11 +2,18 @@ import {
   and,
   database,
   eq,
+  gte,
   isMissingRelationError,
   schema,
+  sql,
 } from "@repo/database";
+import {
+  extractProductImageObjectKey,
+  normalizeStoredProductImageReference,
+} from "@repo/storage/product-image";
 import { cache } from "react";
 import { z } from "zod";
+import { normalizeCheckoutCommerceLogoUrl } from "@/lib/commerce";
 
 export const checkoutOrderPayloadSchema = z
   .object({
@@ -20,6 +27,9 @@ export const checkoutOrderPayloadSchema = z
     notes: z.string().trim().max(400).default(""),
     phone: z.string().trim().min(1, {
       message: "Ingresa un telefono valido.",
+    }),
+    quantity: z.coerce.number().int().min(1, {
+      message: "Selecciona una cantidad valida.",
     }),
     recipientName: z.string().trim().min(1, {
       message: "Ingresa el nombre de quien recibe el pedido.",
@@ -52,6 +62,7 @@ export type CheckoutOrderPayload = z.infer<typeof checkoutOrderPayloadSchema>;
 
 export interface ProductLinkCheckoutRecord {
   commerceId: string;
+  commerceLogoImageUrl: string | null;
   commerceName: string;
   commerceSlug: string;
   currency: string;
@@ -59,12 +70,14 @@ export interface ProductLinkCheckoutRecord {
   deliveryEnabled: boolean;
   description: string | null;
   expiresAt: Date | null;
+  imageReference: string | null;
   imageUrl: string | null;
   paymentRequired: boolean;
   pickupEnabled: boolean;
   productId: string;
   productLinkId: string;
   slug: string;
+  stock: number;
   title: string;
   trustState:
     | "pending_review"
@@ -89,29 +102,58 @@ export class ProductLinkCheckoutError extends Error {
   }
 }
 
-const normalizePublicProductImageObjectKey = (value: string) => {
-  const trimmedValue = value.trim();
-
-  if (
-    !trimmedValue ||
-    trimmedValue.startsWith("/") ||
-    trimmedValue.startsWith("blob:") ||
-    trimmedValue.startsWith("data:") ||
-    trimmedValue.startsWith("http://") ||
-    trimmedValue.startsWith("https://")
-  ) {
-    return "";
-  }
-
-  if (!trimmedValue.startsWith("products/")) {
-    return "";
-  }
-
-  return trimmedValue;
-};
-
 const formatPriceLabel = (value: number) =>
   `Gs. ${new Intl.NumberFormat("es-PY").format(value)}`;
+
+const OUT_OF_STOCK_ERROR = "Este producto se quedó sin stock.";
+const EXCEEDS_STOCK_ERROR = "La cantidad seleccionada supera el stock disponible.";
+
+const buildPublicProductImagePath = (objectKey: string) =>
+  `/api/product-link-images?objectKey=${encodeURIComponent(objectKey)}`;
+
+const normalizeCheckoutProductImageUrl = (imageUrl: string | null) => {
+  if (!imageUrl) {
+    return null;
+  }
+
+  const normalizedReference = normalizeStoredProductImageReference(
+    imageUrl,
+    process.env.GCS_BUCKET_NAME
+  );
+  const objectKey = getPublicProductImageObjectKey(
+    normalizedReference,
+    process.env.GCS_BUCKET_NAME
+  );
+
+  if (!objectKey) {
+    return normalizedReference || imageUrl;
+  }
+
+  // Public checkout pages cannot rely on raw bucket URLs or signed URLs being
+  // stable, so canonical object keys are always rewritten through our proxy.
+  return buildPublicProductImagePath(objectKey);
+};
+
+const resolveCheckoutProductImage = (
+  candidate: string | null | undefined
+): { imageReference: string | null; imageUrl: string | null } => {
+  const normalizedReference = normalizeStoredProductImageReference(
+    candidate,
+    process.env.GCS_BUCKET_NAME
+  );
+
+  if (normalizedReference) {
+    return {
+      imageReference: normalizedReference,
+      imageUrl: normalizeCheckoutProductImageUrl(normalizedReference),
+    };
+  }
+
+  return {
+    imageReference: null,
+    imageUrl: null,
+  };
+};
 
 export const getPublicProductLinkCheckout = cache(
   async (
@@ -121,6 +163,7 @@ export const getPublicProductLinkCheckout = cache(
     let record:
       | {
           commerceId: string;
+          commerceLogoImageUrl: string | null;
           commerceName: string;
           commerceSlug: string;
           currency: string;
@@ -128,7 +171,7 @@ export const getPublicProductLinkCheckout = cache(
           deliveryEnabled: boolean;
           description: string | null;
           expiresAt: Date | null;
-          imageUrl: string | null;
+          imageObjectKey: string | null;
           paymentRequired: boolean;
           pickupEnabled: boolean;
           productId: string;
@@ -136,6 +179,7 @@ export const getPublicProductLinkCheckout = cache(
           productLinkStatus: "active" | "draft" | "expired" | "inactive";
           productStatus: "active" | "draft" | "inactive";
           slug: string;
+          stock: number;
           title: string;
           trustState:
             | "limited"
@@ -150,15 +194,16 @@ export const getPublicProductLinkCheckout = cache(
     try {
       [record] = await database
         .select({
-        commerceId: schema.commerce.id,
-        commerceName: schema.commerce.name,
-        commerceSlug: schema.commerce.slug,
-        currency: schema.productLink.currency,
-        defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
+          commerceId: schema.commerce.id,
+          commerceLogoImageUrl: schema.commerce.logoImageUrl,
+          commerceName: schema.commerce.name,
+          commerceSlug: schema.commerce.slug,
+          currency: schema.productLink.currency,
+          defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
           deliveryEnabled: schema.productLink.deliveryEnabled,
           description: schema.productLink.description,
           expiresAt: schema.productLink.expiresAt,
-          imageUrl: schema.productLink.imageUrl,
+          imageObjectKey: schema.productImage.objectKey,
           paymentRequired: schema.productLink.paymentRequired,
           pickupEnabled: schema.productLink.pickupEnabled,
           productId: schema.product.id,
@@ -166,6 +211,7 @@ export const getPublicProductLinkCheckout = cache(
           productStatus: schema.product.status,
           productLinkStatus: schema.productLink.status,
           slug: schema.productLink.slug,
+          stock: schema.product.stock,
           title: schema.productLink.title,
           trustState: schema.commerce.trustState,
           unitPrice: schema.productLink.unitPrice,
@@ -181,6 +227,16 @@ export const getPublicProductLinkCheckout = cache(
         .innerJoin(
           schema.product,
           eq(schema.product.id, schema.productLink.productId)
+        )
+        .leftJoin(
+          schema.productImage,
+          // Checkout tolerates products whose image row is temporarily missing
+          // or inconsistent. Matching both keys keeps the join aligned with the
+          // composite FK used by Product.primaryImageId.
+          and(
+            eq(schema.productImage.id, schema.product.primaryImageId),
+            eq(schema.productImage.productId, schema.product.id)
+          )
         )
         .where(eq(schema.commerce.slug, commerceSlug));
     } catch (error) {
@@ -207,8 +263,13 @@ export const getPublicProductLinkCheckout = cache(
       return null;
     }
 
+    const productImage = resolveCheckoutProductImage(record.imageObjectKey);
+
     return {
       commerceId: record.commerceId,
+      commerceLogoImageUrl: normalizeCheckoutCommerceLogoUrl(
+        record.commerceLogoImageUrl
+      ),
       commerceName: record.commerceName,
       commerceSlug: record.commerceSlug,
       currency: record.currency,
@@ -216,12 +277,14 @@ export const getPublicProductLinkCheckout = cache(
       deliveryEnabled: record.deliveryEnabled,
       description: record.description,
       expiresAt: record.expiresAt,
-      imageUrl: record.imageUrl,
+      imageReference: productImage.imageReference,
+      imageUrl: productImage.imageUrl,
       paymentRequired: record.paymentRequired,
       pickupEnabled: record.pickupEnabled,
       productId: record.productId,
       productLinkId: record.productLinkId,
       slug: record.slug,
+      stock: record.stock,
       title: record.title,
       trustState: record.trustState,
       unitPrice: record.unitPrice,
@@ -231,7 +294,7 @@ export const getPublicProductLinkCheckout = cache(
 
 export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
   merchant: {
-    avatarUrl: null,
+    avatarUrl: record.commerceLogoImageUrl,
     name: record.commerceName,
     trustState: record.trustState,
   },
@@ -256,25 +319,27 @@ export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
     totalLabel: formatPriceLabel(record.unitPrice),
   },
   product: {
+    availableStock: record.stock,
     description:
       record.description ??
       "Oferta publicada desde Cerramos para cerrar el pedido sin salir de la misma URL.",
     imageUrl: record.imageUrl ?? "",
     name: record.title,
     priceLabel: formatPriceLabel(record.unitPrice),
+    quantity: 1,
+    unitPrice: record.unitPrice,
   },
 });
 
-export const getPublicProductImageObjectKey = (value: string | null) => {
+export const getPublicProductImageObjectKey = (
+  value: string | null,
+  bucketName?: string
+) => {
   if (!value) {
     return "";
   }
 
-  const searchParams = new URL(value, "http://localhost").searchParams;
-
-  return normalizePublicProductImageObjectKey(
-    searchParams.get("objectKey") ?? ""
-  );
+  return extractProductImageObjectKey(value.trim(), bucketName);
 };
 
 export const createOrderFromProductLink = async (
@@ -308,8 +373,55 @@ export const createOrderFromProductLink = async (
   const expiresAt = new Date(
     Date.now() + record.defaultOrderExpiryHours * 60 * 60 * 1000
   );
+  const totalAmount = record.unitPrice * payload.quantity;
 
   return database.transaction(async (tx) => {
+    const [productSnapshot] = await tx
+      .select({
+        stock: schema.product.stock,
+      })
+      .from(schema.product)
+      .where(eq(schema.product.id, record.productId));
+
+    if (!productSnapshot || productSnapshot.stock <= 0) {
+      throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
+    }
+
+    if (payload.quantity > productSnapshot.stock) {
+      throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
+    }
+
+    const [reservedProduct] = await tx
+      .update(schema.product)
+      .set({
+        stock: sql`${schema.product.stock} - ${payload.quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.product.id, record.productId),
+          gte(schema.product.stock, payload.quantity)
+        )
+      )
+      .returning({
+        stock: schema.product.stock,
+      });
+
+    if (!reservedProduct) {
+      const [currentProduct] = await tx
+        .select({
+          stock: schema.product.stock,
+        })
+        .from(schema.product)
+        .where(eq(schema.product.id, record.productId));
+
+      throw new ProductLinkCheckoutError(
+        currentProduct && currentProduct.stock > 0
+          ? EXCEEDS_STOCK_ERROR
+          : OUT_OF_STOCK_ERROR
+      );
+    }
+
     const [existingCustomer] = await tx
       .select({
         id: schema.customer.id,
@@ -374,9 +486,9 @@ export const createOrderFromProductLink = async (
         orderStatus,
         paymentStatus,
         productLinkId: record.productLinkId,
-        quantity: 1,
-        subtotal: record.unitPrice,
-        total: record.unitPrice,
+        quantity: payload.quantity,
+        subtotal: totalAmount,
+        total: totalAmount,
         currency: record.currency,
       })
       .returning({
@@ -385,13 +497,13 @@ export const createOrderFromProductLink = async (
 
     await tx.insert(schema.orderItem).values({
       description: record.description,
-      imageUrl: record.imageUrl,
+      imageObjectKey: record.imageReference,
       orderId: order.id,
       productId: record.productId,
       productLinkId: record.productLinkId,
-      quantity: 1,
+      quantity: payload.quantity,
       title: record.title,
-      totalPrice: record.unitPrice,
+      totalPrice: totalAmount,
       unitPrice: record.unitPrice,
       variantLabel: null,
     });
@@ -409,7 +521,7 @@ export const createOrderFromProductLink = async (
       const [paymentIntent] = await tx
         .insert(schema.paymentIntent)
         .values({
-          amount: record.unitPrice,
+          amount: totalAmount,
           currency: record.currency,
           expiresAt,
           method: null,
@@ -436,3 +548,70 @@ export const createOrderFromProductLink = async (
     };
   });
 };
+
+export const releaseReservedStockForOrder = async (
+  orderId: string,
+  nextStatus: "cancelled" | "expired"
+) =>
+  database.transaction(async (tx) => {
+    const [existingOrder] = await tx
+      .select({
+        orderId: schema.order.id,
+        orderStatus: schema.order.orderStatus,
+        quantity: schema.order.quantity,
+        productId: schema.orderItem.productId,
+      })
+      .from(schema.order)
+      .innerJoin(
+        schema.orderItem,
+        eq(schema.orderItem.orderId, schema.order.id)
+      )
+      .where(eq(schema.order.id, orderId));
+
+    if (!existingOrder) {
+      return null;
+    }
+
+    if (
+      existingOrder.orderStatus === nextStatus ||
+      existingOrder.orderStatus === "cancelled" ||
+      existingOrder.orderStatus === "expired"
+    ) {
+      return {
+        orderId,
+        released: false,
+      };
+    }
+
+    const now = new Date();
+
+    await tx
+      .update(schema.order)
+      .set({
+        cancelledAt: nextStatus === "cancelled" ? now : null,
+        orderStatus: nextStatus,
+        updatedAt: now,
+      })
+      .where(eq(schema.order.id, orderId));
+
+    await tx
+      .update(schema.product)
+      .set({
+        stock: sql`${schema.product.stock} + ${existingOrder.quantity}`,
+        updatedAt: now,
+      })
+      .where(eq(schema.product.id, existingOrder.productId));
+
+    await tx.insert(schema.orderStatusHistory).values({
+      changedByType: "system",
+      fromStatus: existingOrder.orderStatus,
+      orderId,
+      reason: `stock_released_${nextStatus}`,
+      toStatus: nextStatus,
+    });
+
+    return {
+      orderId,
+      released: true,
+    };
+  });

@@ -29,6 +29,7 @@
     "db:generate": "bun run --cwd packages/database db:generate",
     "db:clean": "bun run --cwd packages/database db:clean",
     "db:migrate": "bun run --cwd packages/database db:migrate",
+    "db:normalize-images": "bun run --cwd packages/database db:normalize-images",
     "db:push": "bun run --cwd packages/database db:push",
     "db:studio": "bun run --cwd packages/database db:studio",
     "migrate": "bun run db:generate && bun run db:migrate",

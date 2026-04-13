@@ -1,17 +1,17 @@
-import type { PumpProps, PumpQuery } from "basehub/react-pump";
+import type { ReactNode } from "react";
 import { isCMSConfigured } from "..";
 
-export const Feed = async <
-  Queries extends Array<PumpQuery>,
-  Bind extends unknown | undefined = undefined,
->(
-  props: PumpProps<Queries, Bind>
-) => {
+interface FeedProps {
+  readonly children: (...args: any[]) => ReactNode | Promise<ReactNode>;
+  readonly queries: readonly unknown[];
+}
+
+export const Feed = async (props: FeedProps) => {
   if (!isCMSConfigured) {
     return null;
   }
 
   const { Pump } = await import("basehub/react-pump");
 
-  return <Pump {...props} />;
+  return <Pump {...(props as any)} />;
 };

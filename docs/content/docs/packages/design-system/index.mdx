@@ -1,0 +1,16 @@
+---
+title: Design System
+description: Shared UI foundation and ownership boundary for reusable components.
+type: reference
+product: Design System
+summary: How the shared design-system package fits the repo.
+related:
+  - /docs/apps/storybook
+  - /docs/packages/design-system/components
+---
+
+`@repo/design-system` is the shared UI foundation for the repo.
+It owns reusable primitives, composed interface building blocks, styling, and theme helpers used across apps.
+
+It does not own app-specific page composition, product business logic, or Storybook stories.
+When a component becomes shared, move it here and update consuming apps in the same PR.

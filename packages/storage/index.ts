@@ -1,5 +1,7 @@
 import "server-only";
 
+import { existsSync } from "node:fs";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import { Storage } from "@google-cloud/storage";
 import { keys } from "./keys";
 
@@ -28,6 +30,11 @@ export type CreateSignedReadUrlOptions = {
 export type DeleteObjectOptions = {
   bucketName?: string;
   ignoreNotFound?: boolean;
+  objectKey: string;
+};
+
+export type ObjectExistsOptions = {
+  bucketName?: string;
   objectKey: string;
 };
 
@@ -76,6 +83,35 @@ const getUploadTtlSeconds = (seconds?: number) =>
 const getReadTtlSeconds = (seconds?: number) =>
   seconds ?? keys().GCS_READ_URL_TTL_SECONDS ?? DEFAULT_READ_URL_TTL_SECONDS;
 
+const resolveCredentialPath = (credentialPath?: string) => {
+  if (!credentialPath) {
+    return undefined;
+  }
+
+  if (!isAbsolute(credentialPath) || existsSync(credentialPath)) {
+    return credentialPath;
+  }
+
+  const fileName = basename(credentialPath);
+  let currentDirectory = process.cwd();
+
+  while (true) {
+    const candidatePath = join(currentDirectory, fileName);
+
+    if (existsSync(candidatePath)) {
+      return candidatePath;
+    }
+
+    const parentDirectory = dirname(currentDirectory);
+
+    if (parentDirectory === currentDirectory) {
+      return credentialPath;
+    }
+
+    currentDirectory = parentDirectory;
+  }
+};
+
 export const createStorageClient = (): Storage => {
   if (cachedStorageClient) {
     return cachedStorageClient;
@@ -84,7 +120,7 @@ export const createStorageClient = (): Storage => {
   const { GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_CLOUD_PROJECT } = keys();
 
   cachedStorageClient = new Storage({
-    keyFilename: GOOGLE_APPLICATION_CREDENTIALS || undefined,
+    keyFilename: resolveCredentialPath(GOOGLE_APPLICATION_CREDENTIALS),
     projectId: GOOGLE_CLOUD_PROJECT || undefined,
   });
 
@@ -162,6 +198,19 @@ export const createSignedReadUrl = async ({
     objectKey,
     url,
   };
+};
+
+export const objectExists = async ({
+  bucketName,
+  objectKey,
+}: ObjectExistsOptions): Promise<boolean> => {
+  const storage = createStorageClient();
+  const [exists] = await storage
+    .bucket(getBucketName(bucketName))
+    .file(objectKey)
+    .exists();
+
+  return exists;
 };
 
 export const deleteObject = async ({

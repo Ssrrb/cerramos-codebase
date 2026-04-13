@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { requireCommerceIdForRequest } from "@repo/auth/server";
 import { database, schema } from "@repo/database";
 import { NextResponse } from "next/server";
@@ -44,21 +45,31 @@ export const POST = async (request: Request) => {
   }
 
   const { imageObjectKey: _ignoredImageObjectKey, ...rest } = result.data;
-  const images = {
-    primary: imageObjectKey,
-  };
+  const productId = randomUUID();
+  const productImageId = randomUUID();
 
-  const [product] = await database
-    .insert(schema.product)
-    .values({
-      commerceId,
-      ...rest,
-      image: imageObjectKey,
-      images,
-    })
-    .returning({
-      id: schema.product.id,
+  const product = await database.transaction(async (tx) => {
+    const [createdProduct] = await tx
+      .insert(schema.product)
+      .values({
+        commerceId,
+        id: productId,
+        primaryImageId: productImageId,
+        ...rest,
+      })
+      .returning({
+        id: schema.product.id,
+      });
+
+    await tx.insert(schema.productImage).values({
+      id: productImageId,
+      objectKey: imageObjectKey,
+      position: 0,
+      productId,
     });
+
+    return createdProduct;
+  });
 
   return NextResponse.json({
     id: product.id,

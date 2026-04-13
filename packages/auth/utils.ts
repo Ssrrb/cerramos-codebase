@@ -12,6 +12,7 @@ export type AppUserRole = "buyer" | "merchant_admin" | "operator";
 
 export interface ActiveCommerce {
   id: string;
+  logoImageUrl?: string | null;
   name: string;
   role: AppUserRole;
   slug: string;

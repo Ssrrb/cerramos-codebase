@@ -33,11 +33,15 @@ vi.mock("@repo/database", () => ({
       deliveryIncluded: "product.deliveryIncluded",
       description: "product.description",
       id: "product.id",
-      image: "product.image",
+      primaryImageId: "product.primaryImageId",
       name: "product.name",
       status: "product.status",
       stock: "product.stock",
       unitPrice: "product.unitPrice",
+    },
+    productImage: {
+      id: "productImage.id",
+      objectKey: "productImage.objectKey",
     },
     productLink: {
       commerceId: "productLink.commerceId",
@@ -46,7 +50,6 @@ vi.mock("@repo/database", () => ({
       description: "productLink.description",
       expiresAt: "productLink.expiresAt",
       id: "productLink.id",
-      imageUrl: "productLink.imageUrl",
       paymentRequired: "productLink.paymentRequired",
       pickupEnabled: "productLink.pickupEnabled",
       productId: "productLink.productId",
@@ -78,6 +81,7 @@ describe("products page", () => {
       from: fromMock,
     }));
     fromMock.mockImplementation(() => ({
+      innerJoin: fromMock,
       where: whereMock,
     }));
     whereMock.mockImplementation(() => ({

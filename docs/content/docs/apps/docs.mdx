@@ -5,12 +5,15 @@ type: reference
 product: Docs
 summary: How the documentation application is configured.
 related:
-  - /docs/packages/cms/overview
+  - /docs/packages/cms
 ---
 
 <Tip>The `docs` application runs on port 3004. We recommend deploying it to `docs.{yourdomain}.com`.</Tip>
 
 next-forge uses [Mintlify](https://mintlify.com) to generate beautiful docs. Each page is a `.mdx` file, written in Markdown, with built-in UI components and API playground.
+
+In this repo, `apps/docs` is the public or external docs surface.
+Internal product architecture, repo rules, and package boundary guidance live under the root `docs/` workspace instead.
 
 ## Creating a new page
 

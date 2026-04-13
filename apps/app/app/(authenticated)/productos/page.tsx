@@ -3,6 +3,8 @@ import { database, isMissingRelationError, schema } from "@repo/database";
 import { desc, eq } from "drizzle-orm";
 import {
   buildProductLinkPublicPath,
+  type ProductLinkTableRow,
+  type ProductWithLinkTableRow,
   productLinksMigrationRequiredMessage,
 } from "@/lib/product-links";
 import { normalizeProductImageObjectKey } from "@/lib/products";
@@ -42,14 +44,18 @@ const ProductsPage = async () => {
       deliveryIncluded: schema.product.deliveryIncluded,
       description: schema.product.description,
       id: schema.product.id,
-      image: schema.product.image,
-      imageObjectKey: schema.product.image,
+      image: schema.productImage.objectKey,
+      imageObjectKey: schema.productImage.objectKey,
       name: schema.product.name,
       status: schema.product.status,
       stock: schema.product.stock,
       unitPrice: schema.product.unitPrice,
     })
     .from(schema.product)
+    .innerJoin(
+      schema.productImage,
+      eq(schema.productImage.id, schema.product.primaryImageId)
+    )
     .where(eq(schema.product.commerceId, context.commerce.id))
     .orderBy(desc(schema.product.createdAt));
   let productLinksNotice: string | null = null;
@@ -75,7 +81,7 @@ const ProductsPage = async () => {
         description: schema.productLink.description,
         expiresAt: schema.productLink.expiresAt,
         id: schema.productLink.id,
-        imageUrl: schema.productLink.imageUrl,
+        imageUrl: schema.productImage.objectKey,
         paymentRequired: schema.productLink.paymentRequired,
         pickupEnabled: schema.productLink.pickupEnabled,
         productId: schema.productLink.productId,
@@ -85,6 +91,14 @@ const ProductsPage = async () => {
         unitPrice: schema.productLink.unitPrice,
       })
       .from(schema.productLink)
+      .innerJoin(
+        schema.product,
+        eq(schema.product.id, schema.productLink.productId)
+      )
+      .innerJoin(
+        schema.productImage,
+        eq(schema.productImage.id, schema.product.primaryImageId)
+      )
       .where(eq(schema.productLink.commerceId, context.commerce.id))
       .orderBy(desc(schema.productLink.createdAt));
   } catch (error) {
@@ -95,31 +109,33 @@ const ProductsPage = async () => {
     productLinksNotice = productLinksMigrationRequiredMessage;
   }
 
-  const productLinksByProductId = new Map(
-    productLinks.map((productLink) => [
-      productLink.productId,
-      {
-        currency: "PYG",
-        deliveryEnabled: productLink.deliveryEnabled,
-        description: productLink.description,
-        expiresAt: productLink.expiresAt?.toISOString() ?? null,
-        id: productLink.id,
-        imageUrl: productLink.imageUrl,
-        paymentRequired: productLink.paymentRequired,
-        pickupEnabled: productLink.pickupEnabled,
-        publicPath: buildProductLinkPublicPath(
-          context.commerce.slug,
-          productLink.slug
-        ),
-        slug: productLink.slug,
-        status: productLink.status,
-        title: productLink.title,
-        unitPrice: productLink.unitPrice,
-      },
-    ])
+  const productLinksByProductId = new Map<string, ProductLinkTableRow>(
+    await Promise.all(
+      productLinks.map(async (productLink): Promise<[string, ProductLinkTableRow]> => [
+        productLink.productId,
+        {
+          currency: "PYG",
+          deliveryEnabled: productLink.deliveryEnabled,
+          description: productLink.description,
+          expiresAt: productLink.expiresAt?.toISOString() ?? null,
+          id: productLink.id,
+          imageUrl: await resolveProductImage(productLink.imageUrl ?? ""),
+          paymentRequired: productLink.paymentRequired,
+          pickupEnabled: productLink.pickupEnabled,
+          publicPath: buildProductLinkPublicPath(
+            context.commerce.slug,
+            productLink.slug
+          ),
+          slug: productLink.slug,
+          status: productLink.status,
+          title: productLink.title,
+          unitPrice: productLink.unitPrice,
+        },
+      ])
+    )
   );
 
-  const productsWithSignedUrls = await Promise.all(
+  const productsWithSignedUrls: ProductWithLinkTableRow[] = await Promise.all(
     products.map(async (product) => ({
       commerceSlug: context.commerce.slug,
       ...product,

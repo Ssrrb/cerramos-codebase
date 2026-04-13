@@ -6,19 +6,26 @@ const {
   deleteReturningMock,
   deleteWhereMock,
   requireCommerceIdForRequestMock,
-  updateMock,
-  updateReturningMock,
-  updateSetMock,
-  updateWhereMock,
+  schemaMock,
+  transactionMock,
 } = vi.hoisted(() => ({
   deleteMock: vi.fn(),
   deleteReturningMock: vi.fn(),
   deleteWhereMock: vi.fn(),
   requireCommerceIdForRequestMock: vi.fn(),
-  updateMock: vi.fn(),
-  updateReturningMock: vi.fn(),
-  updateSetMock: vi.fn(),
-  updateWhereMock: vi.fn(),
+  schemaMock: {
+    product: {
+      commerceId: "product.commerceId",
+      id: "product.id",
+      primaryImageId: "product.primaryImageId",
+    },
+    productImage: {
+      id: "productImage.id",
+      objectKey: "productImage.objectKey",
+      productId: "productImage.productId",
+    },
+  },
+  transactionMock: vi.fn(),
 }));
 
 vi.mock("@repo/auth/server", () => ({
@@ -28,7 +35,7 @@ vi.mock("@repo/auth/server", () => ({
 vi.mock("@repo/database", () => ({
   database: {
     delete: deleteMock,
-    update: updateMock,
+    transaction: transactionMock,
   },
   isForeignKeyConstraintError: (error: unknown) => {
     if (!error || typeof error !== "object") {
@@ -42,35 +49,17 @@ vi.mock("@repo/database", () => ({
 
     return candidates.some((candidate) => candidate?.code === "23503");
   },
-  schema: {
-    product: {
-      commerceId: "product.commerceId",
-      id: "product.id",
-    },
-  },
+  schema: schemaMock,
 }));
 
 describe("product by id route", () => {
   beforeEach(() => {
     vi.resetModules();
     requireCommerceIdForRequestMock.mockReset();
-    updateMock.mockReset();
-    updateSetMock.mockReset();
-    updateWhereMock.mockReset();
-    updateReturningMock.mockReset();
+    transactionMock.mockReset();
     deleteMock.mockReset();
     deleteWhereMock.mockReset();
     deleteReturningMock.mockReset();
-
-    updateMock.mockImplementation(() => ({
-      set: updateSetMock,
-    }));
-    updateSetMock.mockImplementation(() => ({
-      where: updateWhereMock,
-    }));
-    updateWhereMock.mockImplementation(() => ({
-      returning: updateReturningMock,
-    }));
 
     deleteMock.mockImplementation(() => ({
       where: deleteWhereMock,
@@ -80,9 +69,53 @@ describe("product by id route", () => {
     }));
   });
 
-  test("updates a product for the authenticated commerce", async () => {
+  test("updates a product without replacing the image when the object key is unchanged", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    updateReturningMock.mockResolvedValue([{ id: "product_1" }]);
+
+    const productImageUpdateSetCalls: Array<Record<string, unknown>> = [];
+    const updateSetCalls: Array<Record<string, unknown>> = [];
+
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        select: () => ({
+          from: () => ({
+            innerJoin: () => ({
+              where: async () => [
+                {
+                  id: "product_1",
+                  primaryImageId: "product_image_1",
+                  primaryImageObjectKey:
+                    "products/commerce_1/images/licuadora.png",
+                },
+              ],
+            }),
+          }),
+        }),
+        update: (table: unknown) => {
+          if (table === schemaMock.productImage) {
+            return {
+              set: (values: Record<string, unknown>) => {
+                productImageUpdateSetCalls.push(values);
+                return {
+                  where: async () => undefined,
+                };
+              },
+            };
+          }
+
+          return {
+            set: (values: Record<string, unknown>) => {
+              updateSetCalls.push(values);
+              return {
+                where: () => ({
+                  returning: async () => [{ id: "product_1" }],
+                }),
+              };
+            },
+          };
+        },
+      })
+    );
 
     const { PATCH } = await import("./route");
     const response = await PATCH(
@@ -112,19 +145,110 @@ describe("product by id route", () => {
       id: "product_1",
       success: true,
     });
-    expect(updateSetMock).toHaveBeenCalledWith({
-      category: "Electrodomesticos",
-      deliveryIncluded: true,
-      description: "Licuadora premium para tu cocina diaria.",
-      image: "products/commerce_1/images/licuadora.png",
-      images: {
-        primary: "products/commerce_1/images/licuadora.png",
+    expect(updateSetCalls).toEqual([
+      {
+        category: "Electrodomesticos",
+        deliveryIncluded: true,
+        description: "Licuadora premium para tu cocina diaria.",
+        name: "Licuadora Cerramos",
+        primaryImageId: "product_image_1",
+        status: "active",
+        stock: 14,
+        unitPrice: 185_000,
       },
-      name: "Licuadora Cerramos",
-      status: "active",
-      stock: 14,
-      unitPrice: 185_000,
-    });
+    ]);
+    expect(productImageUpdateSetCalls).toHaveLength(0);
+  });
+
+  test("updates the canonical product image in place when the object key changes", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+
+    const productImageUpdateSetCalls: Array<Record<string, unknown>> = [];
+    const updateSetCalls: Array<Record<string, unknown>> = [];
+
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        select: () => ({
+          from: () => ({
+            innerJoin: () => ({
+              where: async () => [
+                {
+                  id: "product_1",
+                  primaryImageId: "product_image_1",
+                  primaryImageObjectKey:
+                    "products/commerce_1/images/licuadora-vieja.png",
+                },
+              ],
+            }),
+          }),
+        }),
+        update: (table: unknown) => {
+          if (table === schemaMock.productImage) {
+            return {
+              set: (values: Record<string, unknown>) => {
+                productImageUpdateSetCalls.push(values);
+                return {
+                  where: async () => undefined,
+                };
+              },
+            };
+          }
+
+          return {
+            set: (values: Record<string, unknown>) => {
+              updateSetCalls.push(values);
+              return {
+                where: () => ({
+                  returning: async () => [{ id: "product_1" }],
+                }),
+              };
+            },
+          };
+        },
+      })
+    );
+
+    const { PATCH } = await import("./route");
+    const response = await PATCH(
+      new Request("http://localhost/api/products/product_1", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Licuadora premium para tu cocina diaria.",
+          imageObjectKey: "products/commerce_1/images/licuadora-nueva.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }),
+        headers: { "content-type": "application/json" },
+        method: "PATCH",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(productImageUpdateSetCalls).toEqual([
+      {
+        objectKey: "products/commerce_1/images/licuadora-nueva.png",
+      },
+    ]);
+    expect(updateSetCalls).toEqual([
+      {
+        category: "Electrodomesticos",
+        deliveryIncluded: true,
+        description: "Licuadora premium para tu cocina diaria.",
+        name: "Licuadora Cerramos",
+        primaryImageId: "product_image_1",
+        status: "active",
+        stock: 14,
+        unitPrice: 185_000,
+      },
+    ]);
   });
 
   test("returns auth errors from the shared commerce resolver", async () => {
@@ -157,7 +281,30 @@ describe("product by id route", () => {
 
   test("returns 404 when the product does not exist during update", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    updateReturningMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        delete: () => ({
+          where: () => Promise.resolve(undefined),
+        }),
+        insert: () => ({
+          values: () => Promise.resolve(undefined),
+        }),
+        select: () => ({
+          from: () => ({
+            innerJoin: () => ({
+              where: async () => [],
+            }),
+          }),
+        }),
+        update: () => ({
+          set: () => ({
+            where: () => ({
+              returning: async () => [],
+            }),
+          }),
+        }),
+      })
+    );
 
     const { PATCH } = await import("./route");
     const response = await PATCH(
@@ -304,40 +451,6 @@ describe("product by id route", () => {
     await expect(response.json()).resolves.toEqual({
       error:
         "No puedes eliminar este producto mientras tenga links publicos asociados.",
-    });
-  });
-
-  test("updates a product when commerce id is resolved from the database instead of the session cookie", async () => {
-    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    updateReturningMock.mockResolvedValue([{ id: "product_db_resolved" }]);
-
-    const { PATCH } = await import("./route");
-    const response = await PATCH(
-      new Request("http://localhost/api/products/product_1", {
-        body: JSON.stringify({
-          category: "Electrodomesticos",
-          deliveryIncluded: true,
-          description: "Licuadora premium para tu cocina diaria.",
-          imageObjectKey: "products/commerce_1/images/licuadora.png",
-          name: "Licuadora Cerramos",
-          status: "active",
-          stock: 14,
-          unitPrice: 185_000,
-        }),
-        headers: { "content-type": "application/json" },
-        method: "PATCH",
-      }),
-      {
-        params: Promise.resolve({
-          productId: "product_1",
-        }),
-      }
-    );
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      id: "product_db_resolved",
-      success: true,
     });
   });
 });

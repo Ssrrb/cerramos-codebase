@@ -19,6 +19,9 @@ The API is designed to run serverless functions, and is not intended to be used 
 
 Functionally speaking, splitting the API from the main app doesn't matter if you're running these projects on Vercel. Serverless functions are all independent pieces of infrastructure and can scale independently. However, having it run independently provides a dedicated endpoint for non-web applications e.g. mobile apps, smart home devices, etc.
 
+In this repo, `apps/api` owns API-only runtime entrypoints such as health checks, cron handlers, and inbound webhooks.
+Keep routes thin and idempotent, and move reusable provider or domain behavior into `packages/*`.
+
 ## Features
 
 - **Cron jobs**: The API is used to run [cron jobs](/docs/packages/cron). These are defined in the `apps/api/app/cron` directory. Each cron job is a `.ts` file that exports a route handler.

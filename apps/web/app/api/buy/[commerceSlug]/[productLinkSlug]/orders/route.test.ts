@@ -19,6 +19,7 @@ vi.mock("@/lib/product-links", () => {
     mode: z.enum(["delivery", "pickup"]),
     notes: z.string(),
     phone: z.string(),
+    quantity: z.number().int().min(1),
     recipientName: z.string(),
     reference: z.string(),
   });
@@ -52,6 +53,7 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
           mode: "pickup",
           notes: "",
           phone: "0981000000",
+          quantity: 1,
           recipientName: "Buyer Name",
           reference: "",
         }),
@@ -89,6 +91,7 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
           mode: "pickup",
           notes: "",
           phone: "0981000000",
+          quantity: 1,
           recipientName: "Buyer Name",
           reference: "",
         }),
@@ -106,6 +109,40 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({
       error: "No se pudo crear el pedido.",
+    });
+  });
+
+  test("returns 400 with field errors for invalid quantity payloads", async () => {
+    const { POST } = await import("./route");
+
+    const response = await POST(
+      new Request("http://localhost/api/buy/mate-shop/mate-premium/orders", {
+        body: JSON.stringify({
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          email: "buyer@example.com",
+          mode: "pickup",
+          notes: "",
+          phone: "0981000000",
+          quantity: 0,
+          recipientName: "Buyer Name",
+          reference: "",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }),
+      {
+        params: Promise.resolve({
+          commerceSlug: "mate-shop",
+          productLinkSlug: "mate-premium",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "Invalid checkout data.",
     });
   });
 });

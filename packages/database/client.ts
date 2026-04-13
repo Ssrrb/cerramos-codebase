@@ -1,10 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { WebSocket } from "undici";
 import { keys } from "./keys";
 import * as schema from "./schema";
 
-const client = neon(keys().DATABASE_URL);
+neonConfig.webSocketConstructor ??= WebSocket;
+
+const client = new Pool({
+  connectionString: keys().DATABASE_URL,
+});
 
 export const database = drizzle({ client, schema });
 

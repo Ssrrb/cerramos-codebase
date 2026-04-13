@@ -1,13 +1,18 @@
 ---
-title: Overview
-description: How the CMS is configured in next-forge.
+title: CMS
+description: How the CMS package is configured and where its ownership stops in this repo.
 type: reference
 product: CMS
-summary: How the CMS is configured in next-forge.
+summary: How the CMS package is configured and where its ownership stops in this repo.
 related:
   - /docs/packages/cms/components
   - /docs/packages/cms/metadata
 ---
+
+`@repo/cms` owns the shared CMS integration layer for content-driven public experiences.
+
+It owns CMS client wiring, content-rendering helpers, and package-level CMS configuration.
+It does not own public page composition in `apps/web`, docs content in `apps/docs` or `docs/`, or adjacent SEO and i18n concerns outside the CMS boundary.
 
 next-forge has a dedicated CMS package that can be used to generate type-safe data collections from your content. This approach provides a structured way to manage your content while maintaining full type safety throughout your application. By default, next-forge uses [BaseHub](https://basehub.com) as the CMS.
 

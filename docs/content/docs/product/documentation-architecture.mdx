@@ -1,0 +1,61 @@
+---
+title: Documentation Architecture
+description: Durable rules for keeping repo docs small, clear, and maintainable.
+order: 7
+---
+
+## Purpose
+
+This page defines where documentation belongs in this repo and how to keep the surface area small.
+
+The goal is not to document every folder. The goal is to help contributors answer three questions quickly:
+
+- what this folder is for
+- what belongs here and what does not
+- which entrypoints matter before making changes
+
+## Durable Rules
+
+- `docs/` holds broad, cross-project knowledge: product scope, architecture, repo guidance, package and app references, and imported source material.
+- A folder-level `README.md` exists only for a true ownership boundary with local intent and neighboring boundaries that contributors need before editing.
+- Code comments explain tricky implementation details that are too local for a README or docs page.
+- ADRs capture decisions and tradeoffs that future contributors will need to revisit.
+
+## README Budget
+
+Keep at most 10 local `README.md` files in this repo:
+
+- root `README.md`
+- `docs/README.md`
+- `apps/app/README.md`
+- `apps/api/README.md`
+- `apps/web/README.md`
+- `apps/docs/README.md`
+- `packages/database/README.md`
+- `packages/payments/README.md`
+- `scripts/README.md`
+- `turbo/README.md`
+
+Tiny or obvious folders usually do not need docs.
+Do not add nested READMEs unless the folder becomes a real ownership boundary.
+
+## Writing Rules
+
+- Keep local READMEs short, usually 5 to 30 lines.
+- Prefer links over repeated prose.
+- Prefer central architecture docs plus selective local READMEs.
+- Do not add `last reviewed` unless it will actually be maintained.
+- Assume docs must be updated in the same PR as code changes.
+- Use English for engineering READMEs; broader product docs may use Spanish when it improves clarity.
+
+## What To Update In A PR
+
+Update the nearest relevant doc when a PR:
+
+- changes ownership or boundaries between apps or packages
+- adds a new runtime surface or shared module
+- changes the canonical product or architecture direction
+- introduces a decision that future contributors may need to revisit
+
+If the change is cross-project, update `docs/`.
+If the change is local to one of the retained ownership boundaries, update that folder's `README.md`.

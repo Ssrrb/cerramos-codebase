@@ -40,7 +40,6 @@ vi.mock("@repo/database", () => ({
     product: {
       id: "product.id",
       status: "product.status",
-      image: "product.image",
     },
     productLink: {
       commerceId: "productLink.commerceId",
@@ -128,7 +127,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);
@@ -170,7 +168,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);
@@ -216,7 +213,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);
@@ -263,7 +259,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);
@@ -318,7 +313,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);
@@ -360,8 +354,6 @@ describe("product link by id route", () => {
       deliveryEnabled: false,
       description: "Oferta ajustada",
       expiresAt: null,
-      imageUrl:
-        "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
       paymentRequired: true,
       pickupEnabled: true,
       slug: "mate-vip",
@@ -443,7 +435,6 @@ describe("product link by id route", () => {
       {
         id: "link_1",
         productId: "product_1",
-        productImage: "products/commerce_1/images/mate.png",
         productStatus: "active",
       },
     ]);

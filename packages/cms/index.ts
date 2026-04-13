@@ -1,6 +1,6 @@
 /// <reference path="./basehub-types.d.ts" />
-import type { QueryGenqlSelection } from "basehub";
-import { basehub as basehubClient, fragmentOn } from "basehub";
+import { basehub as basehubClient } from "basehub";
+import type { RichTextNode, RichTextTocNode } from "basehub/react-rich-text";
 import { keys } from "./keys";
 import "./basehub.config";
 
@@ -15,19 +15,46 @@ const basehub = isCMSConfigured
  * Common Fragments
  * -----------------------------------------------------------------------------------------------*/
 
-const imageFragment = fragmentOn("BlockImage", {
+const imageFragment = {
   url: true,
   width: true,
   height: true,
   alt: true,
   blurDataURL: true,
-});
+} as const;
+
+export interface CMSImage {
+  alt: string | null;
+  blurDataURL: string;
+  height: number;
+  url: string;
+  width: number;
+}
+
+interface Author {
+  _title: string;
+  avatar: CMSImage | null;
+  xUrl: string | null;
+}
+
+interface Category {
+  _title: string;
+}
+
+interface CMSBody {
+  json: {
+    content: RichTextNode[] | undefined;
+    toc: RichTextTocNode[] | undefined;
+  };
+  plainText: string;
+  readingTime: number;
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Blog Fragments & Queries
  * -----------------------------------------------------------------------------------------------*/
 
-const postMetaFragment = fragmentOn("PostsItem", {
+const postMetaFragment = {
   _slug: true,
   _title: true,
   authors: {
@@ -41,9 +68,9 @@ const postMetaFragment = fragmentOn("PostsItem", {
   date: true,
   description: true,
   image: imageFragment,
-});
+} as const;
 
-const postFragment = fragmentOn("PostsItem", {
+const postFragment = {
   ...postMetaFragment,
   body: {
     plainText: true,
@@ -53,10 +80,37 @@ const postFragment = fragmentOn("PostsItem", {
     },
     readingTime: true,
   },
-});
+} as const;
 
-export type PostMeta = fragmentOn.infer<typeof postMetaFragment>;
-export type Post = fragmentOn.infer<typeof postFragment>;
+export interface PostMeta {
+  _slug: string;
+  _title: string;
+  authors: Author[];
+  categories: Category[];
+  date: string;
+  description: string;
+  image: CMSImage;
+}
+
+export interface Post extends PostMeta {
+  body: CMSBody;
+}
+
+interface BlogPostsResult {
+  blog: {
+    posts: {
+      items: PostMeta[];
+    };
+  };
+}
+
+interface BlogPostResult {
+  blog: {
+    posts: {
+      item: Post | null;
+    };
+  };
+}
 
 export const blog = {
   postsQuery: {
@@ -65,7 +119,7 @@ export const blog = {
         items: postMetaFragment,
       },
     },
-  } satisfies QueryGenqlSelection,
+  } as const,
 
   latestPostQuery: {
     blog: {
@@ -76,7 +130,7 @@ export const blog = {
         item: postFragment,
       },
     },
-  } satisfies QueryGenqlSelection,
+  } as const,
 
   postQuery: (slug: string) => ({
     blog: {
@@ -97,7 +151,7 @@ export const blog = {
     }
 
     try {
-      const data = await basehub.query(blog.postsQuery);
+      const data = (await basehub.query(blog.postsQuery as never)) as BlogPostsResult;
       return data.blog.posts.items;
     } catch {
       return [];
@@ -110,7 +164,9 @@ export const blog = {
     }
 
     try {
-      const data = await basehub.query(blog.latestPostQuery);
+      const data = (await basehub.query(
+        blog.latestPostQuery as never
+      )) as BlogPostResult;
       return data.blog.posts.item;
     } catch {
       return null;
@@ -124,7 +180,7 @@ export const blog = {
 
     try {
       const query = blog.postQuery(slug);
-      const data = await basehub.query(query);
+      const data = (await basehub.query(query as never)) as BlogPostResult;
       return data.blog.posts.item;
     } catch {
       return null;
@@ -136,13 +192,13 @@ export const blog = {
  * Legal Fragments & Queries
  * -----------------------------------------------------------------------------------------------*/
 
-const legalPostMetaFragment = fragmentOn("LegalPagesItem", {
+const legalPostMetaFragment = {
   _slug: true,
   _title: true,
   description: true,
-});
+} as const;
 
-const legalPostFragment = fragmentOn("LegalPagesItem", {
+const legalPostFragment = {
   ...legalPostMetaFragment,
   body: {
     plainText: true,
@@ -152,23 +208,48 @@ const legalPostFragment = fragmentOn("LegalPagesItem", {
     },
     readingTime: true,
   },
-});
+} as const;
 
-export type LegalPostMeta = fragmentOn.infer<typeof legalPostMetaFragment>;
-export type LegalPost = fragmentOn.infer<typeof legalPostFragment>;
+export interface LegalPostMeta {
+  _slug: string;
+  _title: string;
+  description: string;
+}
+
+export interface LegalPost extends LegalPostMeta {
+  body: CMSBody;
+}
+
+interface LegalPostsMetaResult {
+  legalPages: {
+    items: LegalPostMeta[];
+  };
+}
+
+interface LegalPostsResult {
+  legalPages: {
+    items: LegalPost[];
+  };
+}
+
+interface LegalPostResult {
+  legalPages: {
+    item: LegalPost | null;
+  };
+}
 
 export const legal = {
   postsMetaQuery: {
     legalPages: {
       items: legalPostMetaFragment,
     },
-  } satisfies QueryGenqlSelection,
+  } as const,
 
   postsQuery: {
     legalPages: {
       items: legalPostFragment,
     },
-  } satisfies QueryGenqlSelection,
+  } as const,
 
   latestPostQuery: {
     legalPages: {
@@ -177,7 +258,7 @@ export const legal = {
       },
       item: legalPostFragment,
     },
-  } satisfies QueryGenqlSelection,
+  } as const,
 
   postQuery: (slug: string) => ({
     legalPages: {
@@ -196,7 +277,9 @@ export const legal = {
     }
 
     try {
-      const data = await basehub.query(legal.postsMetaQuery);
+      const data = (await basehub.query(
+        legal.postsMetaQuery as never
+      )) as LegalPostsMetaResult;
       return data.legalPages.items;
     } catch {
       return [];
@@ -209,7 +292,9 @@ export const legal = {
     }
 
     try {
-      const data = await basehub.query(legal.postsQuery);
+      const data = (await basehub.query(
+        legal.postsQuery as never
+      )) as LegalPostsResult;
       return data.legalPages.items;
     } catch {
       return [];
@@ -222,7 +307,9 @@ export const legal = {
     }
 
     try {
-      const data = await basehub.query(legal.latestPostQuery);
+      const data = (await basehub.query(
+        legal.latestPostQuery as never
+      )) as LegalPostResult;
       return data.legalPages.item;
     } catch {
       return null;
@@ -236,7 +323,7 @@ export const legal = {
 
     try {
       const query = legal.postQuery(slug);
-      const data = await basehub.query(query);
+      const data = (await basehub.query(query as never)) as LegalPostResult;
       return data.legalPages.item;
     } catch {
       return null;

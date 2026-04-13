@@ -3,6 +3,8 @@ import { database, isMissingRelationError, schema } from "@repo/database";
 import { desc, eq } from "drizzle-orm";
 import {
   buildProductLinkPublicPath,
+  type ProductLinkTableRow,
+  type ProductWithLinkTableRow,
   productLinksMigrationRequiredMessage,
 } from "@/lib/product-links";
 import { normalizeProductImageObjectKey } from "@/lib/products";
@@ -107,9 +109,9 @@ const ProductsPage = async () => {
     productLinksNotice = productLinksMigrationRequiredMessage;
   }
 
-  const productLinksByProductId = new Map(
+  const productLinksByProductId = new Map<string, ProductLinkTableRow>(
     await Promise.all(
-      productLinks.map(async (productLink) => [
+      productLinks.map(async (productLink): Promise<[string, ProductLinkTableRow]> => [
         productLink.productId,
         {
           currency: "PYG",
@@ -133,7 +135,7 @@ const ProductsPage = async () => {
     )
   );
 
-  const productsWithSignedUrls = await Promise.all(
+  const productsWithSignedUrls: ProductWithLinkTableRow[] = await Promise.all(
     products.map(async (product) => ({
       commerceSlug: context.commerce.slug,
       ...product,

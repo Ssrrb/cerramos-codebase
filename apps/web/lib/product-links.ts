@@ -4,6 +4,7 @@ import {
   eq,
   gte,
   isMissingRelationError,
+  leftJoin,
   schema,
   sql,
 } from "@repo/database";
@@ -228,12 +229,15 @@ export const getPublicProductLinkCheckout = cache(
           schema.product,
           eq(schema.product.id, schema.productLink.productId)
         )
-        .innerJoin(
+        .leftJoin(
           schema.productImage,
-          // Checkout requires a single display image. Joining through the
-          // product's primary image guarantees a deterministic asset for the
-          // public view model.
-          eq(schema.productImage.id, schema.product.primaryImageId)
+          // Checkout tolerates products whose image row is temporarily missing
+          // or inconsistent. Matching both keys keeps the join aligned with the
+          // composite FK used by Product.primaryImageId.
+          and(
+            eq(schema.productImage.id, schema.product.primaryImageId),
+            eq(schema.productImage.productId, schema.product.id)
+          )
         )
         .where(eq(schema.commerce.slug, commerceSlug));
     } catch (error) {

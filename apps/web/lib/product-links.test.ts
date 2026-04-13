@@ -76,6 +76,8 @@ const {
   databaseTransactionMock,
   eqMock,
   gteMock,
+  isMissingRelationErrorMock,
+  leftJoinMock,
   selectFromMock,
   selectJoinMock,
   selectWhereMock,
@@ -100,6 +102,8 @@ const {
     right,
     type: "gte",
   })),
+  isMissingRelationErrorMock: vi.fn(() => false),
+  leftJoinMock: vi.fn(),
   selectFromMock: vi.fn(),
   selectJoinMock: vi.fn(),
   selectWhereMock: vi.fn(),
@@ -135,6 +139,7 @@ const productTable = {
 const productImageTable = {
   id: "productImage.id",
   objectKey: "productImage.objectKey",
+  productId: "productImage.productId",
 };
 const productLinkTable = {
   commerceId: "productLink.commerceId",
@@ -189,6 +194,8 @@ vi.mock("@repo/database", () => ({
   },
   eq: eqMock,
   gte: gteMock,
+  isMissingRelationError: isMissingRelationErrorMock,
+  leftJoin: leftJoinMock,
   sql: sqlMock,
   schema: {
     commerce: commerceTable,
@@ -236,6 +243,8 @@ describe("web product links", () => {
     databaseTransactionMock.mockReset();
     eqMock.mockClear();
     gteMock.mockClear();
+    isMissingRelationErrorMock.mockReset();
+    leftJoinMock.mockReset();
     selectFromMock.mockReset();
     selectJoinMock.mockReset();
     selectWhereMock.mockReset();
@@ -246,16 +255,24 @@ describe("web product links", () => {
     txSelectWhereMock.mockReset();
     txUpdateMock.mockReset();
     sqlMock.mockClear();
+    isMissingRelationErrorMock.mockReturnValue(false);
 
     databaseSelectMock.mockImplementation(() => ({
       from: selectFromMock,
     }));
     selectFromMock.mockImplementation(() => ({
       innerJoin: selectJoinMock,
+      leftJoin: leftJoinMock,
       where: selectWhereMock,
     }));
     selectJoinMock.mockImplementation(() => ({
       innerJoin: selectJoinMock,
+      leftJoin: leftJoinMock,
+      where: selectWhereMock,
+    }));
+    leftJoinMock.mockImplementation(() => ({
+      innerJoin: selectJoinMock,
+      leftJoin: leftJoinMock,
       where: selectWhereMock,
     }));
     txSelectMock.mockImplementation(() => ({
@@ -393,6 +410,29 @@ describe("web product links", () => {
     );
   });
 
+  test("returns checkout data when the primary image row is missing", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        imageObjectKey: null,
+      },
+    ]);
+
+    const { getPublicProductLinkCheckout } = await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record).toMatchObject({
+      commerceId: "commerce_1",
+      imageReference: null,
+      imageUrl: null,
+      productId: "product_1",
+      productLinkId: "link_1",
+    });
+  });
+
   test("normalizes bucket-prefixed product image URLs to the public checkout image route", async () => {
     const originalBucketName = process.env.GCS_BUCKET_NAME;
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
@@ -497,10 +537,12 @@ describe("web product links", () => {
     }));
     selectFromMock.mockImplementation(() => ({
       innerJoin: selectJoinMock,
+      leftJoin: leftJoinMock,
       where: selectWhereMock,
     }));
     selectJoinMock.mockImplementation(() => ({
       innerJoin: selectJoinMock,
+      leftJoin: leftJoinMock,
       where: selectWhereMock,
     }));
     selectWhereMock.mockResolvedValueOnce([

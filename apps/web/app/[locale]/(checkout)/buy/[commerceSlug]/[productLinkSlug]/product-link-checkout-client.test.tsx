@@ -42,6 +42,7 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
       mode: "delivery" | "pickup";
       notes: string;
       phone: string;
+      quantity: number;
       recipientName: string;
       reference: string;
     }) => Promise<string | null | undefined>;
@@ -70,6 +71,7 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
               mode: "delivery",
               notes: "",
               phone: "0981000000",
+              quantity: 2,
               recipientName: "Buyer Name",
               reference: "",
             });
@@ -112,10 +114,13 @@ const baseProps = {
   paymentRequired: true,
   pickupEnabled: true,
   product: {
+    availableStock: 5,
     description: "Mate premium",
     imageUrl: "/mate.png",
     name: "Mate premium",
     priceLabel: "Gs. 145.000",
+    quantity: 1,
+    unitPrice: 145_000,
   },
   productLinkSlug: "mate-premium",
 };
@@ -232,6 +237,38 @@ describe("product link checkout client", () => {
       expect(screen.getByTestId("submit-result").textContent).toBe(
         "Ingresa un email valido."
       );
+    });
+  });
+
+  test("sends quantity in the order creation payload", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue({
+      json: async () => ({
+        orderId: "ord_qty",
+        paymentIntentId: null,
+        paymentRequired: false,
+        success: true,
+        upayFormId: null,
+      }),
+      ok: true,
+    } as Response);
+
+    render(
+      <ProductLinkCheckoutClient
+        {...baseProps}
+        paymentRequired={false}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    const requestInit = fetchMock.mock.calls[0]?.[1];
+    expect(requestInit?.body).toBeDefined();
+    expect(JSON.parse(String(requestInit?.body))).toMatchObject({
+      quantity: 2,
     });
   });
 });

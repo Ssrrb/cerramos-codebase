@@ -14,10 +14,13 @@ describe("checkout order summary panel", () => {
       <CheckoutOrderSummaryPanel
         orderSummary={orderSummary}
         product={{
+          availableStock: 5,
           description: "Mate premium para regalo.",
           imageUrl: "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
           name: "Mate premium",
           priceLabel: "Gs. 145.000",
+          quantity: 1,
+          unitPrice: 145_000,
         }}
       />
     );
@@ -32,10 +35,13 @@ describe("checkout order summary panel", () => {
       <CheckoutOrderSummaryPanel
         orderSummary={orderSummary}
         product={{
+          availableStock: 5,
           description: "Mate premium para regalo.",
           imageUrl: "",
           name: "Mate premium",
           priceLabel: "Gs. 145.000",
+          quantity: 1,
+          unitPrice: 145_000,
         }}
       />
     );

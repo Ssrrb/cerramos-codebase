@@ -112,7 +112,7 @@ export const Header = ({ dictionary, isAuthenticated }: HeaderProps) => {
             priority
             src={logoCerramos}
           />
-          <p className="whitespace-nowrap font-semibold">cerramos</p>
+          <p className="whitespace-nowrap font-semibold">cheki</p>
         </div>
         <div className="flex w-full justify-end gap-4">
           <Button asChild className="hidden md:inline" variant="ghost">

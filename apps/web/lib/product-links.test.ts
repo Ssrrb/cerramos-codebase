@@ -1,18 +1,91 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+vi.mock("@repo/storage/product-image", () => ({
+  extractProductImageObjectKey: (
+    value: string | null,
+    bucketName?: string
+  ) => {
+    if (!value) {
+      return "";
+    }
+
+    const trimmed = value.trim();
+
+    if (trimmed.startsWith("/api/")) {
+      const [, objectKey = ""] = trimmed.split("objectKey=");
+      const decoded = decodeURIComponent(objectKey);
+
+      if (decoded.startsWith("gs://")) {
+        const prefix = bucketName ? `gs://${bucketName}/` : "gs://";
+        return decoded.replace(prefix, "");
+      }
+
+      if (decoded.startsWith("https://")) {
+        const match = decoded.match(/\/([^/?]+\/*products\/.*)$/);
+        return match ? match[1].replace(/^[^/]+\//, "") : decoded;
+      }
+
+      return decoded;
+    }
+
+    if (trimmed.startsWith("gs://")) {
+      const prefix = bucketName ? `gs://${bucketName}/` : "gs://";
+      return trimmed.replace(prefix, "");
+    }
+
+    if (trimmed.startsWith("https://storage.googleapis.com/")) {
+      const prefix = bucketName
+        ? `https://storage.googleapis.com/${bucketName}/`
+        : "https://storage.googleapis.com/";
+      return trimmed.split("?")[0]?.replace(prefix, "") ?? trimmed;
+    }
+
+    return trimmed;
+  },
+  normalizeStoredProductImageReference: (
+    value: string | null | undefined
+  ) => {
+    const normalized = value?.trim() ?? "";
+
+    if (!normalized.startsWith("/api/")) {
+      return normalized;
+    }
+
+    const [, objectKey = ""] = normalized.split("objectKey=");
+    return decodeURIComponent(objectKey);
+  },
+}));
+
+vi.mock("@/lib/commerce", () => ({
+  normalizeCheckoutCommerceLogoUrl: (value: string | null) => {
+    if (!value) {
+      return null;
+    }
+
+    if (value.startsWith("http")) {
+      return value;
+    }
+
+    return `/api/commerce-logos?objectKey=${encodeURIComponent(value)}`;
+  },
+}));
+
 const {
   andMock,
   databaseSelectMock,
   databaseTransactionMock,
   eqMock,
+  gteMock,
   selectFromMock,
   selectJoinMock,
   selectWhereMock,
   txInsertMock,
   txSelectFromMock,
+  txSelectJoinMock,
   txSelectMock,
   txSelectWhereMock,
   txUpdateMock,
+  sqlMock,
 } = vi.hoisted(() => ({
   andMock: vi.fn((...args: unknown[]) => ({ args, type: "and" })),
   databaseSelectMock: vi.fn(),
@@ -22,11 +95,22 @@ const {
     right,
     type: "eq",
   })),
+  gteMock: vi.fn((left: unknown, right: unknown) => ({
+    left,
+    right,
+    type: "gte",
+  })),
   selectFromMock: vi.fn(),
   selectJoinMock: vi.fn(),
   selectWhereMock: vi.fn(),
+  sqlMock: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings,
+    type: "sql",
+    values,
+  })),
   txInsertMock: vi.fn(),
   txSelectFromMock: vi.fn(),
+  txSelectJoinMock: vi.fn(),
   txSelectMock: vi.fn(),
   txSelectWhereMock: vi.fn(),
   txUpdateMock: vi.fn(),
@@ -41,9 +125,12 @@ const commerceTable = {
   trustState: "commerce.trustState",
 };
 const productTable = {
+  __name: "product",
   id: "product.id",
   primaryImageId: "product.primaryImageId",
+  stock: "product.stock",
   status: "product.status",
+  updatedAt: "product.updatedAt",
 };
 const productImageTable = {
   id: "productImage.id",
@@ -75,10 +162,16 @@ const deliveryInfoTable = {
 };
 const orderTable = {
   __name: "order",
+  cancelledAt: "order.cancelledAt",
   id: "order.id",
+  orderStatus: "order.orderStatus",
+  quantity: "order.quantity",
+  updatedAt: "order.updatedAt",
 };
 const orderItemTable = {
   __name: "orderItem",
+  orderId: "orderItem.orderId",
+  productId: "orderItem.productId",
 };
 const orderStatusHistoryTable = {
   __name: "orderStatusHistory",
@@ -95,6 +188,8 @@ vi.mock("@repo/database", () => ({
     transaction: databaseTransactionMock,
   },
   eq: eqMock,
+  gte: gteMock,
+  sql: sqlMock,
   schema: {
     commerce: commerceTable,
     customer: customerTable,
@@ -127,6 +222,7 @@ const baseRecord = {
   productStatus: "active" as const,
   productLinkStatus: "active" as const,
   slug: "mate-premium",
+  stock: 5,
   title: "Server title",
   trustState: "verified" as const,
   unitPrice: 145_000,
@@ -139,14 +235,17 @@ describe("web product links", () => {
     databaseSelectMock.mockReset();
     databaseTransactionMock.mockReset();
     eqMock.mockClear();
+    gteMock.mockClear();
     selectFromMock.mockReset();
     selectJoinMock.mockReset();
     selectWhereMock.mockReset();
     txInsertMock.mockReset();
     txSelectFromMock.mockReset();
+    txSelectJoinMock.mockReset();
     txSelectMock.mockReset();
     txSelectWhereMock.mockReset();
     txUpdateMock.mockReset();
+    sqlMock.mockClear();
 
     databaseSelectMock.mockImplementation(() => ({
       from: selectFromMock,
@@ -163,7 +262,19 @@ describe("web product links", () => {
       from: txSelectFromMock,
     }));
     txSelectFromMock.mockImplementation(() => ({
+      innerJoin: txSelectJoinMock,
       where: txSelectWhereMock,
+    }));
+    txSelectJoinMock.mockImplementation(() => ({
+      where: txSelectWhereMock,
+    }));
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => ({
+        where: () => ({
+          returning: async () =>
+            table.__name === "product" ? [{ stock: 4 }] : [{ id: "customer_1" }],
+        }),
+      }),
     }));
   });
 
@@ -200,6 +311,9 @@ describe("web product links", () => {
     expect(
       record ? createCheckoutViewModel(record).merchant.avatarUrl : null
     ).toBe("/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png");
+    expect(record ? createCheckoutViewModel(record).product.availableStock : 0).toBe(
+      5
+    );
   });
 
   test("keeps external commerce logo URLs untouched", async () => {
@@ -407,7 +521,9 @@ describe("web product links", () => {
 
   test("creates an order snapshot from server-side data and a payment intent when required", async () => {
     selectWhereMock.mockResolvedValueOnce([baseRecord]);
-    txSelectWhereMock.mockResolvedValueOnce([]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([]);
 
     const insertedValues: Array<{
       table: string;
@@ -441,12 +557,17 @@ describe("web product links", () => {
       },
     }));
 
-    txUpdateMock.mockImplementation(() => ({
-      set: () => ({
-        where: () => ({
-          returning: async () => [{ id: "customer_1" }],
-        }),
-      }),
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => {
+        return {
+          where: () => ({
+            returning: async () =>
+              table.__name === "customer"
+                ? [{ id: "customer_1" }]
+                : [{ stock: 2 }],
+          }),
+        };
+      },
     }));
 
     databaseTransactionMock.mockImplementation(async (callback) =>
@@ -469,11 +590,10 @@ describe("web product links", () => {
         mode: "delivery",
         notes: "Leave at reception",
         phone: "0981000000",
+        quantity: 3,
         recipientName: "Buyer Name",
         reference: "Depto 2",
-        title: "Client title",
-        unitPrice: 10,
-      } as never
+      }
     );
 
     expect(result).toEqual({
@@ -497,21 +617,23 @@ describe("web product links", () => {
       fulfillmentType: "delivery",
       paymentStatus: "pending",
       productLinkId: "link_1",
-      subtotal: 145_000,
-      total: 145_000,
+      quantity: 3,
+      subtotal: 435_000,
+      total: 435_000,
     });
     expect(orderItemInsert?.values).toMatchObject({
       description: "Server description",
       imageObjectKey: "products/commerce_1/images/mate.png",
       productId: "product_1",
       productLinkId: "link_1",
+      quantity: 3,
       title: "Server title",
-      totalPrice: 145_000,
+      totalPrice: 435_000,
       unitPrice: 145_000,
       variantLabel: null,
     });
     expect(paymentIntentInsert?.values).toMatchObject({
-      amount: 145_000,
+      amount: 435_000,
       currency: "USD",
       orderId: "order_1",
       provider: "pagopar_upay",
@@ -527,7 +649,9 @@ describe("web product links", () => {
           "/api/product-link-images?objectKey=products%2Fcommerce_1%2Fimages%2Fmate.png",
       },
     ]);
-    txSelectWhereMock.mockResolvedValueOnce([]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([]);
 
     const insertedValues: Array<{
       table: string;
@@ -578,11 +702,10 @@ describe("web product links", () => {
       mode: "delivery",
       notes: "Leave at reception",
       phone: "0981000000",
+      quantity: 1,
       recipientName: "Buyer Name",
       reference: "Depto 2",
-      title: "Client title",
-      unitPrice: 10,
-    } as never);
+    });
 
     const orderItemInsert = insertedValues.find(
       ({ table }) => table === "orderItem"
@@ -601,7 +724,9 @@ describe("web product links", () => {
         paymentRequired: false,
       },
     ]);
-    txSelectWhereMock.mockResolvedValueOnce([]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([]);
 
     const insertedTables: string[] = [];
 
@@ -636,6 +761,15 @@ describe("web product links", () => {
       })
     );
 
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => ({
+        where: () => ({
+          returning: async () =>
+            table.__name === "customer" ? [{ id: "customer_1" }] : [{ stock: 4 }],
+        }),
+      }),
+    }));
+
     const { createOrderFromProductLink } = await import("./product-links");
     const result = await createOrderFromProductLink(
       "mate-shop",
@@ -648,6 +782,7 @@ describe("web product links", () => {
         mode: "pickup",
         notes: "",
         phone: "0981000000",
+        quantity: 1,
         recipientName: "Buyer Name",
         reference: "",
       }
@@ -681,6 +816,7 @@ describe("web product links", () => {
         mode: "pickup",
         notes: "",
         phone: "0981000000",
+        quantity: 1,
         recipientName: "Buyer Name",
         reference: "",
       })
@@ -708,9 +844,235 @@ describe("web product links", () => {
         mode: "pickup",
         notes: "",
         phone: "0981000000",
+        quantity: 1,
         recipientName: "Buyer Name",
         reference: "",
       })
     ).rejects.toThrow("Este link no permite retiro.");
+  });
+
+  test("rejects checkout when the product has no stock left", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        stock: 0,
+      },
+    ]);
+    txSelectWhereMock.mockResolvedValueOnce([{ stock: 0 }]);
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+
+    await expect(
+      createOrderFromProductLink("mate-shop", "mate-premium", {
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        email: "buyer@example.com",
+        mode: "pickup",
+        notes: "",
+        phone: "0981000000",
+        quantity: 1,
+        recipientName: "Buyer Name",
+        reference: "",
+      })
+    ).rejects.toThrow("Este producto se quedó sin stock.");
+  });
+
+  test("rejects checkout when the requested quantity exceeds stock", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    txSelectWhereMock.mockResolvedValueOnce([{ stock: 2 }]);
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+
+    await expect(
+      createOrderFromProductLink("mate-shop", "mate-premium", {
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        email: "buyer@example.com",
+        mode: "pickup",
+        notes: "",
+        phone: "0981000000",
+        quantity: 3,
+        recipientName: "Buyer Name",
+        reference: "",
+      })
+    ).rejects.toThrow("La cantidad seleccionada supera el stock disponible.");
+  });
+
+  test("rejects checkout when concurrent stock reservation exhausts inventory", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 2 }])
+      .mockResolvedValueOnce([{ stock: 0 }]);
+
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => ({
+        where: () => ({
+          returning: async () =>
+            table.__name === "product" ? [] : [{ id: "customer_1" }],
+        }),
+      }),
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+
+    await expect(
+      createOrderFromProductLink("mate-shop", "mate-premium", {
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        email: "buyer@example.com",
+        mode: "pickup",
+        notes: "",
+        phone: "0981000000",
+        quantity: 2,
+        recipientName: "Buyer Name",
+        reference: "",
+      })
+    ).rejects.toThrow("Este producto se quedó sin stock.");
+  });
+
+  test("releases reserved stock when an order is cancelled", async () => {
+    txSelectWhereMock.mockResolvedValueOnce([
+      {
+        orderId: "order_1",
+        orderStatus: "pending_payment",
+        productId: "product_1",
+        quantity: 2,
+      },
+    ]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+        return Promise.resolve(undefined);
+      },
+    }));
+
+    txUpdateMock.mockImplementation(() => ({
+      set: () => ({
+        where: () => Promise.resolve(undefined),
+      }),
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { releaseReservedStockForOrder } = await import("./product-links");
+    const result = await releaseReservedStockForOrder("order_1", "cancelled");
+
+    expect(result).toEqual({
+      orderId: "order_1",
+      released: true,
+    });
+    expect(insertedValues).toContainEqual({
+      table: "orderStatusHistory",
+      values: expect.objectContaining({
+        fromStatus: "pending_payment",
+        orderId: "order_1",
+        reason: "stock_released_cancelled",
+        toStatus: "cancelled",
+      }),
+    });
+  });
+
+  test("releases reserved stock when an order expires", async () => {
+    txSelectWhereMock.mockResolvedValueOnce([
+      {
+        orderId: "order_1",
+        orderStatus: "new",
+        productId: "product_1",
+        quantity: 1,
+      },
+    ]);
+
+    txUpdateMock.mockImplementation(() => ({
+      set: () => ({
+        where: () => Promise.resolve(undefined),
+      }),
+    }));
+    txInsertMock.mockImplementation(() => ({
+      values: () => Promise.resolve(undefined),
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { releaseReservedStockForOrder } = await import("./product-links");
+    const result = await releaseReservedStockForOrder("order_1", "expired");
+
+    expect(result).toEqual({
+      orderId: "order_1",
+      released: true,
+    });
+  });
+
+  test("does not release stock twice for terminal orders", async () => {
+    txSelectWhereMock.mockResolvedValueOnce([
+      {
+        orderId: "order_1",
+        orderStatus: "cancelled",
+        productId: "product_1",
+        quantity: 2,
+      },
+    ]);
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { releaseReservedStockForOrder } = await import("./product-links");
+    const result = await releaseReservedStockForOrder("order_1", "cancelled");
+
+    expect(result).toEqual({
+      orderId: "order_1",
+      released: false,
+    });
+    expect(txUpdateMock).not.toHaveBeenCalled();
+    expect(txInsertMock).not.toHaveBeenCalled();
   });
 });

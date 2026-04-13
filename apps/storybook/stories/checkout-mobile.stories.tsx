@@ -25,12 +25,15 @@ const merchantPending: CheckoutMerchantSummary = {
 };
 
 const product: CheckoutProductSummary = {
+  availableStock: 6,
   name: "Set matero de acero con bombilla y funda térmica",
   description:
     "Incluye termo de 1 litro, mate forrado y funda liviana para acompañarte todos los días sin sumar pasos innecesarios al checkout.",
   imageUrl:
     "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=600&q=80",
   priceLabel: "Gs. 145.000",
+  quantity: 1,
+  unitPrice: 145_000,
 };
 
 const defaultDeliveryValues: CheckoutDeliveryValues = {

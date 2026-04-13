@@ -12,10 +12,13 @@ export interface CheckoutMerchantSummary {
 }
 
 export interface CheckoutProductSummary {
+  availableStock: number;
   description: string;
   imageUrl: string;
   name: string;
   priceLabel: string;
+  quantity: number;
+  unitPrice: number;
 }
 
 export type CheckoutStepId = "details" | "delivery" | "payment";

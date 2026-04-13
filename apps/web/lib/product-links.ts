@@ -2,8 +2,10 @@ import {
   and,
   database,
   eq,
+  gte,
   isMissingRelationError,
   schema,
+  sql,
 } from "@repo/database";
 import {
   extractProductImageObjectKey,
@@ -25,6 +27,9 @@ export const checkoutOrderPayloadSchema = z
     notes: z.string().trim().max(400).default(""),
     phone: z.string().trim().min(1, {
       message: "Ingresa un telefono valido.",
+    }),
+    quantity: z.coerce.number().int().min(1, {
+      message: "Selecciona una cantidad valida.",
     }),
     recipientName: z.string().trim().min(1, {
       message: "Ingresa el nombre de quien recibe el pedido.",
@@ -72,6 +77,7 @@ export interface ProductLinkCheckoutRecord {
   productId: string;
   productLinkId: string;
   slug: string;
+  stock: number;
   title: string;
   trustState:
     | "pending_review"
@@ -98,6 +104,9 @@ export class ProductLinkCheckoutError extends Error {
 
 const formatPriceLabel = (value: number) =>
   `Gs. ${new Intl.NumberFormat("es-PY").format(value)}`;
+
+const OUT_OF_STOCK_ERROR = "Este producto se quedó sin stock.";
+const EXCEEDS_STOCK_ERROR = "La cantidad seleccionada supera el stock disponible.";
 
 const buildPublicProductImagePath = (objectKey: string) =>
   `/api/product-link-images?objectKey=${encodeURIComponent(objectKey)}`;
@@ -170,6 +179,7 @@ export const getPublicProductLinkCheckout = cache(
           productLinkStatus: "active" | "draft" | "expired" | "inactive";
           productStatus: "active" | "draft" | "inactive";
           slug: string;
+          stock: number;
           title: string;
           trustState:
             | "limited"
@@ -201,6 +211,7 @@ export const getPublicProductLinkCheckout = cache(
           productStatus: schema.product.status,
           productLinkStatus: schema.productLink.status,
           slug: schema.productLink.slug,
+          stock: schema.product.stock,
           title: schema.productLink.title,
           trustState: schema.commerce.trustState,
           unitPrice: schema.productLink.unitPrice,
@@ -270,6 +281,7 @@ export const getPublicProductLinkCheckout = cache(
       productId: record.productId,
       productLinkId: record.productLinkId,
       slug: record.slug,
+      stock: record.stock,
       title: record.title,
       trustState: record.trustState,
       unitPrice: record.unitPrice,
@@ -304,12 +316,15 @@ export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
     totalLabel: formatPriceLabel(record.unitPrice),
   },
   product: {
+    availableStock: record.stock,
     description:
       record.description ??
       "Oferta publicada desde Cerramos para cerrar el pedido sin salir de la misma URL.",
     imageUrl: record.imageUrl ?? "",
     name: record.title,
     priceLabel: formatPriceLabel(record.unitPrice),
+    quantity: 1,
+    unitPrice: record.unitPrice,
   },
 });
 
@@ -355,8 +370,55 @@ export const createOrderFromProductLink = async (
   const expiresAt = new Date(
     Date.now() + record.defaultOrderExpiryHours * 60 * 60 * 1000
   );
+  const totalAmount = record.unitPrice * payload.quantity;
 
   return database.transaction(async (tx) => {
+    const [productSnapshot] = await tx
+      .select({
+        stock: schema.product.stock,
+      })
+      .from(schema.product)
+      .where(eq(schema.product.id, record.productId));
+
+    if (!productSnapshot || productSnapshot.stock <= 0) {
+      throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
+    }
+
+    if (payload.quantity > productSnapshot.stock) {
+      throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
+    }
+
+    const [reservedProduct] = await tx
+      .update(schema.product)
+      .set({
+        stock: sql`${schema.product.stock} - ${payload.quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.product.id, record.productId),
+          gte(schema.product.stock, payload.quantity)
+        )
+      )
+      .returning({
+        stock: schema.product.stock,
+      });
+
+    if (!reservedProduct) {
+      const [currentProduct] = await tx
+        .select({
+          stock: schema.product.stock,
+        })
+        .from(schema.product)
+        .where(eq(schema.product.id, record.productId));
+
+      throw new ProductLinkCheckoutError(
+        currentProduct && currentProduct.stock > 0
+          ? EXCEEDS_STOCK_ERROR
+          : OUT_OF_STOCK_ERROR
+      );
+    }
+
     const [existingCustomer] = await tx
       .select({
         id: schema.customer.id,
@@ -421,9 +483,9 @@ export const createOrderFromProductLink = async (
         orderStatus,
         paymentStatus,
         productLinkId: record.productLinkId,
-        quantity: 1,
-        subtotal: record.unitPrice,
-        total: record.unitPrice,
+        quantity: payload.quantity,
+        subtotal: totalAmount,
+        total: totalAmount,
         currency: record.currency,
       })
       .returning({
@@ -436,9 +498,9 @@ export const createOrderFromProductLink = async (
       orderId: order.id,
       productId: record.productId,
       productLinkId: record.productLinkId,
-      quantity: 1,
+      quantity: payload.quantity,
       title: record.title,
-      totalPrice: record.unitPrice,
+      totalPrice: totalAmount,
       unitPrice: record.unitPrice,
       variantLabel: null,
     });
@@ -456,7 +518,7 @@ export const createOrderFromProductLink = async (
       const [paymentIntent] = await tx
         .insert(schema.paymentIntent)
         .values({
-          amount: record.unitPrice,
+          amount: totalAmount,
           currency: record.currency,
           expiresAt,
           method: null,
@@ -483,3 +545,70 @@ export const createOrderFromProductLink = async (
     };
   });
 };
+
+export const releaseReservedStockForOrder = async (
+  orderId: string,
+  nextStatus: "cancelled" | "expired"
+) =>
+  database.transaction(async (tx) => {
+    const [existingOrder] = await tx
+      .select({
+        orderId: schema.order.id,
+        orderStatus: schema.order.orderStatus,
+        quantity: schema.order.quantity,
+        productId: schema.orderItem.productId,
+      })
+      .from(schema.order)
+      .innerJoin(
+        schema.orderItem,
+        eq(schema.orderItem.orderId, schema.order.id)
+      )
+      .where(eq(schema.order.id, orderId));
+
+    if (!existingOrder) {
+      return null;
+    }
+
+    if (
+      existingOrder.orderStatus === nextStatus ||
+      existingOrder.orderStatus === "cancelled" ||
+      existingOrder.orderStatus === "expired"
+    ) {
+      return {
+        orderId,
+        released: false,
+      };
+    }
+
+    const now = new Date();
+
+    await tx
+      .update(schema.order)
+      .set({
+        cancelledAt: nextStatus === "cancelled" ? now : null,
+        orderStatus: nextStatus,
+        updatedAt: now,
+      })
+      .where(eq(schema.order.id, orderId));
+
+    await tx
+      .update(schema.product)
+      .set({
+        stock: sql`${schema.product.stock} + ${existingOrder.quantity}`,
+        updatedAt: now,
+      })
+      .where(eq(schema.product.id, existingOrder.productId));
+
+    await tx.insert(schema.orderStatusHistory).values({
+      changedByType: "system",
+      fromStatus: existingOrder.orderStatus,
+      orderId,
+      reason: `stock_released_${nextStatus}`,
+      toStatus: nextStatus,
+    });
+
+    return {
+      orderId,
+      released: true,
+    };
+  });

@@ -120,7 +120,7 @@ export const ProductLinkCheckoutClient = ({
       onSubmit={
         orderReference
           ? undefined
-          : async (values: CheckoutDeliveryValues) => {
+          : async (values: CheckoutDeliveryValues & { quantity: number }) => {
               const response = await fetch(
                 `/api/buy/${commerceSlug}/${productLinkSlug}/orders`,
                 {

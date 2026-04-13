@@ -4,16 +4,11 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@repo/design-system/components/ui/alert";
-import { Button } from "@repo/design-system/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@repo/design-system/components/ui/card";
-import { Form } from "@repo/design-system/components/ui/form";
-import { cn } from "@repo/design-system/lib/utils";
+} from "../ui/alert";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Form } from "../ui/form";
+import { cn } from "../../lib/utils";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -147,7 +142,7 @@ interface CheckoutProgressiveFlowProps {
   onPaymentConfirm?: () => Promise<string | null | undefined>;
   onReset?: () => void;
   onSubmit?: (
-    values: CheckoutDeliveryValues
+    values: CheckoutDeliveryValues & { quantity: number }
   ) => Promise<string | null | undefined>;
   orderReference?: string | null;
   orderSummary: CheckoutOrderSummary;
@@ -205,6 +200,13 @@ function CheckoutProgressiveFlow({
   const [isPaymentProcessing, startPaymentProcessing] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
+  const [quantity, setQuantity] = useState(() =>
+    Math.max(1, Math.min(product.quantity, Math.max(product.availableStock, 1)))
+  );
+  const initialQuantity = Math.max(
+    1,
+    Math.min(product.quantity, Math.max(product.availableStock, 1))
+  );
 
   const formValues = useWatch({
     control: form.control,
@@ -214,9 +216,18 @@ function CheckoutProgressiveFlow({
   const resolvedOrderReference = orderReference ?? localOrderReference;
   const isConfirmed = isOrderConfirmed || lifecycleState === "confirmed";
   const isLocked = isSubmitting || isPaymentProcessing || isConfirmed;
+  const isOutOfStock = product.availableStock <= 0;
   const canSubmitCheckout =
     Boolean(onSubmit) &&
-    (!paymentRequired || merchant.trustState === "verified");
+    (!paymentRequired || merchant.trustState === "verified") &&
+    !isOutOfStock;
+  const resolvedProduct = useMemo(
+    () => ({
+      ...product,
+      quantity,
+    }),
+    [product, quantity]
+  );
   const paymentSummaryLines = useMemo(() => {
     if (isConfirmed) {
       return ["Pago simulado como procesado", "Pedido confirmado"];
@@ -286,6 +297,12 @@ function CheckoutProgressiveFlow({
   }, [isOrderConfirmed]);
 
   useEffect(() => {
+    setQuantity((current) =>
+      Math.max(1, Math.min(current, Math.max(product.availableStock, 1)))
+    );
+  }, [product.availableStock]);
+
+  useEffect(() => {
     if (resolvedOrderReference && !isConfirmed) {
       setLifecycleState(paymentRequired ? "order_created" : "confirmed");
     }
@@ -325,7 +342,7 @@ function CheckoutProgressiveFlow({
       setLifecycleState("creating_order");
 
       try {
-        const errorMessage = await onSubmit?.(values);
+        const errorMessage = await onSubmit?.({ ...values, quantity });
 
         if (errorMessage) {
           setSubmitError(errorMessage);
@@ -457,6 +474,7 @@ function CheckoutProgressiveFlow({
                   className="min-h-11 w-full"
                   disabled={
                     isLocked ||
+                    isOutOfStock ||
                     (paymentRequired && Boolean(resolvedOrderReference))
                   }
                   onClick={handleSubmitCheckout}
@@ -491,6 +509,12 @@ function CheckoutProgressiveFlow({
                       </>
                     )}
                   </Button>
+                ) : null}
+                {isOutOfStock ? (
+                  <p className="text-muted-foreground text-sm">
+                    Este producto se quedó sin stock y no puede continuar al
+                    checkout.
+                  </p>
                 ) : null}
               </div>
             ) : null
@@ -580,7 +604,14 @@ function CheckoutProgressiveFlow({
                       </div>
                     ) : null}
                     {onReset ? (
-                      <Button onClick={onReset} type="button" variant="outline">
+                      <Button
+                        onClick={() => {
+                          setQuantity(initialQuantity);
+                          onReset?.();
+                        }}
+                        type="button"
+                        variant="outline"
+                      >
                         Crear otro pedido
                       </Button>
                     ) : null}
@@ -588,14 +619,16 @@ function CheckoutProgressiveFlow({
                 </Card>
               </div>
               <CheckoutOrderSummaryPanel
+                onQuantityChange={setQuantity}
                 orderSummary={orderSummary}
-                product={product}
+                product={resolvedProduct}
               />
             </div>
           </div>
           <CheckoutMobileSummaryBar
+            onQuantityChange={setQuantity}
             orderSummary={orderSummary}
-            product={product}
+            product={resolvedProduct}
           />
         </section>
       </Form>
@@ -629,14 +662,16 @@ function CheckoutProgressiveFlow({
               </div>
             </div>
             <CheckoutOrderSummaryPanel
+              onQuantityChange={setQuantity}
               orderSummary={orderSummary}
-              product={product}
+              product={resolvedProduct}
             />
           </div>
         </div>
         <CheckoutMobileSummaryBar
+          onQuantityChange={setQuantity}
           orderSummary={orderSummary}
-          product={product}
+          product={resolvedProduct}
         />
       </section>
     </Form>

@@ -387,6 +387,7 @@ function CheckoutProgressiveFlow({
           />
           <div className="flex justify-end">
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={handleContinueDetails}
               type="button"
@@ -412,8 +413,9 @@ function CheckoutProgressiveFlow({
             names={deliveryFieldNames}
             pickupEnabled={pickupEnabled}
           />
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={() => setActiveStep("details")}
               type="button"
@@ -423,6 +425,7 @@ function CheckoutProgressiveFlow({
               Volver
             </Button>
             <Button
+              className="min-h-11 w-full sm:w-auto"
               disabled={isLocked}
               onClick={handleContinueDelivery}
               type="button"
@@ -451,7 +454,7 @@ function CheckoutProgressiveFlow({
                   <p className="text-destructive text-sm">{paymentError}</p>
                 ) : null}
                 <Button
-                  className="w-full"
+                  className="min-h-11 w-full"
                   disabled={
                     isLocked ||
                     (paymentRequired && Boolean(resolvedOrderReference))
@@ -470,7 +473,7 @@ function CheckoutProgressiveFlow({
                 </Button>
                 {paymentRequired && resolvedOrderReference ? (
                   <Button
-                    className="w-full"
+                    className="min-h-11 w-full"
                     disabled={isLocked || paymentStage !== "ready"}
                     onClick={handleConfirmPayment}
                     type="button"
@@ -526,22 +529,22 @@ function CheckoutProgressiveFlow({
       <Form {...form}>
         <section
           className={cn(
-            "min-h-dvh bg-muted/25 px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
+            "min-h-dvh bg-muted/25 px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-6",
             className
           )}
         >
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:gap-6">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
             <CheckoutHeader secureLabel={secureLabel} />
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-              <div className="space-y-6 pb-24 lg:pb-0">
-                <div className="rounded-[1.75rem] border border-border/70 bg-background px-5 py-4 shadow-xs">
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+              <div className="space-y-4 pb-24 sm:space-y-5 lg:space-y-6 lg:pb-0">
+                <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
                   <CheckoutMerchantCard
                     className="px-0 py-0"
                     merchant={merchant}
                   />
                 </div>
                 <Card className="rounded-[2rem] border-border/70 shadow-xs">
-                  <CardHeader className="gap-4 pb-0">
+                  <CardHeader className="gap-4 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
                     <div className="flex size-14 items-center justify-center rounded-3xl bg-emerald-500 text-white">
                       <CheckCircle2 className="size-7" />
                     </div>
@@ -554,7 +557,7 @@ function CheckoutProgressiveFlow({
                       </CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
+                  <CardContent className="space-y-4 px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
                     <Alert className="rounded-[1.25rem] border-border/70 bg-muted/15">
                       <ReceiptTextIcon className="size-4" />
                       <AlertTitle>Pago procesado</AlertTitle>
@@ -603,21 +606,21 @@ function CheckoutProgressiveFlow({
     <Form {...form}>
       <section
         className={cn(
-          "min-h-dvh bg-muted/25 px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
+          "min-h-dvh bg-muted/25 px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-6",
           className
         )}
       >
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 lg:gap-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
           <CheckoutHeader secureLabel={secureLabel} />
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="space-y-6 pb-24 lg:pb-0">
-              <div className="rounded-[1.75rem] border border-border/70 bg-background px-5 py-4 shadow-xs">
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+            <div className="space-y-4 pb-24 sm:space-y-5 md:pb-28 lg:space-y-6 lg:pb-0">
+              <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
                 <CheckoutMerchantCard
                   className="px-0 py-0"
                   merchant={merchant}
                 />
               </div>
-              <div className="rounded-[2rem] border border-border/70 bg-background p-4 shadow-xs sm:p-6">
+              <div className="rounded-[2rem] border border-border/70 bg-background p-3 shadow-xs sm:p-5 lg:p-6">
                 <CheckoutVerticalStepper
                   activeStep={activeStep}
                   onStepSelect={handleStepSelect}

@@ -150,13 +150,18 @@ function CheckoutPaymentSection({
   }
 
   return (
-    <Card className={cn("gap-0 rounded-[1.75rem] border-border/70", className)}>
-      <CardHeader className="gap-1.5">
+    <Card
+      className={cn(
+        "gap-0 rounded-[1.75rem] border-border/70 shadow-xs",
+        className
+      )}
+    >
+      <CardHeader className="gap-1.5 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
         <CardTitle className="text-base">Finalizá el checkout</CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
         {orderReference ? (
-          <div className="mb-4 rounded-[1.25rem] border border-border/70 bg-muted/20 px-4 py-3">
+          <div className="mb-4 rounded-[1.25rem] border border-border/70 bg-muted/20 px-4 py-3.5">
             <p className="font-medium text-foreground text-sm">Pedido creado</p>
             <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
               {orderReference}
@@ -172,7 +177,7 @@ function CheckoutPaymentSection({
           </div>
         ) : null}
         {paymentRequired && isVerified ? (
-          <p className="mt-4 text-muted-foreground text-xs">
+          <p className="mt-4 text-muted-foreground text-xs leading-relaxed">
             Tus datos de pago se cargan en un formulario seguro del proveedor.
           </p>
         ) : null}

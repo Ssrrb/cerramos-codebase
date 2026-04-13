@@ -22,7 +22,7 @@ function CheckoutSummaryContent({
   product,
 }: CheckoutSummaryContentProps) {
   return (
-    <div className="rounded-[1.75rem] border border-border/70 bg-background p-5 shadow-xs">
+    <div className="rounded-[1.75rem] border border-border/70 bg-background p-4 shadow-xs sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-muted-foreground text-xs uppercase tracking-[0.22em]">
@@ -118,7 +118,7 @@ function CheckoutOrderSummaryPanel({
 }: CheckoutOrderSummaryPanelProps) {
   return (
     <aside className={cn("hidden lg:block", className)}>
-      <div className="sticky top-6">
+      <div className="sticky top-8">
         <CheckoutSummaryContent orderSummary={orderSummary} product={product} />
       </div>
     </aside>
@@ -140,7 +140,7 @@ function CheckoutMobileSummaryBar({
     <Drawer>
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur lg:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/90 lg:hidden",
           className
         )}
       >
@@ -155,7 +155,7 @@ function CheckoutMobileSummaryBar({
           </div>
           <DrawerTrigger asChild>
             <button
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-border/70 bg-foreground px-4 font-medium text-background text-sm shadow-sm transition-colors hover:bg-foreground/90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-foreground px-4 font-medium text-background text-sm shadow-sm transition-colors hover:bg-foreground/90"
               type="button"
             >
               <ReceiptTextIcon className="size-4" />
@@ -165,13 +165,13 @@ function CheckoutMobileSummaryBar({
         </div>
       </div>
       <DrawerContent className="max-h-[85vh] rounded-t-[1.75rem]">
-        <DrawerHeader className="px-4 pt-4 text-left">
+        <DrawerHeader className="px-4 pt-4 text-left sm:px-5">
           <DrawerTitle>Resumen del pedido</DrawerTitle>
           <DrawerDescription>
             Revisá el producto y el total sin salir del checkout.
           </DrawerDescription>
         </DrawerHeader>
-        <div className="overflow-y-auto px-4 pb-6">
+        <div className="overflow-y-auto px-4 pb-6 sm:px-5">
           <CheckoutSummaryContent
             orderSummary={orderSummary}
             product={product}

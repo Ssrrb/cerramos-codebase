@@ -59,20 +59,20 @@ function CheckoutVerticalStepper({
   }, [activeStep]);
 
   return (
-    <div className={cn("flex flex-col gap-5", className)}>
+    <div className={cn("flex flex-col gap-4 sm:gap-5", className)}>
       {visibleSteps.map((step, index) => {
         const isActive = step.id === activeStep;
         const isLast = index === visibleSteps.length - 1;
 
         return (
           <div
-            className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4"
+            className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-3 sm:grid-cols-[2.5rem_minmax(0,1fr)] sm:gap-4"
             key={step.id}
           >
             <div className="flex flex-col items-center">
               <div
                 className={cn(
-                  "mt-6 flex size-9 items-center justify-center rounded-full border text-sm transition-colors",
+                  "mt-5 flex size-8 items-center justify-center rounded-full border text-xs transition-colors sm:mt-6 sm:size-9 sm:text-sm",
                   stepIndicatorClassName(isActive, step.isCompleted)
                 )}
               >
@@ -83,13 +83,13 @@ function CheckoutVerticalStepper({
                 )}
               </div>
               {isLast ? null : (
-                <div className="mt-2 h-full min-h-12 w-px bg-border/70" />
+                <div className="mt-2 h-full min-h-10 w-px bg-border/70 sm:min-h-12" />
               )}
             </div>
             <div className="pb-2">
               {isActive ? (
                 <div
-                  className="space-y-3 rounded-[1.5rem] bg-transparent outline-hidden"
+                  className="space-y-3 rounded-[1.5rem] bg-transparent outline-hidden sm:space-y-4"
                   ref={(node) => {
                     stepRefs.current[step.id] = node ?? undefined;
                   }}
@@ -99,7 +99,7 @@ function CheckoutVerticalStepper({
                     <p className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
                       Paso activo
                     </p>
-                    <h2 className="font-semibold text-2xl text-foreground tracking-[-0.03em]">
+                    <h2 className="font-semibold text-[1.75rem] text-foreground leading-none tracking-[-0.03em] sm:text-2xl">
                       {step.title}
                     </h2>
                   </div>
@@ -111,14 +111,14 @@ function CheckoutVerticalStepper({
                 </div>
               ) : (
                 <button
-                  className="group flex w-full items-start justify-between gap-4 rounded-[1.5rem] border border-border/70 bg-background px-5 py-4 text-left shadow-xs transition-colors hover:border-foreground/20"
+                  className="group flex w-full flex-col items-start gap-4 rounded-[1.5rem] border border-border/70 bg-background px-4 py-4 text-left shadow-xs transition-colors hover:border-foreground/20 sm:flex-row sm:items-start sm:justify-between sm:px-5"
                   onClick={() => onStepSelect(step.id)}
                   ref={(node) => {
                     stepRefs.current[step.id] = node ?? undefined;
                   }}
                   type="button"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium text-base text-foreground">
                       {step.title}
                     </p>
@@ -139,7 +139,7 @@ function CheckoutVerticalStepper({
                       </p>
                     )}
                   </div>
-                  <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/25 px-3 py-1.5 font-medium text-foreground text-sm">
+                  <span className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/25 px-3 py-1.5 font-medium text-foreground text-sm">
                     <PencilLineIcon className="size-4" />
                     Editar
                   </span>

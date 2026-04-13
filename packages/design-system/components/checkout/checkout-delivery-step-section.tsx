@@ -45,14 +45,19 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
   const isDelivery = (deliveryMode ?? "delivery") === "delivery";
 
   return (
-    <Card className={cn("gap-0 rounded-[1.75rem] border-border/70", className)}>
-      <CardHeader className="gap-1.5">
+    <Card
+      className={cn(
+        "gap-0 rounded-[1.75rem] border-border/70 shadow-xs",
+        className
+      )}
+    >
+      <CardHeader className="gap-1.5 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
         <CardDescription>Entrega</CardDescription>
         <CardTitle className="text-base">
           Cómo querés recibir este pedido
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
         <FieldGroup>
           <CheckoutDeliveryModeField
             control={control}
@@ -66,7 +71,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
           />
           {isDelivery ? (
             <>
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <CheckoutInputField
                   control={control}
                   disabled={disabled}
@@ -126,7 +131,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
           />
         </FieldGroup>
       </CardContent>
-      <CardFooter className="border-border/70 border-t pt-6">
+      <CardFooter className="border-border/70 border-t px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
         <p className="text-muted-foreground text-sm leading-relaxed">
           Mostramos solo los campos necesarios para esta modalidad.
         </p>

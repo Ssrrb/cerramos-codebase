@@ -1,10 +1,9 @@
-import { LockKeyholeIcon } from "lucide-react"
-
-import { cn } from "@repo/design-system/lib/utils"
+import { cn } from "@repo/design-system/lib/utils";
+import { LockKeyholeIcon } from "lucide-react";
 
 interface CheckoutHeaderProps {
-  className?: string
-  secureLabel?: string
+  className?: string;
+  secureLabel?: string;
 }
 
 function CheckoutHeader({
@@ -14,13 +13,13 @@ function CheckoutHeader({
   return (
     <header
       className={cn(
-        "rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs",
+        "rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-3.5",
         className
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-foreground font-semibold text-background text-sm tracking-tight">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-foreground font-semibold text-background text-sm tracking-tight sm:size-11">
             C
           </div>
           <div className="flex min-w-0 flex-col">
@@ -32,13 +31,13 @@ function CheckoutHeader({
             </span>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-muted-foreground text-xs">
-          <LockKeyholeIcon />
+        <div className="flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/35 px-3 py-1.5 text-muted-foreground text-xs">
+          <LockKeyholeIcon className="size-4" />
           <span>{secureLabel}</span>
         </div>
       </div>
     </header>
-  )
+  );
 }
 
-export { CheckoutHeader }
+export { CheckoutHeader };

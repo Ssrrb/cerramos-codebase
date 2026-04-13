@@ -1,7 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { requireCommerceIdForRequest } from "@repo/auth/server";
 import { database, isForeignKeyConstraintError, schema } from "@repo/database";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import {
   normalizeProductImageObjectKey,
@@ -77,24 +76,25 @@ export const PATCH = async (request: Request, context: ProductRouteContext) => {
       return null;
     }
 
-    let nextPrimaryImageId = currentProduct.primaryImageId;
-
     if (currentProduct.primaryImageObjectKey !== imageObjectKey) {
-      nextPrimaryImageId = randomUUID();
-
-      await tx.insert(schema.productImage).values({
-        id: nextPrimaryImageId,
-        objectKey: imageObjectKey,
-        position: 0,
-        productId,
-      });
+      await tx
+        .update(schema.productImage)
+        .set({
+          objectKey: imageObjectKey,
+        })
+        .where(
+          and(
+            eq(schema.productImage.id, currentProduct.primaryImageId),
+            eq(schema.productImage.productId, productId)
+          )
+        );
     }
 
     const [updatedProduct] = await tx
       .update(schema.product)
       .set({
         ...rest,
-        primaryImageId: nextPrimaryImageId,
+        primaryImageId: currentProduct.primaryImageId,
       })
       .where(
         and(
@@ -108,17 +108,6 @@ export const PATCH = async (request: Request, context: ProductRouteContext) => {
 
     if (!updatedProduct) {
       return null;
-    }
-
-    if (nextPrimaryImageId !== currentProduct.primaryImageId) {
-      await tx
-        .delete(schema.productImage)
-        .where(
-          and(
-            eq(schema.productImage.productId, productId),
-            ne(schema.productImage.id, nextPrimaryImageId)
-          )
-        );
     }
 
     return updatedProduct;

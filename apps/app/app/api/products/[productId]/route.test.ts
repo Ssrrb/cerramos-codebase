@@ -2,29 +2,31 @@ import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
-  randomUUIDMock,
   deleteMock,
   deleteReturningMock,
   deleteWhereMock,
   requireCommerceIdForRequestMock,
+  schemaMock,
   transactionMock,
 } = vi.hoisted(() => ({
-  randomUUIDMock: vi.fn(),
   deleteMock: vi.fn(),
   deleteReturningMock: vi.fn(),
   deleteWhereMock: vi.fn(),
   requireCommerceIdForRequestMock: vi.fn(),
+  schemaMock: {
+    product: {
+      commerceId: "product.commerceId",
+      id: "product.id",
+      primaryImageId: "product.primaryImageId",
+    },
+    productImage: {
+      id: "productImage.id",
+      objectKey: "productImage.objectKey",
+      productId: "productImage.productId",
+    },
+  },
   transactionMock: vi.fn(),
 }));
-
-vi.mock("node:crypto", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:crypto")>();
-
-  return {
-    ...actual,
-    randomUUID: randomUUIDMock,
-  };
-});
 
 vi.mock("@repo/auth/server", () => ({
   requireCommerceIdForRequest: requireCommerceIdForRequestMock,
@@ -47,24 +49,12 @@ vi.mock("@repo/database", () => ({
 
     return candidates.some((candidate) => candidate?.code === "23503");
   },
-  schema: {
-    product: {
-      commerceId: "product.commerceId",
-      id: "product.id",
-      primaryImageId: "product.primaryImageId",
-    },
-    productImage: {
-      id: "productImage.id",
-      objectKey: "productImage.objectKey",
-      productId: "productImage.productId",
-    },
-  },
+  schema: schemaMock,
 }));
 
 describe("product by id route", () => {
   beforeEach(() => {
     vi.resetModules();
-    randomUUIDMock.mockReset();
     requireCommerceIdForRequestMock.mockReset();
     transactionMock.mockReset();
     deleteMock.mockReset();
@@ -82,24 +72,11 @@ describe("product by id route", () => {
   test("updates a product without replacing the image when the object key is unchanged", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
 
-    const insertedValues: Array<Record<string, unknown>> = [];
-    const deletedWhereCalls: unknown[] = [];
+    const productImageUpdateSetCalls: Array<Record<string, unknown>> = [];
     const updateSetCalls: Array<Record<string, unknown>> = [];
 
     transactionMock.mockImplementation(async (callback) =>
       callback({
-        delete: () => ({
-          where: (value: unknown) => {
-            deletedWhereCalls.push(value);
-            return Promise.resolve(undefined);
-          },
-        }),
-        insert: () => ({
-          values: (values: Record<string, unknown>) => {
-            insertedValues.push(values);
-            return Promise.resolve(undefined);
-          },
-        }),
         select: () => ({
           from: () => ({
             innerJoin: () => ({
@@ -114,16 +91,29 @@ describe("product by id route", () => {
             }),
           }),
         }),
-        update: () => ({
-          set: (values: Record<string, unknown>) => {
-            updateSetCalls.push(values);
+        update: (table: unknown) => {
+          if (table === schemaMock.productImage) {
             return {
-              where: () => ({
-                returning: async () => [{ id: "product_1" }],
-              }),
+              set: (values: Record<string, unknown>) => {
+                productImageUpdateSetCalls.push(values);
+                return {
+                  where: async () => undefined,
+                };
+              },
             };
-          },
-        }),
+          }
+
+          return {
+            set: (values: Record<string, unknown>) => {
+              updateSetCalls.push(values);
+              return {
+                where: () => ({
+                  returning: async () => [{ id: "product_1" }],
+                }),
+              };
+            },
+          };
+        },
       })
     );
 
@@ -167,31 +157,17 @@ describe("product by id route", () => {
         unitPrice: 185_000,
       },
     ]);
-    expect(insertedValues).toHaveLength(0);
-    expect(deletedWhereCalls).toHaveLength(0);
+    expect(productImageUpdateSetCalls).toHaveLength(0);
   });
 
-  test("replaces the canonical product image when the object key changes", async () => {
+  test("updates the canonical product image in place when the object key changes", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
 
-    const insertedValues: Array<Record<string, unknown>> = [];
+    const productImageUpdateSetCalls: Array<Record<string, unknown>> = [];
     const updateSetCalls: Array<Record<string, unknown>> = [];
-    const deletedWhereCalls: unknown[] = [];
 
     transactionMock.mockImplementation(async (callback) =>
       callback({
-        delete: () => ({
-          where: (value: unknown) => {
-            deletedWhereCalls.push(value);
-            return Promise.resolve(undefined);
-          },
-        }),
-        insert: () => ({
-          values: (values: Record<string, unknown>) => {
-            insertedValues.push(values);
-            return Promise.resolve(undefined);
-          },
-        }),
         select: () => ({
           from: () => ({
             innerJoin: () => ({
@@ -206,16 +182,29 @@ describe("product by id route", () => {
             }),
           }),
         }),
-        update: () => ({
-          set: (values: Record<string, unknown>) => {
-            updateSetCalls.push(values);
+        update: (table: unknown) => {
+          if (table === schemaMock.productImage) {
             return {
-              where: () => ({
-                returning: async () => [{ id: "product_1" }],
-              }),
+              set: (values: Record<string, unknown>) => {
+                productImageUpdateSetCalls.push(values);
+                return {
+                  where: async () => undefined,
+                };
+              },
             };
-          },
-        }),
+          }
+
+          return {
+            set: (values: Record<string, unknown>) => {
+              updateSetCalls.push(values);
+              return {
+                where: () => ({
+                  returning: async () => [{ id: "product_1" }],
+                }),
+              };
+            },
+          };
+        },
       })
     );
 
@@ -243,26 +232,23 @@ describe("product by id route", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(insertedValues).toHaveLength(1);
-    expect(insertedValues[0]).toMatchObject({
-      objectKey: "products/commerce_1/images/licuadora-nueva.png",
-      position: 0,
-      productId: "product_1",
-    });
-    expect(insertedValues[0]?.id).toEqual(expect.any(String));
+    expect(productImageUpdateSetCalls).toEqual([
+      {
+        objectKey: "products/commerce_1/images/licuadora-nueva.png",
+      },
+    ]);
     expect(updateSetCalls).toEqual([
       {
         category: "Electrodomesticos",
         deliveryIncluded: true,
         description: "Licuadora premium para tu cocina diaria.",
         name: "Licuadora Cerramos",
-        primaryImageId: insertedValues[0]?.id,
+        primaryImageId: "product_image_1",
         status: "active",
         stock: 14,
         unitPrice: 185_000,
       },
     ]);
-    expect(deletedWhereCalls).toHaveLength(1);
   });
 
   test("returns auth errors from the shared commerce resolver", async () => {

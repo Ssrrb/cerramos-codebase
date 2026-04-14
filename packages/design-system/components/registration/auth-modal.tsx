@@ -54,6 +54,7 @@ export const AuthModal = ({ isOpen, onClose, type }: AuthModalProps) => {
             <SignInFormView
               callbackHref="#"
               email=""
+              googleEnabled
               password=""
               step="email"
               onEmailChange={() => {}}

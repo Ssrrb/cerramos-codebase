@@ -10,8 +10,12 @@ import type {
 } from "@repo/design-system/components/checkout/types";
 import { NonDistractingFooter } from "@repo/design-system/components/layout/non-distracting-footer";
 import { NonDistractingHeader } from "@repo/design-system/components/layout/non-distracting-header";
+import {
+  AuthModal,
+  type AuthModalType,
+} from "@repo/design-system/components/registration/auth-modal";
+import { Button } from "@repo/design-system/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react";
-import { ShieldCheckIcon, TruckIcon, WalletCardsIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const merchantVerified: CheckoutMerchantSummary = {
@@ -87,6 +91,8 @@ function CheckoutPageStory({
     useState<CheckoutPaymentStage>("idle");
   const [orderReference, setOrderReference] = useState<string | null>(null);
   const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
+  const [authModalType, setAuthModalType] = useState<AuthModalType>("sign-in");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     if (paymentStage !== "initializing") {
@@ -108,6 +114,11 @@ function CheckoutPageStory({
     setIsOrderConfirmed(false);
   };
 
+  const openAuthModal = (type: AuthModalType) => {
+    setAuthModalType(type);
+    setIsAuthModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,color-mix(in_oklab,var(--color-muted)_34%,var(--color-background)_66%)_0%,var(--color-background)_18rem)] text-foreground">
       <NonDistractingHeader
@@ -115,9 +126,16 @@ function CheckoutPageStory({
           user ? (
             <CheckoutUserIdentity user={user} />
           ) : (
-            <span className="text-inherit">
-              Ingresá para usar tus datos guardados
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                className="h-auto px-0 font-semibold text-inherit text-xs"
+                onClick={() => openAuthModal("sign-in")}
+                type="button"
+                variant="link"
+              >
+                Ingresar
+              </Button>
+            </div>
           )
         }
       />
@@ -171,6 +189,11 @@ function CheckoutPageStory({
           Powered by Cheki
         </div>
       </NonDistractingFooter>
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        type={authModalType}
+      />
     </div>
   );
 }

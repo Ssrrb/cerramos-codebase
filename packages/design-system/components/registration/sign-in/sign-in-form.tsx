@@ -8,7 +8,7 @@ import { Button } from "@repo/design-system/components/ui/button";
 import { Input } from "@repo/design-system/components/ui/input";
 import { Separator } from "@repo/design-system/components/ui/separator";
 import { cn } from "@repo/design-system/lib/utils";
-import { ChevronLeft, LockKeyhole, Mail } from "lucide-react";
+import { ChevronLeft, Mail } from "lucide-react";
 import { AuthLegalLinks } from "../auth-legal-links";
 
 export interface SignInFormViewProps {
@@ -87,11 +87,10 @@ export const SignInFormView = ({
       <div className="w-full space-y-6">
         <div className="space-y-2 text-center">
           <h1 className="font-semibold text-3xl text-foreground tracking-[-0.05em] sm:text-[2.15rem]">
-            Log in to Cerramos
+            Log in to Cheki
           </h1>
           <p className="mx-auto max-w-[20rem] text-muted-foreground text-sm leading-6">
-            Entra a tu panel para ordenar pedidos, cobros y seguimiento en un
-            solo flujo.
+            Ordena pedidos, servicios y seguimiento en un solo flujo.
           </p>
         </div>
         <form className="space-y-3" onSubmit={onSubmit}>
@@ -198,11 +197,7 @@ export const SignInFormView = ({
       <div className="mt-14 space-y-3 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/55 px-3 py-1.5 text-[11px] text-muted-foreground/85 shadow-sm backdrop-blur-sm dark:bg-[oklch(0.16_0.004_286)]">
           <Mail className="size-3.5" />
-          Acceso para operaciones y seguimiento del negocio.
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/55 px-3 py-1.5 text-[11px] text-muted-foreground/85 shadow-sm backdrop-blur-sm dark:bg-[oklch(0.16_0.004_286)]">
-          <LockKeyhole className="size-3.5" />
-          Sesion protegida para tu panel interno.
+          Guarda tus datos para futuras compras.
         </div>
         <div className="pt-4">
           <AuthLegalLinks privacyUrl={privacyUrl} termsUrl={termsUrl} />
@@ -211,3 +206,4 @@ export const SignInFormView = ({
     </div>
   );
 };
+//TODO: add google option for users icon to the auth modal

@@ -128,7 +128,7 @@ const getConfirmationMessage = (
     ? `Registramos tu pedido y simulamos el pago como procesado. ${merchantName} seguirá la confirmación comercial por separado.`
     : `${merchantName} usará tus datos para coordinar la entrega o el retiro.`;
 
-interface CheckoutProgressiveFlowProps {
+export interface CheckoutProgressiveFlowProps {
   className?: string;
   confirmationMessage?: string;
   defaultValues?: Partial<CheckoutDeliveryValues>;

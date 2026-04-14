@@ -21,8 +21,10 @@ vi.mock("@repo/design-system/components/checkout/checkout-upay-card-loader", () 
   ),
 }));
 
-vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () => ({
-  CheckoutProgressiveFlow: ({
+vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
+  CheckoutPage: ({
+    accountAction,
+    footerContent,
     isOrderConfirmed,
     onPaymentConfirm,
     onReset,
@@ -31,6 +33,8 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
     paymentStage,
     processorSlot,
   }: {
+    accountAction?: React.ReactNode;
+    footerContent?: React.ReactNode;
     isOrderConfirmed?: boolean;
     onPaymentConfirm?: () => Promise<string | null | undefined>;
     onReset?: () => void;
@@ -55,6 +59,8 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
 
     return (
       <div>
+        <div data-testid="account-action">{accountAction}</div>
+        <div data-testid="footer-content">{footerContent}</div>
         <div data-testid="confirmed">{String(Boolean(isOrderConfirmed))}</div>
         <div data-testid="order-reference">{orderReference ?? "none"}</div>
         <div data-testid="payment-stage">{paymentStage ?? "idle"}</div>
@@ -173,6 +179,18 @@ describe("product link checkout client", () => {
     });
 
     expect(screen.getByTestId("order-reference").textContent).toBe("none");
+  });
+
+  test("renders the shared checkout page chrome props", () => {
+    render(<ProductLinkCheckoutClient {...baseProps} />);
+
+    expect(screen.getByRole("link", { name: "Ingresar" })).toHaveAttribute(
+      "href",
+      "/sign-in"
+    );
+    expect(screen.getByTestId("footer-content").textContent).toContain(
+      "Powered by Cheki"
+    );
   });
 
   test("transitions payment checkouts from initializing to ready and confirms them", async () => {

@@ -57,7 +57,9 @@ export const betterAuthServer = betterAuth({
     cookiePrefix: AUTH_COOKIE_PREFIX,
     crossSubDomainCookies,
     database: {
-      generateId: false,
+      // Keep auth IDs explicit and string-backed. This avoids runtime/schema
+      // drift when a database was bootstrapped with UUID auth tables.
+      generateId: () => crypto.randomUUID(),
     },
   },
   baseURL: authKeys.BETTER_AUTH_URL,

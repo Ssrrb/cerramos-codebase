@@ -1,5 +1,5 @@
 import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
-import { CheckoutProgressiveFlow } from "@repo/design-system/components/checkout/checkout-progressive-flow";
+import { CheckoutPage } from "@repo/design-system/components/checkout/checkout-page";
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import { CheckoutUserIdentity } from "@repo/design-system/components/checkout/checkout-user-identity";
 import type {
@@ -8,8 +8,6 @@ import type {
   CheckoutOrderSummary,
   CheckoutProductSummary,
 } from "@repo/design-system/components/checkout/types";
-import { NonDistractingFooter } from "@repo/design-system/components/layout/non-distracting-footer";
-import { NonDistractingHeader } from "@repo/design-system/components/layout/non-distracting-header";
 import {
   AuthModal,
   type AuthModalType,
@@ -120,8 +118,8 @@ function CheckoutPageStory({
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,color-mix(in_oklab,var(--color-muted)_34%,var(--color-background)_66%)_0%,var(--color-background)_18rem)] text-foreground">
-      <NonDistractingHeader
+    <>
+      <CheckoutPage
         accountAction={
           user ? (
             <CheckoutUserIdentity user={user} />
@@ -138,63 +136,51 @@ function CheckoutPageStory({
             </div>
           )
         }
-      />
-      <main className="mx-auto flex w-full max-w-[88rem] flex-col gap-6 px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-        <CheckoutProgressiveFlow
-          className="min-h-0 bg-transparent px-0 py-0 sm:px-0 sm:py-0 lg:px-0 lg:py-0"
-          confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial sigue por separado."
-          defaultValues={defaultValues}
-          isOrderConfirmed={isOrderConfirmed}
-          merchant={merchantVerified}
-          onPaymentConfirm={async () => {
-            await wait(1000);
+        confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial sigue por separado."
+        defaultValues={defaultValues}
+        footerContent="Powered by Cheki"
+        isOrderConfirmed={isOrderConfirmed}
+        merchant={merchantVerified}
+        onPaymentConfirm={async () => {
+          await wait(1000);
+          setIsOrderConfirmed(true);
+          return null;
+        }}
+        onReset={reset}
+        onSubmit={async () => {
+          await wait(900);
+
+          if (!paymentRequired) {
+            setOrderReference("ord_storybook_checkout_page");
             setIsOrderConfirmed(true);
             return null;
-          }}
-          onReset={reset}
-          onSubmit={async () => {
-            await wait(900);
-
-            if (!paymentRequired) {
-              setOrderReference("ord_storybook_checkout_page");
-              setIsOrderConfirmed(true);
-              return null;
-            }
-
-            setOrderReference("ord_storybook_checkout_page");
-            setPaymentStage("initializing");
-            return null;
-          }}
-          orderReference={orderReference}
-          orderSummary={orderSummary}
-          paymentActionLabel="Simular pago aprobado"
-          paymentRequired={paymentRequired}
-          paymentStage={paymentStage}
-          processorSlot={
-            paymentRequired ? (
-              <CheckoutUpayCardLoader
-                formId={
-                  paymentStage === "ready" ? "storybook-upay-form-id" : null
-                }
-              />
-            ) : undefined
           }
-          product={product}
-          showHeader={false}
-          submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
-        />
-      </main>
-      <NonDistractingFooter>
-        <div className="max-w-md text-center text-muted-foreground text-sm">
-          Powered by Cheki
-        </div>
-      </NonDistractingFooter>
+
+          setOrderReference("ord_storybook_checkout_page");
+          setPaymentStage("initializing");
+          return null;
+        }}
+        orderReference={orderReference}
+        orderSummary={orderSummary}
+        paymentActionLabel="Simular pago aprobado"
+        paymentRequired={paymentRequired}
+        paymentStage={paymentStage}
+        processorSlot={
+          paymentRequired ? (
+            <CheckoutUpayCardLoader
+              formId={paymentStage === "ready" ? "storybook-upay-form-id" : null}
+            />
+          ) : undefined
+        }
+        product={product}
+        submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
+      />
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         type={authModalType}
       />
-    </div>
+    </>
   );
 }
 

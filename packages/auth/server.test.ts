@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { betterAuth } from "better-auth";
 
 const {
   fromMock,
@@ -119,6 +120,19 @@ describe("auth server commerce context", () => {
     whereMock.mockImplementation(() => ({
       limit: limitMock,
     }));
+  });
+
+  test("configures Better Auth to generate UUID ids in application code", async () => {
+    await import("./server");
+
+    expect(betterAuth).toHaveBeenCalled();
+
+    const config = vi.mocked(betterAuth).mock.calls[0]?.[0];
+
+    expect(config?.advanced?.database?.generateId).toBeTypeOf("function");
+    expect(config?.advanced?.database?.generateId?.({ model: "verification" })).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    );
   });
 
   test("returns authenticated app context from the active commerce record", async () => {

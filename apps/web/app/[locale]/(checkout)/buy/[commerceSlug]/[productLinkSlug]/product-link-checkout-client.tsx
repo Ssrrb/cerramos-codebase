@@ -9,14 +9,12 @@ import type {
   CheckoutOrderSummary,
   CheckoutProductSummary,
 } from "@repo/design-system/components/checkout/types";
-import { Button } from "@repo/design-system/components/ui/button";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@repo/design-system/components/ui/alert";
 import { ReceiptTextIcon } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 interface ProductLinkCheckoutClientProps {
@@ -101,15 +99,6 @@ export const ProductLinkCheckoutClient = ({
 
   return (
     <CheckoutPage
-      accountAction={
-        <Button
-          asChild
-          className="h-auto px-0 font-semibold text-inherit text-xs"
-          variant="link"
-        >
-          <Link href="/sign-in">Ingresar</Link>
-        </Button>
-      }
       confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado."
       defaultValues={{
         mode: deliveryEnabled ? "delivery" : "pickup",

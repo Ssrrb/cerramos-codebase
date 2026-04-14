@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
 
 import * as React from "react";
-import { afterEach, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   cleanup,
+  fireEvent,
   render,
   screen,
 } from "../../../../apps/app/node_modules/@testing-library/react";
@@ -16,6 +25,17 @@ import type {
 
 afterEach(() => {
   cleanup();
+});
+
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+});
+
+afterAll(() => {
+  delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
 });
 
 const merchant: CheckoutMerchantSummary = {
@@ -40,6 +60,21 @@ const orderSummary: CheckoutOrderSummary = {
 };
 
 describe("CheckoutPage", () => {
+  test("opens the auth modal from the default ingresar action", () => {
+    render(
+      <CheckoutPage
+        merchant={merchant}
+        orderSummary={orderSummary}
+        paymentRequired
+        product={product}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Ingresar" }));
+
+    expect(screen.getByText("Welcome back")).toBeDefined();
+  });
+
   test("renders the account action in the page header", () => {
     render(
       <CheckoutPage

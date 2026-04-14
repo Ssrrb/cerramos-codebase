@@ -15,11 +15,14 @@ declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-vi.mock("@repo/design-system/components/checkout/checkout-upay-card-loader", () => ({
-  CheckoutUpayCardLoader: ({ formId }: { formId?: string | null }) => (
-    <div data-testid="upay-loader">{formId ?? "missing-form-id"}</div>
-  ),
-}));
+vi.mock(
+  "@repo/design-system/components/checkout/checkout-upay-card-loader",
+  () => ({
+    CheckoutUpayCardLoader: ({ formId }: { formId?: string | null }) => (
+      <div data-testid="upay-loader">{formId ?? "missing-form-id"}</div>
+    ),
+  })
+);
 
 vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
   CheckoutPage: ({
@@ -55,7 +58,9 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
     processorSlot?: React.ReactNode;
   }) => {
     const [submitResult, setSubmitResult] = React.useState<string | null>(null);
-    const [paymentResult, setPaymentResult] = React.useState<string | null>(null);
+    const [paymentResult, setPaymentResult] = React.useState<string | null>(
+      null
+    );
 
     return (
       <div>
@@ -156,10 +161,7 @@ describe("product link checkout client", () => {
     } as Response);
 
     render(
-      <ProductLinkCheckoutClient
-        {...baseProps}
-        paymentRequired={false}
-      />
+      <ProductLinkCheckoutClient {...baseProps} paymentRequired={false} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: "submit" }));
@@ -184,10 +186,7 @@ describe("product link checkout client", () => {
   test("renders the shared checkout page chrome props", () => {
     render(<ProductLinkCheckoutClient {...baseProps} />);
 
-    expect(screen.getByRole("link", { name: "Ingresar" })).toHaveAttribute(
-      "href",
-      "/sign-in"
-    );
+    expect(screen.getByTestId("account-action").textContent).toBe("");
     expect(screen.getByTestId("footer-content").textContent).toContain(
       "Powered by Cheki"
     );
@@ -213,7 +212,9 @@ describe("product link checkout client", () => {
       fireEvent.click(screen.getByRole("button", { name: "submit" }));
     });
 
-    expect(screen.getByTestId("payment-stage").textContent).toBe("initializing");
+    expect(screen.getByTestId("payment-stage").textContent).toBe(
+      "initializing"
+    );
     expect(screen.getByTestId("order-reference").textContent).toBe(
       "ord_payment"
     );
@@ -271,10 +272,7 @@ describe("product link checkout client", () => {
     } as Response);
 
     render(
-      <ProductLinkCheckoutClient
-        {...baseProps}
-        paymentRequired={false}
-      />
+      <ProductLinkCheckoutClient {...baseProps} paymentRequired={false} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: "submit" }));

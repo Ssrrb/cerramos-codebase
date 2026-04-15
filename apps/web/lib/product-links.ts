@@ -4,7 +4,6 @@ import {
   eq,
   gte,
   isMissingRelationError,
-  leftJoin,
   schema,
   sql,
 } from "@repo/database";
@@ -94,6 +93,11 @@ export interface CreateOrderResult {
   paymentIntentId: string | null;
   paymentRequired: boolean;
   upayFormId: string | null;
+}
+
+export interface AuthenticatedCheckoutBuyer {
+  customerId?: string | null;
+  userId: string;
 }
 
 export class ProductLinkCheckoutError extends Error {
@@ -343,10 +347,105 @@ export const getPublicProductImageObjectKey = (
   return extractProductImageObjectKey(value.trim(), bucketName);
 };
 
+const getAuthenticatedCustomerProfile = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  authenticatedBuyer: AuthenticatedCheckoutBuyer
+) => {
+  if (authenticatedBuyer.customerId) {
+    const [customerProfile] = await tx
+      .select({
+        email: schema.customerProfile.email,
+        id: schema.customerProfile.id,
+        name: schema.customerProfile.name,
+      })
+      .from(schema.customerProfile)
+      .where(eq(schema.customerProfile.id, authenticatedBuyer.customerId));
+
+    if (customerProfile) {
+      return customerProfile;
+    }
+  }
+
+  const [customerProfile] = await tx
+    .select({
+      email: schema.customerProfile.email,
+      id: schema.customerProfile.id,
+      name: schema.customerProfile.name,
+    })
+    .from(schema.customerProfile)
+    .where(eq(schema.customerProfile.userId, authenticatedBuyer.userId));
+
+  return customerProfile ?? null;
+};
+
+const resolveOrderCustomerProfile = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  payload: CheckoutOrderPayload,
+  authenticatedBuyer?: AuthenticatedCheckoutBuyer
+) => {
+  if (authenticatedBuyer) {
+    const linkedCustomerProfile = await getAuthenticatedCustomerProfile(
+      tx,
+      authenticatedBuyer
+    );
+
+    if (linkedCustomerProfile) {
+      const [customerProfile] = await tx
+        .update(schema.customerProfile)
+        .set({
+          email: linkedCustomerProfile.email ?? payload.email,
+          name: linkedCustomerProfile.name ?? payload.recipientName,
+          phone: payload.phone,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.customerProfile.id, linkedCustomerProfile.id))
+        .returning({
+          id: schema.customerProfile.id,
+        });
+
+      return customerProfile;
+    }
+  }
+
+  const [existingCustomerProfile] = await tx
+    .select({
+      id: schema.customerProfile.id,
+    })
+    .from(schema.customerProfile)
+    .where(eq(schema.customerProfile.email, payload.email));
+
+  const [customerProfile] = existingCustomerProfile
+    ? await tx
+        .update(schema.customerProfile)
+        .set({
+          email: payload.email,
+          name: payload.recipientName,
+          phone: payload.phone,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.customerProfile.id, existingCustomerProfile.id))
+        .returning({
+          id: schema.customerProfile.id,
+        })
+    : await tx
+        .insert(schema.customerProfile)
+        .values({
+          email: payload.email,
+          name: payload.recipientName,
+          phone: payload.phone,
+        })
+        .returning({
+          id: schema.customerProfile.id,
+        });
+
+  return customerProfile;
+};
+
 export const createOrderFromProductLink = async (
   commerceSlug: string,
   productLinkSlug: string,
-  payload: CheckoutOrderPayload
+  payload: CheckoutOrderPayload,
+  authenticatedBuyer?: AuthenticatedCheckoutBuyer
 ): Promise<CreateOrderResult | null> => {
   const record = await getPublicProductLinkCheckout(
     commerceSlug,
@@ -423,36 +522,11 @@ export const createOrderFromProductLink = async (
       );
     }
 
-    const [existingCustomer] = await tx
-      .select({
-        id: schema.customer.id,
-      })
-      .from(schema.customer)
-      .where(eq(schema.customer.email, payload.email));
-
-    const [customer] = existingCustomer
-      ? await tx
-          .update(schema.customer)
-          .set({
-            email: payload.email,
-            name: payload.recipientName,
-            phone: payload.phone,
-            updatedAt: new Date(),
-          })
-          .where(eq(schema.customer.id, existingCustomer.id))
-          .returning({
-            id: schema.customer.id,
-          })
-      : await tx
-          .insert(schema.customer)
-          .values({
-            email: payload.email,
-            name: payload.recipientName,
-            phone: payload.phone,
-          })
-          .returning({
-            id: schema.customer.id,
-          });
+    const customerProfile = await resolveOrderCustomerProfile(
+      tx,
+      payload,
+      authenticatedBuyer
+    );
 
     const [deliveryInfo] = await tx
       .insert(schema.deliveryInfo)
@@ -460,7 +534,7 @@ export const createOrderFromProductLink = async (
         addressLine1: payload.mode === "delivery" ? payload.addressLine1 : null,
         addressLine2: payload.mode === "delivery" ? payload.addressLine2 : null,
         city: payload.mode === "delivery" ? payload.city : null,
-        customerId: customer.id,
+        customerId: customerProfile.id,
         email: payload.email,
         mode: payload.mode,
         notes: payload.notes || null,
@@ -479,7 +553,7 @@ export const createOrderFromProductLink = async (
       .insert(schema.order)
       .values({
         commerceId: record.commerceId,
-        customerId: customer.id,
+        customerId: customerProfile.id,
         deliveryInfoId: deliveryInfo.id,
         expiresAt,
         fulfillmentType: payload.mode,

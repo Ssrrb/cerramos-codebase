@@ -1,6 +1,6 @@
 import "server-only";
 
-export { and, eq, gte, leftJoin } from "drizzle-orm";
+export { and, eq, gte } from "drizzle-orm";
 export { database, schema, sql } from "./client";
 export {
   isForeignKeyConstraintError,

@@ -1,4 +1,6 @@
 import React from "react";
+import { isGoogleAuthEnabled } from "@repo/auth/keys";
+import { getSession } from "@repo/auth/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
@@ -54,11 +56,20 @@ const ProductLinkCheckoutPage = async ({
   }
 
   const viewModel = createCheckoutViewModel(checkout);
+  const session = await getSession();
+  const initialAuthUser = session?.user.email
+    ? {
+        email: session.user.email,
+        name: session.user.name ?? null,
+      }
+    : null;
 
   return (
     <ProductLinkCheckoutClient
       commerceSlug={commerceSlug}
       deliveryEnabled={checkout.deliveryEnabled}
+      googleEnabled={isGoogleAuthEnabled()}
+      initialAuthUser={initialAuthUser}
       merchant={viewModel.merchant}
       orderSummary={viewModel.orderSummary}
       paymentRequired={checkout.paymentRequired}

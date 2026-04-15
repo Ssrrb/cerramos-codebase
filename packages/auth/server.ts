@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { log } from "@repo/observability/log";
+import { syncCustomerProfileForUser } from "./customer-profile";
 import { keys } from "./keys";
 import {
   AUTH_COOKIE_PREFIX,
@@ -41,7 +42,7 @@ export interface AuthContext {
 }
 
 const authKeys = keys();
-const trustedOrigins = buildTrustedOrigins([
+export const trustedOrigins = buildTrustedOrigins([
   authKeys.BETTER_AUTH_URL,
   process.env.NEXT_PUBLIC_APP_URL,
   process.env.NEXT_PUBLIC_WEB_URL,
@@ -67,6 +68,27 @@ export const betterAuthServer = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          await syncCustomerProfileForUser(session.userId);
+        },
+      },
+    },
+    user: {
+      create: {
+        after: async (user) => {
+          await syncCustomerProfileForUser(user.id);
+        },
+      },
+      update: {
+        after: async (user) => {
+          await syncCustomerProfileForUser(user.id);
+        },
+      },
+    },
+  },
   emailAndPassword: {
     autoSignIn: true,
     enabled: true,
@@ -119,6 +141,29 @@ type SessionResult = Awaited<
 const getSignInUrl = () =>
   authKeys.NEXT_PUBLIC_AUTH_SIGN_IN_URL ?? DEFAULT_AUTH_SIGN_IN_URL;
 
+const getErrorCauseChain = (error: unknown) => {
+  const messages: string[] = [];
+  const visited = new Set<unknown>();
+  let current: unknown = error;
+
+  while (current && typeof current === "object" && !visited.has(current)) {
+    visited.add(current);
+
+    const message =
+      "message" in current && typeof current.message === "string"
+        ? current.message
+        : null;
+
+    if (message && !messages.includes(message)) {
+      messages.push(message);
+    }
+
+    current = "cause" in current ? current.cause : undefined;
+  }
+
+  return messages;
+};
+
 const getSessionState = cache(async (): Promise<SessionResult> => {
   const requestHeaders = await headers();
 
@@ -127,10 +172,11 @@ const getSessionState = cache(async (): Promise<SessionResult> => {
       headers: requestHeaders,
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown session lookup failure";
+    const [errorMessage = "Unknown session lookup failure", ...errorCauseChain] =
+      getErrorCauseChain(error);
 
     log.warn("Better Auth session lookup failed", {
+      errorCauseChain,
       errorMessage,
     });
 
@@ -147,6 +193,16 @@ const getSessionToken = cache(async () => {
 });
 
 export const getSession = async () => getSessionState();
+
+export const getCurrentCustomerProfile = cache(async () => {
+  const session = await getSessionState();
+
+  if (!session?.user.id) {
+    return null;
+  }
+
+  return syncCustomerProfileForUser(session.user.id);
+});
 
 export const requireSession = async () => {
   const session = await getSessionState();

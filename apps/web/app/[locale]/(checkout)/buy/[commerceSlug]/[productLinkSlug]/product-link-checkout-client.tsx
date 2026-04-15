@@ -16,10 +16,16 @@ import {
 } from "@repo/design-system/components/ui/alert";
 import { ReceiptTextIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  CheckoutAuthAction,
+  type CheckoutAuthUser,
+} from "./checkout-auth-action";
 
 interface ProductLinkCheckoutClientProps {
   commerceSlug: string;
   deliveryEnabled: boolean;
+  googleEnabled?: boolean;
+  initialAuthUser?: CheckoutAuthUser | null;
   merchant: CheckoutMerchantSummary;
   orderSummary: CheckoutOrderSummary;
   paymentRequired: boolean;
@@ -44,6 +50,8 @@ const wait = (ms: number) =>
 export const ProductLinkCheckoutClient = ({
   commerceSlug,
   deliveryEnabled,
+  googleEnabled = false,
+  initialAuthUser = null,
   merchant,
   orderSummary,
   paymentRequired,
@@ -99,6 +107,12 @@ export const ProductLinkCheckoutClient = ({
 
   return (
     <CheckoutPage
+      accountAction={
+        <CheckoutAuthAction
+          googleEnabled={googleEnabled}
+          initialUser={initialAuthUser}
+        />
+      }
       confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado."
       defaultValues={{
         mode: deliveryEnabled ? "delivery" : "pickup",

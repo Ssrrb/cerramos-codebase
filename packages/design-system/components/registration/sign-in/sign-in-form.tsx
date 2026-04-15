@@ -22,6 +22,7 @@ export interface SignInFormViewProps {
   onEmailChange: (value: string) => void;
   onGoogleClick: () => void;
   onPasswordChange: (value: string) => void;
+  onSwitchToSignUp?: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onUseDifferentEmail: () => void;
   password: string;
@@ -65,6 +66,7 @@ export const SignInFormView = ({
   onEmailChange,
   onGoogleClick,
   onPasswordChange,
+  onSwitchToSignUp,
   onSubmit,
   onUseDifferentEmail,
   password,
@@ -184,12 +186,22 @@ export const SignInFormView = ({
           <div className="pt-2 text-center">
             <p className="text-muted-foreground text-sm">
               Don&apos;t have an account?{" "}
-              <a
-                className="font-medium text-foreground transition-colors hover:text-primary"
-                href={callbackHref}
-              >
-                Sign Up
-              </a>
+              {onSwitchToSignUp ? (
+                <button
+                  className="font-medium text-foreground transition-colors hover:text-primary"
+                  onClick={onSwitchToSignUp}
+                  type="button"
+                >
+                  Sign Up
+                </button>
+              ) : (
+                <a
+                  className="font-medium text-foreground transition-colors hover:text-primary"
+                  href={callbackHref}
+                >
+                  Sign Up
+                </a>
+              )}
             </p>
           </div>
         </div>

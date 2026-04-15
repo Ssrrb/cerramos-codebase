@@ -10,6 +10,7 @@ const {
   orderByMock,
   redirectMock,
   selectMock,
+  syncCustomerProfileForUserMock,
   whereMock,
 } = vi.hoisted(() => ({
   fromMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
     throw new Error(`redirect:${url}`);
   }),
   selectMock: vi.fn(),
+  syncCustomerProfileForUserMock: vi.fn(),
   whereMock: vi.fn(),
 }));
 
@@ -78,6 +80,10 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
+vi.mock("./customer-profile", () => ({
+  syncCustomerProfileForUser: syncCustomerProfileForUserMock,
+}));
+
 vi.mock("./keys", () => ({
   keys: () => ({
     AUTH_GOOGLE_CLIENT_ID: undefined,
@@ -100,6 +106,7 @@ describe("auth server commerce context", () => {
     orderByMock.mockReset();
     redirectMock.mockClear();
     selectMock.mockReset();
+    syncCustomerProfileForUserMock.mockReset();
     whereMock.mockReset();
 
     getSessionCookieMock.mockReturnValue("session_123");
@@ -128,11 +135,29 @@ describe("auth server commerce context", () => {
     expect(betterAuth).toHaveBeenCalled();
 
     const config = vi.mocked(betterAuth).mock.calls[0]?.[0];
+    const generateId = config?.advanced?.database?.generateId;
 
-    expect(config?.advanced?.database?.generateId).toBeTypeOf("function");
-    expect(config?.advanced?.database?.generateId?.({ model: "verification" })).toMatch(
+    expect(generateId).toBeTypeOf("function");
+    expect((generateId as (input: { model: string }) => string)({ model: "verification" })).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     );
+  });
+
+  test("wires Better Auth hooks to keep buyer customer profiles linked", async () => {
+    await import("./server");
+
+    const config = vi.mocked(betterAuth).mock.calls[0]?.[0];
+
+    await config?.databaseHooks?.user?.create?.after?.({ id: "user_1" } as any, null);
+    await config?.databaseHooks?.user?.update?.after?.({ id: "user_2" } as any, null);
+    await config?.databaseHooks?.session?.create?.after?.(
+      { userId: "user_3" } as any,
+      null
+    );
+
+    expect(syncCustomerProfileForUserMock).toHaveBeenNthCalledWith(1, "user_1");
+    expect(syncCustomerProfileForUserMock).toHaveBeenNthCalledWith(2, "user_2");
+    expect(syncCustomerProfileForUserMock).toHaveBeenNthCalledWith(3, "user_3");
   });
 
   test("returns authenticated app context from the active commerce record", async () => {

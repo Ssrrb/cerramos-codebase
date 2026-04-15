@@ -5,10 +5,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 const {
   createCheckoutViewModelMock,
   getPublicProductLinkCheckoutMock,
+  getSessionMock,
   notFoundMock,
 } = vi.hoisted(() => ({
   createCheckoutViewModelMock: vi.fn(),
   getPublicProductLinkCheckoutMock: vi.fn(),
+  getSessionMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
   }),
@@ -21,6 +23,14 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/product-links", () => ({
   createCheckoutViewModel: createCheckoutViewModelMock,
   getPublicProductLinkCheckout: getPublicProductLinkCheckoutMock,
+}));
+
+vi.mock("@repo/auth/keys", () => ({
+  isGoogleAuthEnabled: () => false,
+}));
+
+vi.mock("@repo/auth/server", () => ({
+  getSession: getSessionMock,
 }));
 
 vi.mock("./product-link-checkout-client", () => ({
@@ -55,7 +65,9 @@ describe("product link checkout page", () => {
     vi.resetModules();
     createCheckoutViewModelMock.mockReset();
     getPublicProductLinkCheckoutMock.mockReset();
+    getSessionMock.mockReset();
     notFoundMock.mockClear();
+    getSessionMock.mockResolvedValue(null);
   });
 
   test("generates noindex metadata for active checkout pages", async () => {
@@ -85,6 +97,12 @@ describe("product link checkout page", () => {
 
   test("renders the checkout client with the resolved server data", async () => {
     getPublicProductLinkCheckoutMock.mockResolvedValue(checkoutRecord);
+    getSessionMock.mockResolvedValue({
+      user: {
+        email: "buyer@example.com",
+        name: "Buyer Name",
+      },
+    });
     createCheckoutViewModelMock.mockReturnValue({
       merchant: {
         name: "Mate Shop",
@@ -110,6 +128,7 @@ describe("product link checkout page", () => {
 
     expect(html).toContain("mate-shop");
     expect(html).toContain("mate-premium");
+    expect(html).toContain("buyer@example.com");
     expect(html).toContain("paymentRequired&quot;:true");
   });
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
 import {
   checkoutOrderPayloadSchema,
   createOrderFromProductLink,
@@ -32,10 +33,20 @@ export const POST = async (
   const { commerceSlug, productLinkSlug } = await context.params;
 
   try {
+    const session = await getSession();
+    const customerProfile = session?.user.id
+      ? await getCurrentCustomerProfile()
+      : null;
     const order = await createOrderFromProductLink(
       commerceSlug,
       productLinkSlug,
-      result.data
+      result.data,
+      session?.user.id
+        ? {
+            customerId: customerProfile?.id ?? session.user.customerId ?? null,
+            userId: session.user.id,
+          }
+        : undefined
     );
 
     if (!order) {

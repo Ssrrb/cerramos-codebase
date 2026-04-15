@@ -24,6 +24,21 @@ vi.mock(
   })
 );
 
+vi.mock("./checkout-auth-action", () => ({
+  CheckoutAuthAction: ({
+    googleEnabled,
+    initialUser,
+  }: {
+    googleEnabled?: boolean;
+    initialUser?: { email: string; name?: string | null } | null;
+  }) => (
+    <div>
+      {googleEnabled ? "auth-enabled" : "auth-disabled"}:
+      {initialUser?.email ?? "guest"}
+    </div>
+  ),
+}));
+
 vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
   CheckoutPage: ({
     accountAction,
@@ -186,9 +201,27 @@ describe("product link checkout client", () => {
   test("renders the shared checkout page chrome props", () => {
     render(<ProductLinkCheckoutClient {...baseProps} />);
 
-    expect(screen.getByTestId("account-action").textContent).toBe("");
+    expect(screen.getByTestId("account-action").textContent).toBe(
+      "auth-disabled:guest"
+    );
     expect(screen.getByTestId("footer-content").textContent).toContain(
       "Powered by Cheki"
+    );
+  });
+
+  test("passes the server-resolved auth user into the checkout auth action", () => {
+    render(
+      <ProductLinkCheckoutClient
+        {...baseProps}
+        initialAuthUser={{
+          email: "buyer@example.com",
+          name: "Buyer",
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("account-action").textContent).toBe(
+      "auth-disabled:buyer@example.com"
     );
   });
 

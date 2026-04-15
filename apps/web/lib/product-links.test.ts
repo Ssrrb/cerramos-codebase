@@ -156,10 +156,12 @@ const productLinkTable = {
   title: "productLink.title",
   unitPrice: "productLink.unitPrice",
 };
-const customerTable = {
-  __name: "customer",
-  email: "customer.email",
-  id: "customer.id",
+const customerProfileTable = {
+  __name: "customerProfile",
+  email: "customerProfile.email",
+  id: "customerProfile.id",
+  name: "customerProfile.name",
+  userId: "customerProfile.userId",
 };
 const deliveryInfoTable = {
   __name: "deliveryInfo",
@@ -199,7 +201,7 @@ vi.mock("@repo/database", () => ({
   sql: sqlMock,
   schema: {
     commerce: commerceTable,
-    customer: customerTable,
+    customerProfile: customerProfileTable,
     deliveryInfo: deliveryInfoTable,
     order: orderTable,
     orderItem: orderItemTable,
@@ -577,7 +579,7 @@ describe("web product links", () => {
         insertedValues.push({ table: table.__name, values });
 
         switch (table.__name) {
-          case "customer":
+          case "customerProfile":
             return {
               returning: async () => [{ id: "customer_1" }],
             };
@@ -604,7 +606,7 @@ describe("web product links", () => {
         return {
           where: () => ({
             returning: async () =>
-              table.__name === "customer"
+              table.__name === "customerProfile"
                 ? [{ id: "customer_1" }]
                 : [{ stock: 2 }],
           }),
@@ -683,6 +685,102 @@ describe("web product links", () => {
     });
   });
 
+  test("uses the authenticated buyer customer profile when available", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([
+        {
+          email: "auth@example.com",
+          id: "customer_auth_1",
+          name: "Authenticated Buyer",
+        },
+      ]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+
+        switch (table.__name) {
+          case "deliveryInfo":
+            return {
+              returning: async () => [{ id: "delivery_1" }],
+            };
+          case "order":
+            return {
+              returning: async () => [{ id: "order_1" }],
+            };
+          case "paymentIntent":
+            return {
+              returning: async () => [{ id: "payment_1" }],
+            };
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    }));
+
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => ({
+        where: () => ({
+          returning: async () =>
+            table.__name === "product"
+              ? [{ stock: 2 }]
+              : [{ id: "customer_auth_1" }],
+        }),
+      }),
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+    await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      {
+        addressLine1: "",
+        addressLine2: "",
+        city: "",
+        email: "buyer@example.com",
+        mode: "pickup",
+        notes: "",
+        phone: "0981000000",
+        quantity: 3,
+        recipientName: "Buyer Name",
+        reference: "",
+      },
+      {
+        customerId: "customer_auth_1",
+        userId: "user_1",
+      }
+    );
+
+    const deliveryInsert = insertedValues.find(
+      ({ table }) => table === "deliveryInfo"
+    );
+    const orderInsert = insertedValues.find(({ table }) => table === "order");
+
+    expect(deliveryInsert?.values).toMatchObject({
+      customerId: "customer_auth_1",
+      email: "buyer@example.com",
+    });
+    expect(orderInsert?.values).toMatchObject({
+      customerId: "customer_auth_1",
+    });
+    expect(txSelectWhereMock).toHaveBeenCalledTimes(2);
+  });
+
   test("stores canonical object keys in order snapshots when the checkout source is a legacy route URL", async () => {
     selectWhereMock.mockResolvedValueOnce([
       {
@@ -705,7 +803,7 @@ describe("web product links", () => {
         insertedValues.push({ table: table.__name, values });
 
         switch (table.__name) {
-          case "customer":
+          case "customerProfile":
             return {
               returning: async () => [{ id: "customer_1" }],
             };
@@ -777,7 +875,7 @@ describe("web product links", () => {
         insertedTables.push(table.__name);
 
         switch (table.__name) {
-          case "customer":
+          case "customerProfile":
             return {
               returning: async () => [{ id: "customer_1" }],
             };
@@ -807,7 +905,9 @@ describe("web product links", () => {
       set: () => ({
         where: () => ({
           returning: async () =>
-            table.__name === "customer" ? [{ id: "customer_1" }] : [{ stock: 4 }],
+            table.__name === "customerProfile"
+              ? [{ id: "customer_1" }]
+              : [{ stock: 4 }],
         }),
       }),
     }));

@@ -1,5 +1,6 @@
 export { AuthChrome } from "./auth-chrome";
 export { AuthLegalLinks } from "./auth-legal-links";
+export { AuthModal } from "./auth-modal";
 export { CommerceOnboardingFormView } from "./commerce-onboarding-form";
 export { CerramosLogo } from "./cerramos-logo";
 export { SignInFormView } from "./sign-in/sign-in-form";

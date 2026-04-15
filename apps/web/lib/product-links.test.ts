@@ -163,6 +163,22 @@ const customerProfileTable = {
   name: "customerProfile.name",
   userId: "customerProfile.userId",
 };
+const countryTable = {
+  __name: "country",
+  id: "country.id",
+  isoCode2: "country.isoCode2",
+};
+const stateTable = {
+  __name: "state",
+  countryId: "state.countryId",
+  id: "state.id",
+};
+const cityTable = {
+  __name: "city",
+  id: "city.id",
+  name: "city.name",
+  stateId: "city.stateId",
+};
 const deliveryInfoTable = {
   __name: "deliveryInfo",
   id: "deliveryInfo.id",
@@ -200,7 +216,9 @@ vi.mock("@repo/database", () => ({
   leftJoin: leftJoinMock,
   sql: sqlMock,
   schema: {
+    city: cityTable,
     commerce: commerceTable,
+    country: countryTable,
     customerProfile: customerProfileTable,
     deliveryInfo: deliveryInfoTable,
     order: orderTable,
@@ -210,6 +228,7 @@ vi.mock("@repo/database", () => ({
     product: productTable,
     productImage: productImageTable,
     productLink: productLinkTable,
+    state: stateTable,
   },
 }));
 
@@ -285,6 +304,7 @@ describe("web product links", () => {
       where: txSelectWhereMock,
     }));
     txSelectJoinMock.mockImplementation(() => ({
+      innerJoin: txSelectJoinMock,
       where: txSelectWhereMock,
     }));
     txUpdateMock.mockImplementation((table: { __name?: string }) => ({
@@ -567,7 +587,15 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([baseRecord]);
     txSelectWhereMock
       .mockResolvedValueOnce([{ stock: 5 }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          cityId: "city_asuncion",
+          cityName: "Asunción",
+          countryId: "country_py",
+          stateId: "state_capital",
+        },
+      ]);
 
     const insertedValues: Array<{
       table: string;
@@ -648,6 +676,9 @@ describe("web product links", () => {
     });
 
     const orderInsert = insertedValues.find(({ table }) => table === "order");
+    const deliveryInsert = insertedValues.find(
+      ({ table }) => table === "deliveryInfo"
+    );
     const orderItemInsert = insertedValues.find(
       ({ table }) => table === "orderItem"
     );
@@ -664,6 +695,14 @@ describe("web product links", () => {
       quantity: 3,
       subtotal: 435_000,
       total: 435_000,
+    });
+    expect(deliveryInsert?.values).toMatchObject({
+      cityId: "city_asuncion",
+      countryId: "country_py",
+      referenceNote: "Depto 2",
+      stateId: "state_capital",
+      streetLine1: "Buyer street",
+      streetLine2: null,
     });
     expect(orderItemInsert?.values).toMatchObject({
       description: "Server description",
@@ -791,7 +830,15 @@ describe("web product links", () => {
     ]);
     txSelectWhereMock
       .mockResolvedValueOnce([{ stock: 5 }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          cityId: "city_asuncion",
+          cityName: "Asunción",
+          countryId: "country_py",
+          stateId: "state_capital",
+        },
+      ]);
 
     const insertedValues: Array<{
       table: string;

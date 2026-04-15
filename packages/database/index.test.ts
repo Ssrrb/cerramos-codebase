@@ -22,6 +22,38 @@ const database = drizzle({
 const createTextId = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+const insertParaguayGeography = async (suffix: string) => {
+  const countryId = `country_py_${suffix}`;
+  const stateId = `state_capital_${suffix}`;
+  const cityId = `city_asuncion_${suffix}`;
+
+  await database.insert(schema.country).values({
+    id: countryId,
+    isoCode2: `PY-${suffix}`,
+    isoCode3: `PRY-${suffix}`,
+    name: `Paraguay ${suffix}`,
+  });
+
+  await database.insert(schema.state).values({
+    code: `CAP-${suffix.slice(0, 4)}`,
+    countryId,
+    id: stateId,
+    name: `Capital ${suffix}`,
+  });
+
+  await database.insert(schema.city).values({
+    id: cityId,
+    name: `Asuncion ${suffix}`,
+    stateId,
+  });
+
+  return {
+    cityId,
+    countryId,
+    stateId,
+  };
+};
+
 const insertProductWithPrimaryImage = async ({
   commerceId,
   description = "Descripcion",
@@ -314,6 +346,7 @@ databaseTest(
   "orders and delivery records still attach to customer profiles",
   async () => {
     const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const geography = await insertParaguayGeography(suffix);
     const [commerce] = await database
       .insert(schema.commerce)
       .values({
@@ -356,12 +389,14 @@ databaseTest(
     const [deliveryInfo] = await database
       .insert(schema.deliveryInfo)
       .values({
-        addressLine1: "Calle Principal 123",
-        city: "Asuncion",
+        cityId: geography.cityId,
+        countryId: geography.countryId,
         customerId: customerProfileId,
         email: `buyer-${suffix}@example.com`,
         mode: "delivery",
         phone: "0981444555",
+        stateId: geography.stateId,
+        streetLine1: "Calle Principal 123",
         recipientName: "Buyer Profile",
       })
       .returning({ id: schema.deliveryInfo.id });
@@ -408,6 +443,45 @@ databaseTest(
     });
   }
 );
+
+databaseTest("customer addresses allow only one default per customer", async () => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const geography = await insertParaguayGeography(suffix);
+  const customerProfileId = createTextId("customer_profile");
+
+  await database.insert(schema.customerProfile).values({
+    email: `address-${suffix}@example.com`,
+    id: customerProfileId,
+    name: "Address Holder",
+    phone: "0981555666",
+  });
+
+  await database.insert(schema.customerAddress).values({
+    cityId: geography.cityId,
+    countryId: geography.countryId,
+    customerId: customerProfileId,
+    isDefault: true,
+    label: "Casa",
+    recipientName: "Address Holder",
+    stateId: geography.stateId,
+    streetLine1: "Calle Principal 123",
+  });
+
+  await expect(
+    database.insert(schema.customerAddress).values({
+      cityId: geography.cityId,
+      countryId: geography.countryId,
+      customerId: customerProfileId,
+      isDefault: true,
+      label: "Trabajo",
+      recipientName: "Address Holder",
+      stateId: geography.stateId,
+      streetLine1: "Avenida Secundaria 456",
+    })
+  ).rejects.toMatchObject({
+    cause: { code: "23505" },
+  });
+});
 
 databaseTest("user mirror updates keep profile tables in sync", async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

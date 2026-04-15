@@ -1,5 +1,9 @@
 "use client";
 
+// TODO(address-normalization): delete this hardcoded Paraguay city/barrio map
+// once checkout loads canonical country/state/city records from the database
+// and maps neighborhood/apartment detail into streetLine2 instead of treating
+// barrio as a structured geography level.
 const paraguayCityBarrios = {
   Asunción: [
     "Barrio Jara",

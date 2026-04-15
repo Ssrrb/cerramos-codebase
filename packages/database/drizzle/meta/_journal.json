@@ -92,6 +92,13 @@
       "when": 1776267600000,
       "tag": "0012_fix_customer_profile_relink",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776211200000,
+      "tag": "0013_normalize_checkout_addresses",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,10 @@ function CheckoutLocationFields<TFieldValues extends FieldValues>({
   names,
   requiredCityMessage,
 }: CheckoutLocationFieldsProps<TFieldValues>) {
+  // TODO(address-normalization): replace the hardcoded Paraguay city -> barrio
+  // selectors with database-backed country/state/city inputs wired to
+  // canonical ids. Barrio-specific behavior should be removed in favor of the
+  // normalized streetLine2 field once checkout submits the new address model.
   const city = useWatch({
     control,
     name: names.city,

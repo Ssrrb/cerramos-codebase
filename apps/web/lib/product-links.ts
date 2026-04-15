@@ -15,25 +15,76 @@ import { cache } from "react";
 import { z } from "zod";
 import { normalizeCheckoutCommerceLogoUrl } from "@/lib/commerce";
 
-export const checkoutOrderPayloadSchema = z
-  .object({
+const checkoutOrderPayloadBaseSchema = z.object({
+  email: z.string().trim().email({ message: "Ingresa un email valido." }),
+  mode: z.enum(["delivery", "pickup"], {
+    error: "Selecciona una modalidad valida.",
+  }),
+  notes: z.string().trim().max(400).default(""),
+  phone: z.string().trim().min(1, {
+    message: "Ingresa un telefono valido.",
+  }),
+  quantity: z.coerce.number().int().min(1, {
+    message: "Selecciona una cantidad valida.",
+  }),
+  recipientName: z.string().trim().min(1, {
+    message: "Ingresa el nombre de quien recibe el pedido.",
+  }),
+});
+
+const normalizedCheckoutOrderPayloadSchema = checkoutOrderPayloadBaseSchema
+  .extend({
+    countryId: z.string().trim().max(64).default(""),
+    stateId: z.string().trim().max(64).default(""),
+    cityId: z.string().trim().max(64).default(""),
+    streetLine1: z.string().trim().max(160).default(""),
+    streetLine2: z.string().trim().max(160).default(""),
+    postalCode: z.string().trim().max(32).default(""),
+    referenceNote: z.string().trim().max(160).default(""),
+  })
+  .superRefine((value, context) => {
+    if (value.mode !== "delivery") {
+      return;
+    }
+
+    if (!value.countryId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Indicá el pais de entrega.",
+        path: ["countryId"],
+      });
+    }
+
+    if (!value.stateId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Indicá el departamento o estado de entrega.",
+        path: ["stateId"],
+      });
+    }
+
+    if (!value.cityId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Indicá la ciudad de entrega.",
+        path: ["cityId"],
+      });
+    }
+
+    if (!value.streetLine1) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresá la direccion de entrega.",
+        path: ["streetLine1"],
+      });
+    }
+  });
+
+const legacyCheckoutOrderPayloadSchema = checkoutOrderPayloadBaseSchema
+  .extend({
     addressLine1: z.string().trim().max(160).default(""),
     addressLine2: z.string().trim().max(160).default(""),
     city: z.string().trim().max(120).default(""),
-    email: z.string().trim().email({ message: "Ingresa un email valido." }),
-    mode: z.enum(["delivery", "pickup"], {
-      error: "Selecciona una modalidad valida.",
-    }),
-    notes: z.string().trim().max(400).default(""),
-    phone: z.string().trim().min(1, {
-      message: "Ingresa un telefono valido.",
-    }),
-    quantity: z.coerce.number().int().min(1, {
-      message: "Selecciona una cantidad valida.",
-    }),
-    recipientName: z.string().trim().min(1, {
-      message: "Ingresa el nombre de quien recibe el pedido.",
-    }),
     reference: z.string().trim().max(160).default(""),
   })
   .superRefine((value, context) => {
@@ -57,6 +108,11 @@ export const checkoutOrderPayloadSchema = z
       });
     }
   });
+
+export const checkoutOrderPayloadSchema = z.union([
+  normalizedCheckoutOrderPayloadSchema,
+  legacyCheckoutOrderPayloadSchema,
+]);
 
 export type CheckoutOrderPayload = z.infer<typeof checkoutOrderPayloadSchema>;
 
@@ -112,6 +168,20 @@ const formatPriceLabel = (value: number) =>
 
 const OUT_OF_STOCK_ERROR = "Este producto se quedó sin stock.";
 const EXCEEDS_STOCK_ERROR = "La cantidad seleccionada supera el stock disponible.";
+const PARAGUAY_ISO_CODE_2 = "PY";
+const LEGACY_PARAGUAY_CITY_ALIASES: Record<string, string> = {
+  mariano: "mariano roque alonso",
+};
+
+interface ResolvedDeliveryAddress {
+  cityId: string | null;
+  countryId: string | null;
+  postalCode: string | null;
+  referenceNote: string | null;
+  stateId: string | null;
+  streetLine1: string | null;
+  streetLine2: string | null;
+}
 
 const buildPublicProductImagePath = (objectKey: string) =>
   `/api/product-link-images?objectKey=${encodeURIComponent(objectKey)}`;
@@ -378,6 +448,13 @@ const getAuthenticatedCustomerProfile = async (
   return customerProfile ?? null;
 };
 
+const normalizeLocationKey = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
 const resolveOrderCustomerProfile = async (
   tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
   payload: CheckoutOrderPayload,
@@ -439,6 +516,94 @@ const resolveOrderCustomerProfile = async (
         });
 
   return customerProfile;
+};
+
+const resolveDeliveryAddress = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  payload: CheckoutOrderPayload
+): Promise<ResolvedDeliveryAddress> => {
+  if (payload.mode === "pickup") {
+    return {
+      cityId: null,
+      countryId: null,
+      postalCode: null,
+      referenceNote: null,
+      stateId: null,
+      streetLine1: null,
+      streetLine2: null,
+    };
+  }
+
+  if ("countryId" in payload) {
+    const [resolvedCity] = await tx
+      .select({
+        cityId: schema.city.id,
+        countryId: schema.country.id,
+        stateId: schema.state.id,
+      })
+      .from(schema.city)
+      .innerJoin(schema.state, eq(schema.city.stateId, schema.state.id))
+      .innerJoin(
+        schema.country,
+        eq(schema.state.countryId, schema.country.id)
+      )
+      .where(eq(schema.city.id, payload.cityId));
+
+    if (
+      !resolvedCity ||
+      resolvedCity.stateId !== payload.stateId ||
+      resolvedCity.countryId !== payload.countryId
+    ) {
+      throw new ProductLinkCheckoutError(
+        "La ciudad de entrega no coincide con el departamento y pais seleccionados."
+      );
+    }
+
+    return {
+      cityId: payload.cityId,
+      countryId: payload.countryId,
+      postalCode: payload.postalCode || null,
+      referenceNote: payload.referenceNote || null,
+      stateId: payload.stateId,
+      streetLine1: payload.streetLine1,
+      streetLine2: payload.streetLine2 || null,
+    };
+  }
+
+  // TODO: remove this legacy Paraguay resolver after checkout submits
+  // canonical country/state/city ids instead of hardcoded city/barrio values.
+  const paraguayCities = await tx
+    .select({
+      cityId: schema.city.id,
+      cityName: schema.city.name,
+      countryId: schema.country.id,
+      stateId: schema.state.id,
+    })
+    .from(schema.city)
+    .innerJoin(schema.state, eq(schema.city.stateId, schema.state.id))
+    .innerJoin(schema.country, eq(schema.state.countryId, schema.country.id))
+    .where(eq(schema.country.isoCode2, PARAGUAY_ISO_CODE_2));
+
+  const requestedCityKey = normalizeLocationKey(payload.city);
+  const canonicalCityKey =
+    LEGACY_PARAGUAY_CITY_ALIASES[requestedCityKey] ?? requestedCityKey;
+  const resolvedCity = paraguayCities.find(
+    (candidate) => normalizeLocationKey(candidate.cityName) === canonicalCityKey
+  );
+
+  if (!resolvedCity) {
+    throw new ProductLinkCheckoutError("Indicá una ciudad de entrega valida.");
+  }
+
+  return {
+    cityId: resolvedCity.cityId,
+    countryId: resolvedCity.countryId,
+    postalCode: null,
+    referenceNote: payload.reference || null,
+    stateId: resolvedCity.stateId,
+    streetLine1: payload.addressLine1,
+    streetLine2: payload.addressLine2 || null,
+  };
 };
 
 export const createOrderFromProductLink = async (
@@ -527,20 +692,24 @@ export const createOrderFromProductLink = async (
       payload,
       authenticatedBuyer
     );
+    const deliveryAddress = await resolveDeliveryAddress(tx, payload);
 
     const [deliveryInfo] = await tx
       .insert(schema.deliveryInfo)
       .values({
-        addressLine1: payload.mode === "delivery" ? payload.addressLine1 : null,
-        addressLine2: payload.mode === "delivery" ? payload.addressLine2 : null,
-        city: payload.mode === "delivery" ? payload.city : null,
+        cityId: deliveryAddress.cityId,
+        countryId: deliveryAddress.countryId,
         customerId: customerProfile.id,
         email: payload.email,
         mode: payload.mode,
         notes: payload.notes || null,
+        postalCode: deliveryAddress.postalCode,
         phone: payload.phone,
+        referenceNote: deliveryAddress.referenceNote,
         recipientName: payload.recipientName,
-        reference: payload.mode === "delivery" ? payload.reference : null,
+        stateId: deliveryAddress.stateId,
+        streetLine1: deliveryAddress.streetLine1,
+        streetLine2: deliveryAddress.streetLine2,
       })
       .returning({
         id: schema.deliveryInfo.id,

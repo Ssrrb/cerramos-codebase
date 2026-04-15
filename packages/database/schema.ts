@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   boolean,
@@ -424,6 +425,100 @@ export const customerConsent = pgTable(
   (table) => [index("CustomerConsent_customerId_idx").on(table.customerId)]
 );
 
+export const country = pgTable(
+  "Country",
+  {
+    id: cuidPrimaryKey(),
+    isoCode2: text("isoCode2").notNull(),
+    isoCode3: text("isoCode3"),
+    name: text("name").notNull(),
+    isActive: boolean("isActive").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("Country_isoCode2_key").on(table.isoCode2),
+    uniqueIndex("Country_name_key").on(table.name),
+  ]
+);
+
+export const state = pgTable(
+  "State",
+  {
+    id: cuidPrimaryKey(),
+    countryId: text("countryId")
+      .notNull()
+      .references(() => country.id, { onDelete: "restrict" }),
+    code: text("code"),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("State_countryId_idx").on(table.countryId),
+    uniqueIndex("State_countryId_name_key").on(table.countryId, table.name),
+    uniqueIndex("State_countryId_code_key")
+      .on(table.countryId, table.code)
+      .where(sql`${table.code} is not null`),
+  ]
+);
+
+export const city = pgTable(
+  "City",
+  {
+    id: cuidPrimaryKey(),
+    stateId: text("stateId")
+      .notNull()
+      .references(() => state.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("City_stateId_idx").on(table.stateId),
+    uniqueIndex("City_stateId_name_key").on(table.stateId, table.name),
+  ]
+);
+
+export const customerAddress = pgTable(
+  "CustomerAddress",
+  {
+    id: cuidPrimaryKey(),
+    customerId: text("customerId")
+      .notNull()
+      .references(() => customerProfile.id, { onDelete: "cascade" }),
+    countryId: text("countryId")
+      .notNull()
+      .references(() => country.id, { onDelete: "restrict" }),
+    stateId: text("stateId")
+      .notNull()
+      .references(() => state.id, { onDelete: "restrict" }),
+    cityId: text("cityId")
+      .notNull()
+      .references(() => city.id, { onDelete: "restrict" }),
+    streetLine1: text("streetLine1").notNull(),
+    streetLine2: text("streetLine2"),
+    referenceNote: text("referenceNote"),
+    postalCode: text("postalCode"),
+    recipientName: text("recipientName"),
+    phone: text("phone"),
+    label: text("label"),
+    isDefault: boolean("isDefault").notNull().default(false),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("CustomerAddress_customerId_idx").on(table.customerId),
+    index("CustomerAddress_customerId_cityId_idx").on(
+      table.customerId,
+      table.cityId
+    ),
+    uniqueIndex("CustomerAddress_customerId_default_key")
+      .on(table.customerId)
+      .where(sql`${table.isDefault} = true`),
+  ]
+);
+
 export const deliveryInfo = pgTable(
   "DeliveryInfo",
   {
@@ -435,15 +530,31 @@ export const deliveryInfo = pgTable(
     recipientName: text("recipientName").notNull(),
     email: text("email").notNull(),
     phone: text("phone").notNull(),
-    addressLine1: text("addressLine1"),
-    addressLine2: text("addressLine2"),
-    city: text("city"),
-    reference: text("reference"),
+    countryId: text("countryId").references(() => country.id, {
+      onDelete: "restrict",
+    }),
+    stateId: text("stateId").references(() => state.id, {
+      onDelete: "restrict",
+    }),
+    cityId: text("cityId").references(() => city.id, {
+      onDelete: "restrict",
+    }),
+    streetLine1: text("streetLine1"),
+    streetLine2: text("streetLine2"),
+    referenceNote: text("referenceNote"),
+    postalCode: text("postalCode"),
     notes: text("notes"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("DeliveryInfo_customerId_idx").on(table.customerId)]
+  (table) => [
+    index("DeliveryInfo_customerId_idx").on(table.customerId),
+    index("DeliveryInfo_countryId_stateId_cityId_idx").on(
+      table.countryId,
+      table.stateId,
+      table.cityId
+    ),
+  ]
 );
 
 export const order = pgTable(

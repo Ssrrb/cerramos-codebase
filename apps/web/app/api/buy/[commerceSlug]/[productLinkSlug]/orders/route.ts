@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
+import { NextResponse } from "next/server";
 import {
   checkoutOrderPayloadSchema,
   createOrderFromProductLink,

@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import {
   AuthChrome,
   CommerceOnboardingFormView,
   SignInFormView,
   SignUpFormView,
 } from "@repo/design-system/components/registration";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof SignInFormView> = {
   title: "registration/Registration",

@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import * as React from "react";
 import {
   afterAll,
   afterEach,

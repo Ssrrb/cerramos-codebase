@@ -1,15 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
 import {
   Dialog,
-  DialogTitle,
-  DialogDescription,
   DialogContent,
+  DialogDescription,
   DialogHeader,
+  DialogTitle,
 } from "@repo/design-system/components/ui/dialog";
-import { SignUpFormView } from "./sign-up/sign-up-form";
+import type { ReactNode } from "react";
 import { SignInFormView } from "./sign-in/sign-in-form";
+import { SignUpFormView } from "./sign-up/sign-up-form";
 
 export type AuthModalType = "sign-in" | "sign-up";
 
@@ -39,9 +39,9 @@ export const AuthModal = ({
       : "Sign in to access your dashboard.");
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[32.5rem] p-0 overflow-hidden border-border/80 bg-background">
-        <DialogHeader className="px-6 py-4 border-b border-border/50 bg-muted/30">
+    <Dialog onOpenChange={(open) => !open && onClose()} open={isOpen}>
+      <DialogContent className="max-w-[32.5rem] overflow-hidden border-border/80 bg-background p-0">
+        <DialogHeader className="border-border/50 border-b bg-muted/30 px-6 py-4">
           <DialogTitle className="text-xl">{resolvedTitle}</DialogTitle>
           <DialogDescription>{resolvedDescription}</DialogDescription>
         </DialogHeader>
@@ -52,29 +52,29 @@ export const AuthModal = ({
                 accountHref="#"
                 email=""
                 name=""
-                password=""
-                step="account"
-                usage="explore"
                 onBack={() => {}}
                 onEmailChange={() => {}}
+                onGoogleClick={() => {}}
                 onNameChange={() => {}}
                 onPasswordChange={() => {}}
                 onSubmit={(event) => event.preventDefault()}
-                onGoogleClick={() => {}}
                 onUsageChange={() => {}}
+                password=""
+                step="account"
+                usage="explore"
               />
             ) : (
               <SignInFormView
                 callbackHref="#"
                 email=""
                 googleEnabled
-                password=""
-                step="email"
                 onEmailChange={() => {}}
                 onGoogleClick={() => {}}
                 onPasswordChange={() => {}}
                 onSubmit={(event) => event.preventDefault()}
                 onUseDifferentEmail={() => {}}
+                password=""
+                step="email"
               />
             ))}
         </div>

@@ -1,7 +1,12 @@
 "use client";
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "./ui/chart";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "./ui/chart";
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -24,7 +29,7 @@ const chartConfig = {
 
 const AppLineChart = () => {
   return (
-    <ChartContainer config={chartConfig} className="mt-6">
+    <ChartContainer className="mt-6" config={chartConfig}>
       <LineChart
         accessibilityLayer
         data={chartData}
@@ -35,31 +40,27 @@ const AppLineChart = () => {
       >
         <CartesianGrid vertical={false} />
         <XAxis
+          axisLine={false}
           dataKey="month"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
           tickFormatter={(value) => value.slice(0, 3)}
-        />
-        <YAxis
           tickLine={false}
-          axisLine={false}
           tickMargin={8}
         />
-        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+        <YAxis axisLine={false} tickLine={false} tickMargin={8} />
+        <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
         <Line
           dataKey="desktop"
-          type="monotone"
+          dot={false}
           stroke="var(--color-desktop)"
           strokeWidth={2}
-          dot={false}
+          type="monotone"
         />
         <Line
           dataKey="mobile"
-          type="monotone"
+          dot={false}
           stroke="var(--color-mobile)"
           strokeWidth={2}
-          dot={false}
+          type="monotone"
         />
       </LineChart>
     </ChartContainer>

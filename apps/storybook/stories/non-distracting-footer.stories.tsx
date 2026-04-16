@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { NonDistractingFooter } from "@repo/design-system/components/layout/non-distracting-footer";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof NonDistractingFooter> = {
   title: "Layout/NonDistractingFooter",
@@ -19,7 +19,7 @@ export const Default: Story = {
 export const WithCustomContent: Story = {
   args: {
     children: (
-      <div className="text-sm text-zinc-300 font-medium">
+      <div className="font-medium text-sm text-zinc-300">
         Powered by Cerramos
       </div>
     ),

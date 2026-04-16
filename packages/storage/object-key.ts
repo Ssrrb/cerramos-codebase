@@ -82,7 +82,10 @@ export const normalizeStorageObjectKey = ({
     return "";
   }
 
-  const normalizedValue = normalizeBucketPrefixedValue(trimmedValue, bucketName);
+  const normalizedValue = normalizeBucketPrefixedValue(
+    trimmedValue,
+    bucketName
+  );
 
   if (!hasAllowedPrefix(normalizedValue, allowedPrefixes)) {
     return "";

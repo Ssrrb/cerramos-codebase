@@ -1,12 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextResponse } from "next/server";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { requireCommerceContextForRequestMock, createSignedReadUrlMock, fetchMock } =
-  vi.hoisted(() => ({
-    createSignedReadUrlMock: vi.fn(),
-    fetchMock: vi.fn(),
-    requireCommerceContextForRequestMock: vi.fn(),
-  }));
+const {
+  requireCommerceContextForRequestMock,
+  createSignedReadUrlMock,
+  fetchMock,
+} = vi.hoisted(() => ({
+  createSignedReadUrlMock: vi.fn(),
+  fetchMock: vi.fn(),
+  requireCommerceContextForRequestMock: vi.fn(),
+}));
 
 vi.mock("@repo/auth/server", () => ({
   requireCommerceContextForRequest: requireCommerceContextForRequestMock,

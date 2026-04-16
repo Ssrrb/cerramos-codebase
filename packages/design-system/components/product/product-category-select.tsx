@@ -1,13 +1,10 @@
-"use client"
+"use client";
 
-import { useId, useState } from "react"
 import type {
-  ControllerRenderProps,
-  FieldPath,
-  FieldValues,
-} from "react-hook-form"
-
-import { Button } from "@repo/design-system/components/ui/button"
+  ProductFieldProps,
+  ProductSelectOption,
+} from "@repo/design-system/components/product/types";
+import { Button } from "@repo/design-system/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -15,29 +12,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/design-system/components/ui/form"
-import { Input } from "@repo/design-system/components/ui/input"
+} from "@repo/design-system/components/ui/form";
+import { Input } from "@repo/design-system/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/design-system/components/ui/select"
+} from "@repo/design-system/components/ui/select";
+import { useId, useState } from "react";
 import type {
-  ProductFieldProps,
-  ProductSelectOption,
-} from "@repo/design-system/components/product/types"
+  ControllerRenderProps,
+  FieldPath,
+  FieldValues,
+} from "react-hook-form";
 
-const CUSTOM_CATEGORY_VALUE = "__custom__"
+const CUSTOM_CATEGORY_VALUE = "__custom__";
 
 type ProductCategorySelectProps<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues>,
 > = ProductFieldProps<TFieldValues, TName> & {
-  emptyStateLabel?: string
-  options: ProductSelectOption[]
-}
+  emptyStateLabel?: string;
+  options: ProductSelectOption[];
+};
 
 function ProductCategorySelect<
   TFieldValues extends FieldValues,
@@ -51,7 +50,7 @@ function ProductCategorySelect<
   name,
   options,
 }: ProductCategorySelectProps<TFieldValues, TName>) {
-  const customInputId = useId()
+  const customInputId = useId();
 
   return (
     <FormField
@@ -69,18 +68,18 @@ function ProductCategorySelect<
         />
       )}
     />
-  )
+  );
 }
 
 type CategorySelectControlProps = {
-  customInputId: string
-  description: string
-  disabled?: boolean
-  emptyStateLabel: string
-  field: ControllerRenderProps<any, any>
-  label: string
-  options: ProductSelectOption[]
-}
+  customInputId: string;
+  description: string;
+  disabled?: boolean;
+  emptyStateLabel: string;
+  field: ControllerRenderProps<any, any>;
+  label: string;
+  options: ProductSelectOption[];
+};
 
 function CategorySelectControl({
   customInputId,
@@ -91,12 +90,16 @@ function CategorySelectControl({
   label,
   options,
 }: CategorySelectControlProps) {
-  const hasMatchingOption = options.some((option) => option.value === field.value)
+  const hasMatchingOption = options.some(
+    (option) => option.value === field.value
+  );
   const [isCustom, setIsCustom] = useState(
     Boolean(field.value) && !hasMatchingOption
-  )
+  );
 
-  const selectedValue = isCustom ? CUSTOM_CATEGORY_VALUE : field.value || undefined
+  const selectedValue = isCustom
+    ? CUSTOM_CATEGORY_VALUE
+    : field.value || undefined;
 
   return (
     <FormItem>
@@ -107,17 +110,17 @@ function CategorySelectControl({
             disabled={disabled}
             onValueChange={(value) => {
               if (value === CUSTOM_CATEGORY_VALUE) {
-                setIsCustom(true)
+                setIsCustom(true);
 
                 if (hasMatchingOption) {
-                  field.onChange("")
+                  field.onChange("");
                 }
 
-                return
+                return;
               }
 
-              setIsCustom(false)
-              field.onChange(value)
+              setIsCustom(false);
+              field.onChange(value);
             }}
             value={selectedValue}
           >
@@ -142,8 +145,11 @@ function CategorySelectControl({
             </SelectContent>
           </Select>
           {isCustom ? (
-            <div className="space-y-2 rounded-xl border border-dashed border-border/80 bg-background px-3 py-3">
-              <label className="text-muted-foreground text-sm" htmlFor={customInputId}>
+            <div className="space-y-2 rounded-xl border border-border/80 border-dashed bg-background px-3 py-3">
+              <label
+                className="text-muted-foreground text-sm"
+                htmlFor={customInputId}
+              >
                 Categoria personalizada
               </label>
               <Input
@@ -156,8 +162,8 @@ function CategorySelectControl({
               <Button
                 disabled={disabled}
                 onClick={() => {
-                  setIsCustom(false)
-                  field.onChange(options[0]?.value ?? "")
+                  setIsCustom(false);
+                  field.onChange(options[0]?.value ?? "");
                 }}
                 type="button"
                 variant="ghost"
@@ -171,7 +177,7 @@ function CategorySelectControl({
       <FormDescription>{description}</FormDescription>
       <FormMessage />
     </FormItem>
-  )
+  );
 }
 
-export { ProductCategorySelect }
+export { ProductCategorySelect };

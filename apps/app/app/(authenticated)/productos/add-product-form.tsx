@@ -141,7 +141,9 @@ export const AddProductForm = ({
   const initialValues = useMemo(() => toInitialFormValues(product), [product]);
   const form = useForm<AddProductFormValues>({
     defaultValues: initialValues,
-    resolver: zodResolver(addProductFormSchema) as Resolver<AddProductFormValues>,
+    resolver: zodResolver(
+      addProductFormSchema
+    ) as Resolver<AddProductFormValues>,
   });
 
   useEffect(() => {

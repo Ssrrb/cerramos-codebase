@@ -22,8 +22,8 @@ export interface SignInFormViewProps {
   onEmailChange: (value: string) => void;
   onGoogleClick: () => void;
   onPasswordChange: (value: string) => void;
-  onSwitchToSignUp?: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSwitchToSignUp?: () => void;
   onUseDifferentEmail: () => void;
   password: string;
   privacyUrl?: string;

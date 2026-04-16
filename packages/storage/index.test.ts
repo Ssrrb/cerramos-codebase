@@ -77,7 +77,9 @@ describe("@repo/storage", () => {
   test("builds a deterministic object key shape", async () => {
     const randomUuidSpy = vi
       .spyOn(globalThis.crypto, "randomUUID")
-      .mockReturnValue("uuid-123" as `${string}-${string}-${string}-${string}-${string}`);
+      .mockReturnValue(
+        "uuid-123" as `${string}-${string}-${string}-${string}-${string}`
+      );
     const { buildObjectKey } = await import("./index");
 
     expect(
@@ -106,7 +108,9 @@ describe("@repo/storage", () => {
       projectId: undefined,
     });
     expect(bucketMock).toHaveBeenCalledWith("cerramos-assets");
-    expect(fileMock).toHaveBeenCalledWith("products/commerce_1/images/object.png");
+    expect(fileMock).toHaveBeenCalledWith(
+      "products/commerce_1/images/object.png"
+    );
     expect(getSignedUrlMock).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "write",
@@ -157,12 +161,15 @@ describe("@repo/storage", () => {
     ).resolves.toBe(true);
 
     expect(bucketMock).toHaveBeenCalledWith("cerramos-assets");
-    expect(fileMock).toHaveBeenCalledWith("products/commerce_1/images/object.png");
+    expect(fileMock).toHaveBeenCalledWith(
+      "products/commerce_1/images/object.png"
+    );
     expect(existsMock).toHaveBeenCalledTimes(1);
   });
 
   test("uses the configured credential file when present", async () => {
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/cerramos-service-account.json";
+    process.env.GOOGLE_APPLICATION_CREDENTIALS =
+      "/tmp/cerramos-service-account.json";
     existsSyncMock.mockImplementation(
       (path: string) => path === "/tmp/cerramos-service-account.json"
     );
@@ -185,7 +192,8 @@ describe("@repo/storage", () => {
       "/Users/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json";
     existsSyncMock.mockImplementation(
       (path: string) =>
-        path === "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
+        path ===
+        "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
     );
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
     const processCwdSpy = vi
@@ -199,7 +207,8 @@ describe("@repo/storage", () => {
     });
 
     expect(storageConstructorMock).toHaveBeenCalledWith({
-      keyFilename: "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json",
+      keyFilename:
+        "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json",
       projectId: undefined,
     });
 
@@ -230,8 +239,10 @@ describe("@repo/storage", () => {
 
   test("extracts product object keys from legacy route values and signed storage URLs", async () => {
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
-    const { extractProductImageObjectKey, normalizeStoredProductImageReference } =
-      await import("./product-image");
+    const {
+      extractProductImageObjectKey,
+      normalizeStoredProductImageReference,
+    } = await import("./product-image");
 
     expect(
       extractProductImageObjectKey(
@@ -267,8 +278,10 @@ describe("@repo/storage", () => {
 
   test("extracts commerce logo object keys from public and app route URLs", async () => {
     process.env.GCS_BUCKET_NAME = "imagenes-cerramos";
-    const { extractCommerceLogoObjectKey, normalizeStoredCommerceLogoReference } =
-      await import("./commerce-logo");
+    const {
+      extractCommerceLogoObjectKey,
+      normalizeStoredCommerceLogoReference,
+    } = await import("./commerce-logo");
 
     expect(
       extractCommerceLogoObjectKey(

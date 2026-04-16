@@ -1,7 +1,7 @@
 "use client";
 
-import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutPage } from "@repo/design-system/components/checkout/checkout-page";
+import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import type {
   CheckoutDeliveryValues,
@@ -80,7 +80,7 @@ export const ProductLinkCheckoutClient = ({
   }, [paymentStage, upayFormId]);
 
   const paymentProcessorSlot = useMemo(() => {
-    if (!paymentRequired || !orderReference) {
+    if (!(paymentRequired && orderReference)) {
       return undefined;
     }
 

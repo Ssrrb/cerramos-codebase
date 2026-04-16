@@ -40,8 +40,8 @@ export interface SignUpFormViewProps {
   onGoogleClick: () => void;
   onNameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
-  onSwitchToSignIn?: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSwitchToSignIn?: () => void;
   onUsageChange: (value: UsageValue) => void;
   password: string;
   privacyUrl?: string;

@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { signIn, signUp, useSession } from "@repo/auth/client";
+import { buildAuthRedirectUrl } from "@repo/auth/utils";
 import {
   AuthModal,
   SignInFormView,
   SignUpFormView,
 } from "@repo/design-system/components/registration";
 import { Button } from "@repo/design-system/components/ui/button";
-import { signIn, signUp, useSession } from "@repo/auth/client";
-import { buildAuthRedirectUrl } from "@repo/auth/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
 type AuthMode = "sign-in" | "sign-up";
 type PendingAction = "email" | "google" | null;
@@ -28,10 +28,13 @@ interface CheckoutAuthActionProps {
 }
 
 const normalizeCheckoutAuthUser = (
-  user: {
-    email?: string | null;
-    name?: string | null;
-  } | null | undefined
+  user:
+    | {
+        email?: string | null;
+        name?: string | null;
+      }
+    | null
+    | undefined
 ): CheckoutAuthUser | null => {
   if (!user?.email) {
     return null;
@@ -116,7 +119,9 @@ const CheckoutSignInContent = ({
         });
 
         if (signInError) {
-          setError(signInError.message ?? "No se pudo iniciar sesion con Google.");
+          setError(
+            signInError.message ?? "No se pudo iniciar sesion con Google."
+          );
           setPendingAction(null);
         }
       } catch {

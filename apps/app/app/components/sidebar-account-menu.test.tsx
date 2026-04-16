@@ -31,8 +31,12 @@ vi.mock("@repo/auth/client", () => {
 });
 
 vi.mock("./ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownMenu: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DropdownMenuItem: ({
     children,
     disabled,
@@ -68,18 +72,22 @@ import * as authClientModule from "@repo/auth/client";
 import * as nextNavigationModule from "next/navigation";
 import SidebarAccountMenu from "./sidebar-account-menu";
 
-const navigationMocks = (nextNavigationModule as typeof nextNavigationModule & {
-  __mocks: {
-    push: ReturnType<typeof vi.fn>;
-    refresh: ReturnType<typeof vi.fn>;
-  };
-}).__mocks;
+const navigationMocks = (
+  nextNavigationModule as typeof nextNavigationModule & {
+    __mocks: {
+      push: ReturnType<typeof vi.fn>;
+      refresh: ReturnType<typeof vi.fn>;
+    };
+  }
+).__mocks;
 
-const authClientMocks = (authClientModule as typeof authClientModule & {
-  __mocks: {
-    signOut: ReturnType<typeof vi.fn>;
-  };
-}).__mocks;
+const authClientMocks = (
+  authClientModule as typeof authClientModule & {
+    __mocks: {
+      signOut: ReturnType<typeof vi.fn>;
+    };
+  }
+).__mocks;
 
 describe("sidebar account menu", () => {
   afterEach(() => {

@@ -1,14 +1,7 @@
 import { eq } from "drizzle-orm";
-import {
-  database,
-  schema,
-} from "../client";
-import {
-  normalizeStoredCommerceLogoReference,
-} from "../../storage/commerce-logo";
-import {
-  normalizeStoredProductImageReference,
-} from "../../storage/product-image";
+import { normalizeStoredCommerceLogoReference } from "../../storage/commerce-logo";
+import { normalizeStoredProductImageReference } from "../../storage/product-image";
+import { database, schema } from "../client";
 
 const bucketName = process.env.GCS_BUCKET_NAME;
 

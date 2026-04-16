@@ -1,15 +1,17 @@
 "use client";
 
 import {
-  ColumnDef,
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { DataTablePagination } from "@/components/TablePagination";
 import {
   Table,
   TableBody,
@@ -18,9 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DataTablePagination } from "@/components/TablePagination";
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -53,8 +52,8 @@ export function DataTable<TData, TValue>({
     <div className="rounded-md border">
       {Object.keys(rowSelection).length > 0 && (
         <div className="flex justify-end">
-          <button className="flex items-center gap-2 bg-red-500 text-white px-2 py-1 text-sm rounded-md m-4 cursor-pointer">
-            <Trash2 className="w-4 h-4"/>
+          <button className="m-4 flex cursor-pointer items-center gap-2 rounded-md bg-red-500 px-2 py-1 text-sm text-white">
+            <Trash2 className="h-4 w-4" />
             Delete Payment(s)
           </button>
         </div>
@@ -82,8 +81,8 @@ export function DataTable<TData, TValue>({
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
-                key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                key={row.id}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
@@ -94,7 +93,7 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell className="h-24 text-center" colSpan={columns.length}>
                 No results.
               </TableCell>
             </TableRow>

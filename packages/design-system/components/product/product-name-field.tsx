@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import type { FieldPath, FieldValues } from "react-hook-form"
+import type { ProductFieldProps } from "@repo/design-system/components/product/types";
 
 import {
   FormControl,
@@ -9,9 +9,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/design-system/components/ui/form"
-import { Input } from "@repo/design-system/components/ui/input"
-import type { ProductFieldProps } from "@repo/design-system/components/product/types"
+} from "@repo/design-system/components/ui/form";
+import { Input } from "@repo/design-system/components/ui/input";
+import type { FieldPath, FieldValues } from "react-hook-form";
 
 function ProductNameField<
   TFieldValues extends FieldValues,
@@ -43,7 +43,7 @@ function ProductNameField<
         </FormItem>
       )}
     />
-  )
+  );
 }
 
-export { ProductNameField }
+export { ProductNameField };

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import * as React from "react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -8,7 +9,6 @@ import {
   screen,
   waitFor,
 } from "../../../../../../../app/node_modules/@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ProductLinkCheckoutClient } from "./product-link-checkout-client";
 
 declare global {

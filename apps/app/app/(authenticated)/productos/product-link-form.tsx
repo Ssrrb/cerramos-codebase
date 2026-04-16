@@ -33,10 +33,10 @@ import {
   buildProductLinkPublicPath,
   formatProductLinkStatusLabel,
   type ProductLinkFormValues,
-  productLinkFormSchema,
   type ProductLinkTableRow,
-  productLinkStatusValues,
   type ProductWithLinkTableRow,
+  productLinkFormSchema,
+  productLinkStatusValues,
   toProductLinkFormValues,
   toProductLinkPayload,
 } from "@/lib/product-links";
@@ -107,7 +107,9 @@ export const ProductLinkForm = ({
   );
   const form = useForm<ProductLinkFormValues>({
     defaultValues: initialValues,
-    resolver: zodResolver(productLinkFormSchema) as Resolver<ProductLinkFormValues>,
+    resolver: zodResolver(
+      productLinkFormSchema
+    ) as Resolver<ProductLinkFormValues>,
   });
 
   useEffect(() => {
@@ -179,7 +181,7 @@ export const ProductLinkForm = ({
           </Alert>
         ) : null}
         <div className="rounded-2xl border border-border/70 bg-muted/30 px-4 py-4">
-          <p className="font-medium text-sm text-foreground">URL publica</p>
+          <p className="font-medium text-foreground text-sm">URL publica</p>
           <p className="mt-1 break-all text-muted-foreground text-sm">
             {buildProductLinkPublicPath(
               product.commerceSlug ?? "commerce",
@@ -274,10 +276,7 @@ export const ProductLinkForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Estado</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecciona un estado" />

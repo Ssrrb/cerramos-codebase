@@ -90,9 +90,7 @@ describe("product row actions", () => {
 
     requestDeleteDialog();
 
-    expect(
-      screen.queryByText(DELETE_DESCRIPTION_PATTERN)
-    ).toBeNull();
+    expect(screen.queryByText(DELETE_DESCRIPTION_PATTERN)).toBeNull();
 
     await act(async () => {
       vi.runAllTimers();

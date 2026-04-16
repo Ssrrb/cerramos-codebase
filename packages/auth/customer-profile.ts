@@ -1,6 +1,6 @@
 import { database, isUniqueConstraintError, schema } from "@repo/database";
-import { eq } from "drizzle-orm";
 import { log } from "@repo/observability/log";
+import { eq } from "drizzle-orm";
 
 interface BuyerUserRecord {
   customerId: string | null;

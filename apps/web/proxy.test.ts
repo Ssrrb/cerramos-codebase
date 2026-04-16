@@ -1,6 +1,6 @@
+import { internationalizationMiddleware } from "@repo/internationalization/proxy";
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
-import { internationalizationMiddleware } from "@repo/internationalization/proxy";
 
 vi.mock("@repo/auth/proxy", () => ({
   authMiddleware: (callback?: unknown) => callback,

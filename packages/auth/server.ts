@@ -1,21 +1,21 @@
 import "server-only";
 
 import { database, schema } from "@repo/database";
+import { log } from "@repo/observability/log";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSessionCookie } from "better-auth/cookies";
 import { nextCookies } from "better-auth/next-js";
 import { asc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { cache } from "react";
-import { log } from "@repo/observability/log";
 import { syncCustomerProfileForUser } from "./customer-profile";
 import { keys } from "./keys";
 import {
-  AUTH_COOKIE_PREFIX,
   type ActiveCommerce,
+  AUTH_COOKIE_PREFIX,
   type AuthenticatedAppContext,
   type AuthUser,
   buildTrustedOrigins,
@@ -172,8 +172,10 @@ const getSessionState = cache(async (): Promise<SessionResult> => {
       headers: requestHeaders,
     });
   } catch (error) {
-    const [errorMessage = "Unknown session lookup failure", ...errorCauseChain] =
-      getErrorCauseChain(error);
+    const [
+      errorMessage = "Unknown session lookup failure",
+      ...errorCauseChain
+    ] = getErrorCauseChain(error);
 
     log.warn("Better Auth session lookup failed", {
       errorCauseChain,
@@ -239,46 +241,51 @@ const resolveCommerceById = async (
   };
 };
 
-export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null> => {
-  const session = await getSessionState();
+export const getCurrentCommerce = cache(
+  async (): Promise<ActiveCommerce | null> => {
+    const session = await getSessionState();
 
-  if (!session?.user.id) {
-    return null;
-  }
-
-  if (session.user.commerceId && session.user.role) {
-    const activeCommerce = await resolveCommerceById(
-      session.user.commerceId,
-      session.user.role
-    );
-
-    if (activeCommerce) {
-      return activeCommerce;
+    if (!session?.user.id) {
+      return null;
     }
+
+    if (session.user.commerceId && session.user.role) {
+      const activeCommerce = await resolveCommerceById(
+        session.user.commerceId,
+        session.user.role
+      );
+
+      if (activeCommerce) {
+        return activeCommerce;
+      }
+    }
+
+    // Better Auth caches the session cookie payload, so commerceId can be stale
+    // immediately after onboarding completes. Resolve membership from the
+    // database by user id and treat the linked commerce as the source of truth.
+    const [activeCommerce] = await database
+      .select({
+        id: schema.commerce.id,
+        logoImageUrl: schema.commerce.logoImageUrl,
+        name: schema.commerce.name,
+        role: schema.user.role,
+        slug: schema.commerce.slug,
+      })
+      .from(schema.user)
+      .innerJoin(
+        schema.commerce,
+        eq(schema.user.commerceId, schema.commerce.id)
+      )
+      .where(eq(schema.user.id, session.user.id))
+      .limit(1);
+
+    if (!activeCommerce) {
+      return null;
+    }
+
+    return activeCommerce;
   }
-
-  // Better Auth caches the session cookie payload, so commerceId can be stale
-  // immediately after onboarding completes. Resolve membership from the
-  // database by user id and treat the linked commerce as the source of truth.
-  const [activeCommerce] = await database
-    .select({
-      id: schema.commerce.id,
-      logoImageUrl: schema.commerce.logoImageUrl,
-      name: schema.commerce.name,
-      role: schema.user.role,
-      slug: schema.commerce.slug,
-    })
-    .from(schema.user)
-    .innerJoin(schema.commerce, eq(schema.user.commerceId, schema.commerce.id))
-    .where(eq(schema.user.id, session.user.id))
-    .limit(1);
-
-  if (!activeCommerce) {
-    return null;
-  }
-
-  return activeCommerce;
-});
+);
 
 export const getAuthenticatedAppContext = cache(
   async (): Promise<AuthenticatedAppContext | null> => {
@@ -305,17 +312,18 @@ export const getAuthenticatedAppContext = cache(
   }
 );
 
-export const requireCommerceContext = async (): Promise<AuthenticatedAppContext> => {
-  await requireSession();
+export const requireCommerceContext =
+  async (): Promise<AuthenticatedAppContext> => {
+    await requireSession();
 
-  const context = await getAuthenticatedAppContext();
+    const context = await getAuthenticatedAppContext();
 
-  if (!context) {
-    redirect(ONBOARDING_URL);
-  }
+    if (!context) {
+      redirect(ONBOARDING_URL);
+    }
 
-  return context;
-};
+    return context;
+  };
 
 export const requireCommerceIdForRequest = async () => {
   const session = await getSessionState();

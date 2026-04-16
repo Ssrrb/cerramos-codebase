@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -7,7 +8,6 @@ import {
   screen,
   waitFor,
 } from "../../../../../../../app/node_modules/@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CheckoutAuthAction } from "./checkout-auth-action";
 
 const {
@@ -82,7 +82,9 @@ describe("CheckoutAuthAction", () => {
     fireEvent.change(screen.getByPlaceholderText("Email Address"), {
       target: { value: "buyer@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Email" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Email" })
+    );
     fireEvent.change(screen.getByPlaceholderText("Password"), {
       target: { value: "secret-123" },
     });
@@ -133,7 +135,9 @@ describe("CheckoutAuthAction", () => {
     render(<CheckoutAuthAction googleEnabled />);
 
     fireEvent.click(screen.getByRole("button", { name: "Ingresar" }));
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Google" })
+    );
 
     await waitFor(() => {
       expect(signInSocialMock).toHaveBeenCalledWith({

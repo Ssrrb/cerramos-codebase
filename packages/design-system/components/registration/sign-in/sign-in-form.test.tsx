@@ -1,9 +1,4 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SignInFormView } from "./sign-in-form";
 
@@ -135,7 +130,9 @@ describe("sign-in form", () => {
       target: { value: "bad-password" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Google" })
+    );
     fireEvent.click(screen.getByRole("button", { name: "Log In" }));
 
     expect(screen.getByText("Credenciales invalidas")).toBeDefined();

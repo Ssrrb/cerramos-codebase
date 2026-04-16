@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@repo/storage/product-image", () => ({
-  extractProductImageObjectKey: (
-    value: string | null,
-    bucketName?: string
-  ) => {
+  extractProductImageObjectKey: (value: string | null, bucketName?: string) => {
     if (!value) {
       return "";
     }
@@ -42,9 +39,7 @@ vi.mock("@repo/storage/product-image", () => ({
 
     return trimmed;
   },
-  normalizeStoredProductImageReference: (
-    value: string | null | undefined
-  ) => {
+  normalizeStoredProductImageReference: (value: string | null | undefined) => {
     const normalized = value?.trim() ?? "";
 
     if (!normalized.startsWith("/api/")) {
@@ -311,7 +306,9 @@ describe("web product links", () => {
       set: () => ({
         where: () => ({
           returning: async () =>
-            table.__name === "product" ? [{ stock: 4 }] : [{ id: "customer_1" }],
+            table.__name === "product"
+              ? [{ stock: 4 }]
+              : [{ id: "customer_1" }],
         }),
       }),
     }));
@@ -349,10 +346,12 @@ describe("web product links", () => {
     );
     expect(
       record ? createCheckoutViewModel(record).merchant.avatarUrl : null
-    ).toBe("/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png");
-    expect(record ? createCheckoutViewModel(record).product.availableStock : 0).toBe(
-      5
+    ).toBe(
+      "/api/commerce-logos?objectKey=commerces%2Fuser_1%2Flogos%2Flogo.png"
     );
+    expect(
+      record ? createCheckoutViewModel(record).product.availableStock : 0
+    ).toBe(5);
   });
 
   test("keeps external commerce logo URLs untouched", async () => {
@@ -369,7 +368,9 @@ describe("web product links", () => {
       "mate-premium"
     );
 
-    expect(record?.commerceLogoImageUrl).toBe("https://cdn.example.com/logo.png");
+    expect(record?.commerceLogoImageUrl).toBe(
+      "https://cdn.example.com/logo.png"
+    );
   });
 
   test("normalizes stored internal product image URLs to the public checkout image route", async () => {

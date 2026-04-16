@@ -167,7 +167,8 @@ const formatPriceLabel = (value: number) =>
   `Gs. ${new Intl.NumberFormat("es-PY").format(value)}`;
 
 const OUT_OF_STOCK_ERROR = "Este producto se quedó sin stock.";
-const EXCEEDS_STOCK_ERROR = "La cantidad seleccionada supera el stock disponible.";
+const EXCEEDS_STOCK_ERROR =
+  "La cantidad seleccionada supera el stock disponible.";
 const PARAGUAY_ISO_CODE_2 = "PY";
 const LEGACY_PARAGUAY_CITY_ALIASES: Record<string, string> = {
   mariano: "mariano roque alonso",
@@ -543,10 +544,7 @@ const resolveDeliveryAddress = async (
       })
       .from(schema.city)
       .innerJoin(schema.state, eq(schema.city.stateId, schema.state.id))
-      .innerJoin(
-        schema.country,
-        eq(schema.state.countryId, schema.country.id)
-      )
+      .innerJoin(schema.country, eq(schema.state.countryId, schema.country.id))
       .where(eq(schema.city.id, payload.cityId));
 
     if (

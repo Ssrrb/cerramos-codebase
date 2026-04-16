@@ -1,5 +1,5 @@
-import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutPage } from "@repo/design-system/components/checkout/checkout-page";
+import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import { CheckoutUserIdentity } from "@repo/design-system/components/checkout/checkout-user-identity";
 import type {
@@ -168,7 +168,9 @@ function CheckoutPageStory({
         processorSlot={
           paymentRequired ? (
             <CheckoutUpayCardLoader
-              formId={paymentStage === "ready" ? "storybook-upay-form-id" : null}
+              formId={
+                paymentStage === "ready" ? "storybook-upay-form-id" : null
+              }
             />
           ) : undefined
         }

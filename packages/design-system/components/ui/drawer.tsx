@@ -15,10 +15,6 @@ function Drawer({
       data-slot="drawer"
       autoFocus={autoFocus}
       onOpenChange={(open) => {
-        if (open && document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur()
-        }
-
         onOpenChange?.(open)
       }}
       {...props}
@@ -78,6 +74,13 @@ function DrawerContent({
           "data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm",
           className
         )}
+        onOpenAutoFocus={(event) => {
+          const target = event.currentTarget;
+          setTimeout(() => {
+            target?.focus();
+          }, 0);
+          props.onOpenAutoFocus?.(event);
+        }}
         tabIndex={-1}
         {...props}
       >

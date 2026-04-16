@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react"
-import { CheckoutUserIdentity } from "@repo/design-system/components/checkout/checkout-user-identity"
+import { CheckoutUserIdentity } from "@repo/design-system/components/checkout/checkout-user-identity";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof CheckoutUserIdentity> = {
   title: "checkout/User Identity",
@@ -10,10 +10,10 @@ const meta: Meta<typeof CheckoutUserIdentity> = {
       control: "object",
     },
   },
-}
+};
 
-export default meta
-type Story = StoryObj<typeof CheckoutUserIdentity>
+export default meta;
+type Story = StoryObj<typeof CheckoutUserIdentity>;
 
 export const LoggedIn: Story = {
   args: {
@@ -22,7 +22,7 @@ export const LoggedIn: Story = {
       avatarUrl: "https://github.com/shadcn.png",
     },
   },
-}
+};
 
 export const LoggedInNoAvatar: Story = {
   args: {
@@ -30,10 +30,10 @@ export const LoggedInNoAvatar: Story = {
       name: "Jane Doe",
     },
   },
-}
+};
 
 export const LoggedOut: Story = {
   args: {
     user: null,
   },
-}
+};

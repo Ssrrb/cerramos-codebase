@@ -32,15 +32,14 @@ vi.mock("@repo/database", () => ({
     select: selectMock,
     update: updateMock,
   },
-  isUniqueConstraintError: vi.fn(
-    (error: unknown, constraintName?: string) =>
-      Boolean(
-        error &&
-          typeof error === "object" &&
-          "constraint" in error &&
-          constraintName &&
-          (error as { constraint?: string }).constraint === constraintName
-      )
+  isUniqueConstraintError: vi.fn((error: unknown, constraintName?: string) =>
+    Boolean(
+      error &&
+        typeof error === "object" &&
+        "constraint" in error &&
+        constraintName &&
+        (error as { constraint?: string }).constraint === constraintName
+    )
   ),
   schema: {
     customerProfile: {

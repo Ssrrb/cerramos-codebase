@@ -9,7 +9,7 @@ This repository is a Bun-powered Turborepo. Deployable apps live in `apps/`, sha
 - `apps/storybook`: isolated UI development
 - `packages/*`: shared `@repo/*` modules such as `auth`, `database`, `design-system`, and `payments`
 
-Read the product docs before large structural changes; this repo is still being reshaped from the `next-forge` starter into Cerramos-specific modules.
+Read the product docs before large structural changes; this repo is still being reshaped from the `next-forge` starter into Cheki-specific modules.
 
 ## Build, Test, and Development Commands
 Run commands from the repository root:

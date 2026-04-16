@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { betterAuth } from "better-auth";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   fromMock,
@@ -138,7 +138,11 @@ describe("auth server commerce context", () => {
     const generateId = config?.advanced?.database?.generateId;
 
     expect(generateId).toBeTypeOf("function");
-    expect((generateId as (input: { model: string }) => string)({ model: "verification" })).toMatch(
+    expect(
+      (generateId as (input: { model: string }) => string)({
+        model: "verification",
+      })
+    ).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     );
   });
@@ -148,8 +152,14 @@ describe("auth server commerce context", () => {
 
     const config = vi.mocked(betterAuth).mock.calls[0]?.[0];
 
-    await config?.databaseHooks?.user?.create?.after?.({ id: "user_1" } as any, null);
-    await config?.databaseHooks?.user?.update?.after?.({ id: "user_2" } as any, null);
+    await config?.databaseHooks?.user?.create?.after?.(
+      { id: "user_1" } as any,
+      null
+    );
+    await config?.databaseHooks?.user?.update?.after?.(
+      { id: "user_2" } as any,
+      null
+    );
     await config?.databaseHooks?.session?.create?.after?.(
       { userId: "user_3" } as any,
       null
@@ -259,7 +269,9 @@ describe("auth server commerce context", () => {
 
     const { requireCommerceContext } = await import("./server");
 
-    await expect(requireCommerceContext()).rejects.toThrow("redirect:/onboarding");
+    await expect(requireCommerceContext()).rejects.toThrow(
+      "redirect:/onboarding"
+    );
   });
 
   test("redirects to onboarding when the commerce record cannot be loaded", async () => {
@@ -276,7 +288,9 @@ describe("auth server commerce context", () => {
 
     const { requireCommerceContext } = await import("./server");
 
-    await expect(requireCommerceContext()).rejects.toThrow("redirect:/onboarding");
+    await expect(requireCommerceContext()).rejects.toThrow(
+      "redirect:/onboarding"
+    );
   });
 
   test("returns 401 for request handlers when there is no session", async () => {
@@ -295,7 +309,9 @@ describe("auth server commerce context", () => {
   test("treats session lookup failures as unauthenticated request handlers", async () => {
     getSessionMock.mockRejectedValue(new Error("database offline"));
 
-    const { getSession, requireCommerceIdForRequest } = await import("./server");
+    const { getSession, requireCommerceIdForRequest } = await import(
+      "./server"
+    );
     const response = await requireCommerceIdForRequest();
 
     await expect(getSession()).resolves.toBeNull();

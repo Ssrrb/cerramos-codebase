@@ -29,7 +29,8 @@ const CommerceOnboardingForm = ({
   const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLogoUploading, setIsLogoUploading] = useState(false);
-  const [logoImage, setLogoImage] = useState<UploadedImageValue>(EMPTY_LOGO_IMAGE);
+  const [logoImage, setLogoImage] =
+    useState<UploadedImageValue>(EMPTY_LOGO_IMAGE);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -57,7 +58,9 @@ const CommerceOnboardingForm = ({
     setLogoUploadError(null);
     setIsLogoUploading(true);
 
-    const previousBlobUrl = logoImage.src.startsWith("blob:") ? logoImage.src : null;
+    const previousBlobUrl = logoImage.src.startsWith("blob:")
+      ? logoImage.src
+      : null;
 
     try {
       const previewUrl = URL.createObjectURL(file);
@@ -84,7 +87,7 @@ const CommerceOnboardingForm = ({
           }
         | null;
 
-      if (!uploadResponse.ok || !uploadPayload || !("url" in uploadPayload)) {
+      if (!(uploadResponse.ok && uploadPayload && "url" in uploadPayload)) {
         URL.revokeObjectURL(previewUrl);
         throw new Error(
           uploadPayload && "error" in uploadPayload && uploadPayload.error
@@ -152,12 +155,13 @@ const CommerceOnboardingForm = ({
         });
 
         if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as
-            | { error?: string }
-            | null;
+          const payload = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
 
           setError(
-            payload?.error ?? "No se pudo configurar tu comercio. Intenta de nuevo."
+            payload?.error ??
+              "No se pudo configurar tu comercio. Intenta de nuevo."
           );
           return;
         }

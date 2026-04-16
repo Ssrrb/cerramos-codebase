@@ -1,11 +1,14 @@
 import { authMiddleware } from "@repo/auth/proxy";
-import { buildAuthRedirectUrl, DEFAULT_AUTH_SIGN_IN_URL } from "@repo/auth/utils";
+import {
+  buildAuthRedirectUrl,
+  DEFAULT_AUTH_SIGN_IN_URL,
+} from "@repo/auth/utils";
 import {
   noseconeOptions,
   noseconeOptionsWithToolbar,
   securityMiddleware,
 } from "@repo/security/proxy";
-import { NextResponse, type NextProxy } from "next/server";
+import { type NextProxy, NextResponse } from "next/server";
 import { env } from "./env";
 
 const securityHeaders = env.FLAGS_SECRET
@@ -23,7 +26,7 @@ const isApiRoute = (pathname: string) => pathname.startsWith("/api/");
 export default authMiddleware((auth, request) => {
   const { pathname, search } = request.nextUrl;
 
-  if (!auth.sessionId && !isApiRoute(pathname) && !isAuthPage(pathname)) {
+  if (!(auth.sessionId || isApiRoute(pathname) || isAuthPage(pathname))) {
     const redirectUrl = buildAuthRedirectUrl(
       DEFAULT_AUTH_SIGN_IN_URL,
       `${pathname}${search}`

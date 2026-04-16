@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "../../lib/utils";
 import { NonDistractingFooter } from "../layout/non-distracting-footer";
 import { NonDistractingHeader } from "../layout/non-distracting-header";

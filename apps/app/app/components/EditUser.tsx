@@ -1,14 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "./ui/button";
 import {
   Form,
   FormControl,
@@ -19,14 +20,6 @@ import {
   FormMessage,
 } from "./ui/form";
 import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "./ui/button";
 
 const formSchema = z.object({
   fullName: z
@@ -66,9 +59,7 @@ const EditUser = () => {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Enter user full name.
-                    </FormDescription>
+                    <FormDescription>Enter user full name.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

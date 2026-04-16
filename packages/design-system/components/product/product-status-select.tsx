@@ -1,6 +1,9 @@
-"use client"
+"use client";
 
-import type { FieldPath, FieldValues } from "react-hook-form"
+import type {
+  ProductFieldProps,
+  ProductSelectOption,
+} from "@repo/design-system/components/product/types";
 
 import {
   FormControl,
@@ -9,26 +12,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/design-system/components/ui/form"
+} from "@repo/design-system/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/design-system/components/ui/select"
-import type {
-  ProductFieldProps,
-  ProductSelectOption,
-} from "@repo/design-system/components/product/types"
+} from "@repo/design-system/components/ui/select";
+import type { FieldPath, FieldValues } from "react-hook-form";
 
 type ProductStatusSelectProps<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues>,
 > = ProductFieldProps<TFieldValues, TName> & {
-  options: ProductSelectOption[]
-  placeholder?: string
-}
+  options: ProductSelectOption[];
+  placeholder?: string;
+};
 
 function ProductStatusSelect<
   TFieldValues extends FieldValues,
@@ -72,7 +72,7 @@ function ProductStatusSelect<
         </FormItem>
       )}
     />
-  )
+  );
 }
 
-export { ProductStatusSelect }
+export { ProductStatusSelect };

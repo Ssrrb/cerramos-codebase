@@ -1,33 +1,32 @@
-"use client"
+"use client";
 
-import type { Control, FieldPath, FieldValues } from "react-hook-form"
-
-import { Separator } from "@repo/design-system/components/ui/separator"
-import { ProductCategorySelect } from "@repo/design-system/components/product/product-category-select"
-import { ProductDeliveryToggle } from "@repo/design-system/components/product/product-delivery-toggle"
-import { ProductDescriptionField } from "@repo/design-system/components/product/product-description-field"
-import { ProductImageUpload } from "@repo/design-system/components/product/product-image-upload"
-import { ProductNameField } from "@repo/design-system/components/product/product-name-field"
-import { ProductPriceField } from "@repo/design-system/components/product/product-price-field"
-import { ProductStatusSelect } from "@repo/design-system/components/product/product-status-select"
-import { ProductStockField } from "@repo/design-system/components/product/product-stock-field"
-import type { ProductSelectOption } from "@repo/design-system/components/product/types"
+import { ProductCategorySelect } from "@repo/design-system/components/product/product-category-select";
+import { ProductDeliveryToggle } from "@repo/design-system/components/product/product-delivery-toggle";
+import { ProductDescriptionField } from "@repo/design-system/components/product/product-description-field";
+import { ProductImageUpload } from "@repo/design-system/components/product/product-image-upload";
+import { ProductNameField } from "@repo/design-system/components/product/product-name-field";
+import { ProductPriceField } from "@repo/design-system/components/product/product-price-field";
+import { ProductStatusSelect } from "@repo/design-system/components/product/product-status-select";
+import { ProductStockField } from "@repo/design-system/components/product/product-stock-field";
+import type { ProductSelectOption } from "@repo/design-system/components/product/types";
+import { Separator } from "@repo/design-system/components/ui/separator";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
 
 type ProductBasicsSectionProps<TFieldValues extends FieldValues> = {
-  categoryName: FieldPath<TFieldValues>
-  categoryOptions: ProductSelectOption[]
-  control: Control<TFieldValues>
-  deliveryIncludedName: FieldPath<TFieldValues>
-  descriptionName: FieldPath<TFieldValues>
-  disabled?: boolean
-  imageName: FieldPath<TFieldValues>
-  imageUploadUrl: string
-  nameName: FieldPath<TFieldValues>
-  priceName: FieldPath<TFieldValues>
-  statusName: FieldPath<TFieldValues>
-  statusOptions: ProductSelectOption[]
-  stockName: FieldPath<TFieldValues>
-}
+  categoryName: FieldPath<TFieldValues>;
+  categoryOptions: ProductSelectOption[];
+  control: Control<TFieldValues>;
+  deliveryIncludedName: FieldPath<TFieldValues>;
+  descriptionName: FieldPath<TFieldValues>;
+  disabled?: boolean;
+  imageName: FieldPath<TFieldValues>;
+  imageUploadUrl: string;
+  nameName: FieldPath<TFieldValues>;
+  priceName: FieldPath<TFieldValues>;
+  statusName: FieldPath<TFieldValues>;
+  statusOptions: ProductSelectOption[];
+  stockName: FieldPath<TFieldValues>;
+};
 
 function ProductBasicsSection<TFieldValues extends FieldValues>({
   categoryName,
@@ -51,13 +50,18 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
           Informacion principal
         </h2>
         <p className="text-muted-foreground text-sm">
-          Define la identidad visual y operativa del producto antes de publicarlo.
+          Define la identidad visual y operativa del producto antes de
+          publicarlo.
         </p>
       </div>
       <Separator />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
         <div className="space-y-6">
-          <ProductNameField control={control} disabled={disabled} name={nameName} />
+          <ProductNameField
+            control={control}
+            disabled={disabled}
+            name={nameName}
+          />
           <ProductDescriptionField
             control={control}
             disabled={disabled}
@@ -80,8 +84,16 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
           name={statusName}
           options={statusOptions}
         />
-        <ProductPriceField control={control} disabled={disabled} name={priceName} />
-        <ProductStockField control={control} disabled={disabled} name={stockName} />
+        <ProductPriceField
+          control={control}
+          disabled={disabled}
+          name={priceName}
+        />
+        <ProductStockField
+          control={control}
+          disabled={disabled}
+          name={stockName}
+        />
       </div>
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
         <ProductCategorySelect
@@ -97,7 +109,7 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
         />
       </div>
     </section>
-  )
+  );
 }
 
-export { ProductBasicsSection }
+export { ProductBasicsSection };

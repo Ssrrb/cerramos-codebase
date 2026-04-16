@@ -444,44 +444,47 @@ databaseTest(
   }
 );
 
-databaseTest("customer addresses allow only one default per customer", async () => {
-  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const geography = await insertParaguayGeography(suffix);
-  const customerProfileId = createTextId("customer_profile");
+databaseTest(
+  "customer addresses allow only one default per customer",
+  async () => {
+    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const geography = await insertParaguayGeography(suffix);
+    const customerProfileId = createTextId("customer_profile");
 
-  await database.insert(schema.customerProfile).values({
-    email: `address-${suffix}@example.com`,
-    id: customerProfileId,
-    name: "Address Holder",
-    phone: "0981555666",
-  });
+    await database.insert(schema.customerProfile).values({
+      email: `address-${suffix}@example.com`,
+      id: customerProfileId,
+      name: "Address Holder",
+      phone: "0981555666",
+    });
 
-  await database.insert(schema.customerAddress).values({
-    cityId: geography.cityId,
-    countryId: geography.countryId,
-    customerId: customerProfileId,
-    isDefault: true,
-    label: "Casa",
-    recipientName: "Address Holder",
-    stateId: geography.stateId,
-    streetLine1: "Calle Principal 123",
-  });
-
-  await expect(
-    database.insert(schema.customerAddress).values({
+    await database.insert(schema.customerAddress).values({
       cityId: geography.cityId,
       countryId: geography.countryId,
       customerId: customerProfileId,
       isDefault: true,
-      label: "Trabajo",
+      label: "Casa",
       recipientName: "Address Holder",
       stateId: geography.stateId,
-      streetLine1: "Avenida Secundaria 456",
-    })
-  ).rejects.toMatchObject({
-    cause: { code: "23505" },
-  });
-});
+      streetLine1: "Calle Principal 123",
+    });
+
+    await expect(
+      database.insert(schema.customerAddress).values({
+        cityId: geography.cityId,
+        countryId: geography.countryId,
+        customerId: customerProfileId,
+        isDefault: true,
+        label: "Trabajo",
+        recipientName: "Address Holder",
+        stateId: geography.stateId,
+        streetLine1: "Avenida Secundaria 456",
+      })
+    ).rejects.toMatchObject({
+      cause: { code: "23505" },
+    });
+  }
+);
 
 databaseTest("user mirror updates keep profile tables in sync", async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

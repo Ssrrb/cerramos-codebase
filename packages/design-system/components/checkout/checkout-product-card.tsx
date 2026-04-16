@@ -5,20 +5,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@repo/design-system/components/ui/card"
-import { cn } from "@repo/design-system/lib/utils"
-import { CheckoutProductMedia } from "./checkout-product-media"
-import type { CheckoutProductSummary } from "./types"
+} from "@repo/design-system/components/ui/card";
+import { cn } from "@repo/design-system/lib/utils";
+import { CheckoutProductMedia } from "./checkout-product-media";
+import type { CheckoutProductSummary } from "./types";
 
 interface CheckoutProductCardProps {
-  className?: string
-  product: CheckoutProductSummary
+  className?: string;
+  product: CheckoutProductSummary;
 }
 
-function CheckoutProductCard({
-  className,
-  product,
-}: CheckoutProductCardProps) {
+function CheckoutProductCard({ className, product }: CheckoutProductCardProps) {
   return (
     <Card className={cn("gap-0 rounded-[1.75rem] border-border/70", className)}>
       <CardHeader className="gap-1.5">
@@ -38,14 +35,14 @@ function CheckoutProductCard({
           </p>
         </div>
       </CardContent>
-      <CardFooter className="justify-between border-t border-border/70 pt-6">
+      <CardFooter className="justify-between border-border/70 border-t pt-6">
         <span className="text-muted-foreground text-sm">Total</span>
         <span className="font-semibold text-base text-foreground">
           {product.priceLabel}
         </span>
       </CardFooter>
     </Card>
-  )
+  );
 }
 
-export { CheckoutProductCard }
+export { CheckoutProductCard };

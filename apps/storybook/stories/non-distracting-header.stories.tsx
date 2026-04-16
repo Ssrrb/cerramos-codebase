@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import { NonDistractingHeader } from "@repo/design-system/components/layout/non-distracting-header";
+import type { Meta, StoryObj } from "@storybook/react";
 
 const meta: Meta<typeof NonDistractingHeader> = {
   title: "Layout/NonDistractingHeader",

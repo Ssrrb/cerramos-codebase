@@ -1,4 +1,3 @@
-import React from "react";
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
 import { getSession } from "@repo/auth/server";
 import type { Metadata } from "next";

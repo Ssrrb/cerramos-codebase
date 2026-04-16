@@ -133,7 +133,7 @@ vi.mock("@repo/design-system/components/registration", () => ({
               Continuar con Google
             </button>
           ) : null}
-          <button type="button" onClick={onBack}>
+          <button onClick={onBack} type="button">
             Back
           </button>
           <button type="submit">Create Account</button>
@@ -211,9 +211,7 @@ describe("sign-up form", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Create Account" }));
 
-    await waitFor(() =>
-      expect(pushMock).toHaveBeenCalledWith("/onboarding")
-    );
+    await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/onboarding"));
 
     expect(signUpEmailMock).toHaveBeenCalledWith({
       callbackURL: "/",

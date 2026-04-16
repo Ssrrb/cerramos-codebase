@@ -1,14 +1,10 @@
-"use client"
+"use client";
 
-import { ImagePlusIcon, RefreshCcwIcon, Trash2Icon } from "lucide-react"
-import { useId, useRef, useState } from "react"
 import type {
-  ControllerRenderProps,
-  FieldPath,
-  FieldValues,
-} from "react-hook-form"
-
-import { Button } from "@repo/design-system/components/ui/button"
+  ProductFieldProps,
+  ProductImageValue,
+} from "@repo/design-system/components/product/types";
+import { Button } from "@repo/design-system/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -16,21 +12,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/design-system/components/ui/form"
-import { cn } from "@repo/design-system/lib/utils"
+} from "@repo/design-system/components/ui/form";
+import { cn } from "@repo/design-system/lib/utils";
+import { ImagePlusIcon, RefreshCcwIcon, Trash2Icon } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import type {
-  ProductFieldProps,
-  ProductImageValue,
-} from "@repo/design-system/components/product/types"
+  ControllerRenderProps,
+  FieldPath,
+  FieldValues,
+} from "react-hook-form";
 
 type ProductImageUploadProps<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues>,
 > = ProductFieldProps<TFieldValues, TName> & {
-  accept?: string
-  maxSizeInMb?: number
-  uploadUrl: string
-}
+  accept?: string;
+  maxSizeInMb?: number;
+  uploadUrl: string;
+};
 
 function ProductImageUpload<
   TFieldValues extends FieldValues,
@@ -45,8 +44,8 @@ function ProductImageUpload<
   name,
   uploadUrl,
 }: ProductImageUploadProps<TFieldValues, TName>) {
-  const inputId = useId()
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <FormField
@@ -66,28 +65,28 @@ function ProductImageUpload<
         />
       )}
     />
-  )
+  );
 }
 
 type ImageUploadControlProps = {
-  accept: string
-  description: string
-  disabled?: boolean
-  field: ControllerRenderProps<any, any>
-  inputId: string
-  inputRef: React.RefObject<HTMLInputElement | null>
-  label: string
-  maxSizeInMb: number
-  uploadUrl: string
-}
+  accept: string;
+  description: string;
+  disabled?: boolean;
+  field: ControllerRenderProps<any, any>;
+  inputId: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  label: string;
+  maxSizeInMb: number;
+  uploadUrl: string;
+};
 
 type UploadRouteResponse = {
-  expiresAt: string
-  headers: Record<string, string>
-  maxBytes?: number
-  objectKey: string
-  url: string
-}
+  expiresAt: string;
+  headers: Record<string, string>;
+  maxBytes?: number;
+  objectKey: string;
+  url: string;
+};
 
 function ImageUploadControl({
   accept,
@@ -100,17 +99,17 @@ function ImageUploadControl({
   maxSizeInMb,
   uploadUrl,
 }: ImageUploadControlProps) {
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const value = (field.value ?? {
     fileName: "",
     objectKey: "",
     src: "",
-  }) as ProductImageValue
+  }) as ProductImageValue;
 
   const openPicker = () => {
-    inputRef.current?.click()
-  }
+    inputRef.current?.click();
+  };
 
   return (
     <FormItem>
@@ -125,38 +124,40 @@ function ImageUploadControl({
             id={inputId}
             onBlur={field.onBlur}
             onChange={async (event) => {
-              const file = event.target.files?.[0]
+              const file = event.target.files?.[0];
 
               if (!file) {
-                return
+                return;
               }
 
               if (!file.type.startsWith("image/")) {
-                setUploadError("Solo puedes subir archivos de imagen.")
+                setUploadError("Solo puedes subir archivos de imagen.");
                 field.onChange({
                   fileName: "",
                   objectKey: "",
                   src: "",
-                })
+                });
 
-                return
+                return;
               }
 
               if (file.size > maxSizeInMb * 1024 * 1024) {
-                setUploadError(`La imagen debe pesar menos de ${maxSizeInMb} MB.`)
+                setUploadError(
+                  `La imagen debe pesar menos de ${maxSizeInMb} MB.`
+                );
                 field.onChange({
                   fileName: "",
                   objectKey: "",
                   src: "",
-                })
+                });
 
-                return
+                return;
               }
 
-              setIsUploading(true)
+              setIsUploading(true);
 
               try {
-                const previewUrl = URL.createObjectURL(file)
+                const previewUrl = URL.createObjectURL(file);
                 const uploadResponse = await fetch(uploadUrl, {
                   body: JSON.stringify({
                     contentType: file.type,
@@ -167,52 +168,61 @@ function ImageUploadControl({
                     "content-type": "application/json",
                   },
                   method: "POST",
-                })
+                });
 
-                const uploadPayload =
-                  (await uploadResponse.json().catch(() => null)) as
-                    | { error?: string }
-                    | UploadRouteResponse
-                    | null
+                const uploadPayload = (await uploadResponse
+                  .json()
+                  .catch(() => null)) as
+                  | { error?: string }
+                  | UploadRouteResponse
+                  | null;
 
-                if (!uploadResponse.ok || !uploadPayload || !("url" in uploadPayload)) {
+                if (
+                  !(
+                    uploadResponse.ok &&
+                    uploadPayload &&
+                    "url" in uploadPayload
+                  )
+                ) {
                   throw new Error(
-                    uploadPayload && "error" in uploadPayload && uploadPayload.error
+                    uploadPayload &&
+                      "error" in uploadPayload &&
+                      uploadPayload.error
                       ? uploadPayload.error
                       : "No se pudo preparar la carga de la imagen."
-                  )
+                  );
                 }
 
-                const uploadResult = uploadPayload as UploadRouteResponse
+                const uploadResult = uploadPayload as UploadRouteResponse;
                 const directUploadResponse = await fetch(uploadResult.url, {
                   body: file,
                   headers: uploadResult.headers,
                   method: "PUT",
-                })
+                });
 
                 if (!directUploadResponse.ok) {
-                  throw new Error("No se pudo subir la imagen.")
+                  throw new Error("No se pudo subir la imagen.");
                 }
 
-                setUploadError(null)
+                setUploadError(null);
                 field.onChange({
                   fileName: file.name,
                   objectKey: uploadResult.objectKey,
                   src: previewUrl,
-                })
+                });
               } catch (error) {
                 setUploadError(
                   error instanceof Error
                     ? error.message
                     : "No se pudo subir la imagen."
-                )
+                );
                 field.onChange({
                   fileName: "",
                   objectKey: "",
                   src: "",
-                })
+                });
               } finally {
-                setIsUploading(false)
+                setIsUploading(false);
               }
             }}
             ref={inputRef}
@@ -237,27 +247,33 @@ function ImageUploadControl({
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-sm">{value.fileName}</p>
+                    <p className="truncate font-medium text-sm">
+                      {value.fileName}
+                    </p>
                     <p className="text-muted-foreground text-sm">
                       Imagen lista para publicar
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={openPicker} type="button" variant="outline">
+                    <Button
+                      onClick={openPicker}
+                      type="button"
+                      variant="outline"
+                    >
                       <RefreshCcwIcon className="size-4" />
                       Reemplazar
                     </Button>
                     <Button
                       onClick={() => {
-                        setUploadError(null)
+                        setUploadError(null);
                         field.onChange({
                           fileName: "",
                           objectKey: "",
                           src: "",
-                        })
+                        });
 
                         if (inputRef.current) {
-                          inputRef.current.value = ""
+                          inputRef.current.value = "";
                         }
                       }}
                       type="button"
@@ -294,13 +310,15 @@ function ImageUploadControl({
               </button>
             )}
           </div>
-          {uploadError ? <p className="text-destructive text-sm">{uploadError}</p> : null}
+          {uploadError ? (
+            <p className="text-destructive text-sm">{uploadError}</p>
+          ) : null}
         </div>
       </FormControl>
       <FormDescription>{description}</FormDescription>
       <FormMessage />
     </FormItem>
-  )
+  );
 }
 
-export { ProductImageUpload }
+export { ProductImageUpload };

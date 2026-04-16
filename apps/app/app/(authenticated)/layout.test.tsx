@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import type { ReactNode } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -23,11 +22,16 @@ vi.mock("@/app/components/app-sidebar", () => ({
     activeCommerce,
     user,
   }: {
-    activeCommerce: { logoImageUrl?: string | null; name: string; slug: string };
+    activeCommerce: {
+      logoImageUrl?: string | null;
+      name: string;
+      slug: string;
+    };
     user: { email: string };
   }) => (
     <div data-testid="sidebar">
-      {user.email}:{activeCommerce.name}:{activeCommerce.slug}:{activeCommerce.logoImageUrl ?? ""}
+      {user.email}:{activeCommerce.name}:{activeCommerce.slug}:
+      {activeCommerce.logoImageUrl ?? ""}
     </div>
   ),
 }));

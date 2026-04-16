@@ -74,7 +74,8 @@ describe("isForeignKeyConstraintError", () => {
       isForeignKeyConstraintError({
         cause: {
           code: "23503",
-          constraint: "ProductLink_productId_commerceId_Product_id_commerceId_fk",
+          constraint:
+            "ProductLink_productId_commerceId_Product_id_commerceId_fk",
         },
       })
     ).toBe(true);

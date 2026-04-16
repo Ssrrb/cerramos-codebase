@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import type { FieldPath, FieldValues } from "react-hook-form"
+import type { ProductFieldProps } from "@repo/design-system/components/product/types";
 
 import {
   FormControl,
@@ -9,9 +9,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@repo/design-system/components/ui/form"
-import { Input } from "@repo/design-system/components/ui/input"
-import type { ProductFieldProps } from "@repo/design-system/components/product/types"
+} from "@repo/design-system/components/ui/form";
+import { Input } from "@repo/design-system/components/ui/input";
+import type { FieldPath, FieldValues } from "react-hook-form";
 
 function ProductPriceField<
   TFieldValues extends FieldValues,
@@ -35,9 +35,11 @@ function ProductPriceField<
               disabled={disabled}
               min={0}
               onChange={(event) => {
-                const nextValue = event.target.value
+                const nextValue = event.target.value;
 
-                field.onChange(nextValue === "" ? 0 : event.target.valueAsNumber)
+                field.onChange(
+                  nextValue === "" ? 0 : event.target.valueAsNumber
+                );
               }}
               placeholder="0"
               step={1}
@@ -54,7 +56,7 @@ function ProductPriceField<
         </FormItem>
       )}
     />
-  )
+  );
 }
 
-export { ProductPriceField }
+export { ProductPriceField };

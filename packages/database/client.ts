@@ -1,4 +1,4 @@
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { neonConfig, Pool } from "@neondatabase/serverless";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { WebSocket } from "undici";

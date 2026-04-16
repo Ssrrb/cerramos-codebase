@@ -1,7 +1,8 @@
 import { extractProductImageObjectKey as normalizeProductImageObjectKeyImpl } from "@repo/storage/product-image";
 import { z } from "zod";
 
-export const normalizeProductImageObjectKey = normalizeProductImageObjectKeyImpl;
+export const normalizeProductImageObjectKey =
+  normalizeProductImageObjectKeyImpl;
 
 export const productStatusValues = ["active", "inactive", "draft"] as const;
 

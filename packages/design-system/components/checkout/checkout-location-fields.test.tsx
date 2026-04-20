@@ -19,18 +19,37 @@ import {
 } from "../../../../apps/app/node_modules/@testing-library/react";
 import { CheckoutDeliverySection } from "./checkout-delivery-section";
 import { CheckoutDeliveryStepSection } from "./checkout-delivery-step-section";
-import { checkoutParaguayCityOptions } from "./checkout-paraguay-locations";
+import {
+  checkoutParaguayCountryOption,
+  checkoutParaguayStateOptions,
+  getCheckoutParaguayCityOptions,
+} from "./checkout-paraguay-locations";
 import type { CheckoutDeliveryValues } from "./types";
+
+const centralStateOption = checkoutParaguayStateOptions.find(
+  (option) => option.label === "Central"
+);
+const asuncionStateOption = checkoutParaguayStateOptions.find(
+  (option) => option.label === "Asunción"
+);
+const sanLorenzoCityOption = getCheckoutParaguayCityOptions(
+  centralStateOption?.value
+).find((option) => option.label === "San Lorenzo");
+const asuncionCityOption = getCheckoutParaguayCityOptions(
+  asuncionStateOption?.value
+).find((option) => option.label === "Asunción");
 
 const names = {
   recipientName: "recipientName",
   email: "email",
   phone: "phone",
   mode: "mode",
-  city: "city",
-  addressLine1: "addressLine1",
-  addressLine2: "addressLine2",
-  reference: "reference",
+  countryId: "countryId",
+  stateId: "stateId",
+  cityId: "cityId",
+  streetLine1: "streetLine1",
+  streetLine2: "streetLine2",
+  referenceNote: "referenceNote",
   notes: "notes",
 } as const;
 
@@ -45,10 +64,13 @@ function DeliveryStepHarness({
       email: "",
       phone: "",
       mode: "delivery",
-      city: "",
-      addressLine1: "",
-      addressLine2: "",
-      reference: "",
+      countryId: checkoutParaguayCountryOption.value,
+      stateId: "",
+      cityId: "",
+      streetLine1: "",
+      streetLine2: "",
+      referenceNote: "",
+      postalCode: "",
       notes: "",
       ...defaultValues,
     },
@@ -60,20 +82,28 @@ function DeliveryStepHarness({
   return (
     <>
       <CheckoutDeliveryStepSection control={form.control} names={names} />
-      <button onClick={() => form.setValue("city", "Asunción")} type="button">
-        set-city-asuncion
-      </button>
-      <button onClick={() => form.setValue("city", "Luque")} type="button">
-        set-city-luque
-      </button>
       <button
-        onClick={() => form.setValue("addressLine2", "Barrio Jara")}
+        onClick={() => form.setValue("stateId", centralStateOption?.value ?? "")}
         type="button"
       >
-        set-barrio-jara
+        set-state-central
       </button>
-      <output data-testid="selected-city">{values.city ?? ""}</output>
-      <output data-testid="selected-barrio">{values.addressLine2 ?? ""}</output>
+      <button
+        onClick={() =>
+          form.setValue("stateId", asuncionStateOption?.value ?? "")
+        }
+        type="button"
+      >
+        set-state-asuncion
+      </button>
+      <button
+        onClick={() => form.setValue("cityId", sanLorenzoCityOption?.value ?? "")}
+        type="button"
+      >
+        set-city-san-lorenzo
+      </button>
+      <output data-testid="selected-state">{values.stateId ?? ""}</output>
+      <output data-testid="selected-city">{values.cityId ?? ""}</output>
     </>
   );
 }
@@ -85,10 +115,13 @@ function DeliverySectionHarness() {
       email: "",
       phone: "",
       mode: "delivery",
-      city: "",
-      addressLine1: "",
-      addressLine2: "",
-      reference: "",
+      countryId: checkoutParaguayCountryOption.value,
+      stateId: "",
+      cityId: "",
+      streetLine1: "",
+      streetLine2: "",
+      referenceNote: "",
+      postalCode: "",
       notes: "",
     },
   });
@@ -128,70 +161,78 @@ describe("checkout location fields", () => {
     cleanup();
   });
 
-  test("exposes Paraguay city options and keeps barrio disabled until a city is selected", () => {
+  test("exposes Paraguay state options and keeps city disabled until a state is selected", () => {
     render(<DeliveryStepHarness />);
 
+    expect(checkoutParaguayCountryOption.label).toBe("Paraguay");
     expect(
-      checkoutParaguayCityOptions.find((option) => option.value === "Asunción")
+      checkoutParaguayStateOptions.find((option) => option.label === "Asunción")
     ).toBeDefined();
     expect(
-      checkoutParaguayCityOptions.find(
-        (option) => option.value === "Encarnación"
-      )
-    ).toBeDefined();
-    expect(
-      checkoutParaguayCityOptions.find((option) => option.value === "Luque")
+      checkoutParaguayStateOptions.find((option) => option.label === "Central")
     ).toBeDefined();
 
-    const barrioTrigger = screen.getByLabelText("Barrio");
-    expect(barrioTrigger.getAttribute("data-disabled")).not.toBeNull();
+    expect(screen.getByLabelText("País").textContent).toContain("Paraguay");
+    const cityTrigger = screen.getByLabelText("Ciudad");
+    expect(cityTrigger.getAttribute("data-disabled")).not.toBeNull();
   });
 
-  test("filters barrio options by city and resets barrio when the city changes", async () => {
+  test("filters city options by state and resets city when the state changes", async () => {
     render(<DeliveryStepHarness />);
 
-    fireEvent.click(screen.getByRole("button", { name: "set-city-asuncion" }));
+    fireEvent.click(screen.getByRole("button", { name: "set-state-central" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("selected-city").textContent).toBe("Asunción");
-    });
-
-    expect(screen.getByLabelText("Ciudad").textContent).toContain("Asunción");
-    expect(screen.getByLabelText("Barrio").textContent).toContain(
-      "Seleccioná un barrio"
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "set-barrio-jara" }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId("selected-barrio").textContent).toBe(
-        "Barrio Jara"
+      expect(screen.getByTestId("selected-state").textContent).toBe(
+        centralStateOption?.value ?? ""
       );
     });
 
-    expect(screen.getByLabelText("Barrio").textContent).toContain(
-      "Barrio Jara"
+    expect(screen.getByLabelText("Departamento").textContent).toContain(
+      "Central"
+    );
+    expect(screen.getByLabelText("Ciudad").textContent).toContain(
+      "Seleccioná una ciudad"
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "set-city-luque" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "set-city-san-lorenzo" })
+    );
 
     await waitFor(() => {
-      expect(screen.getByTestId("selected-city").textContent).toBe("Luque");
-      expect(screen.getByTestId("selected-barrio").textContent).toBe("");
+      expect(screen.getByTestId("selected-city").textContent).toBe(
+        sanLorenzoCityOption?.value ?? ""
+      );
     });
 
-    expect(screen.getByLabelText("Ciudad").textContent).toContain("Luque");
-    expect(screen.getByLabelText("Barrio").textContent).toContain(
-      "Seleccioná un barrio"
+    expect(screen.getByLabelText("Ciudad").textContent).toContain(
+      "San Lorenzo"
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "set-state-asuncion" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-state").textContent).toBe(
+        asuncionStateOption?.value ?? ""
+      );
+      expect(screen.getByTestId("selected-city").textContent).toBe("");
+    });
+
+    expect(screen.getByLabelText("Departamento").textContent).toContain(
+      "Asunción"
+    );
+    expect(screen.getByLabelText("Ciudad").textContent).toContain(
+      "Seleccioná una ciudad"
+    );
+    expect(asuncionCityOption?.label).toBe("Asunción");
   });
 
-  test("renders the same city and barrio selects in the section checkout surface", () => {
+  test("renders the same normalized location fields in the section checkout surface", () => {
     render(<DeliverySectionHarness />);
 
+    expect(screen.getByLabelText("País")).toBeDefined();
+    expect(screen.getByLabelText("Departamento")).toBeDefined();
     expect(screen.getByLabelText("Ciudad")).toBeDefined();
-    const barrioTrigger = screen.getByLabelText("Barrio");
-    expect(barrioTrigger).toBeDefined();
-    expect(barrioTrigger.getAttribute("data-disabled")).not.toBeNull();
+    expect(screen.getByLabelText("Complemento")).toBeDefined();
   });
 });

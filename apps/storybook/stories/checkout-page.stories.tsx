@@ -1,4 +1,9 @@
 import { CheckoutPage } from "@repo/design-system/components/checkout/checkout-page";
+import {
+  checkoutParaguayCountryOption,
+  checkoutParaguayStateOptions,
+  getCheckoutParaguayCityOptions,
+} from "@repo/design-system/components/checkout/checkout-paraguay-locations";
 import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import { CheckoutUserIdentity } from "@repo/design-system/components/checkout/checkout-user-identity";
@@ -15,6 +20,13 @@ import {
 import { Button } from "@repo/design-system/components/ui/button";
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
+
+const centralStateOption = checkoutParaguayStateOptions.find(
+  (option) => option.label === "Central"
+);
+const sanLorenzoCityOption = getCheckoutParaguayCityOptions(
+  centralStateOption?.value
+).find((option) => option.label === "San Lorenzo");
 
 const merchantVerified: CheckoutMerchantSummary = {
   name: "Casa Nube",
@@ -40,10 +52,13 @@ const defaultDeliveryValues: CheckoutDeliveryValues = {
   email: "camila@cerramos.com",
   phone: "0981 123 456",
   mode: "delivery",
-  city: "Asunción",
-  addressLine1: "Av. España 742 casi Perú",
-  addressLine2: "Barrio Jara",
-  reference: "Portón negro frente a la farmacia",
+  countryId: checkoutParaguayCountryOption.value,
+  stateId: centralStateOption?.value ?? "",
+  cityId: sanLorenzoCityOption?.value ?? "",
+  streetLine1: "Av. España 742 casi Perú",
+  streetLine2: "Depto 204, Torre 2",
+  referenceNote: "Portón negro frente a la farmacia",
+  postalCode: "",
   notes: "",
 };
 

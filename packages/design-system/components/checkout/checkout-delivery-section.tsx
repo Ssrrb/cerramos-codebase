@@ -98,7 +98,7 @@ function CheckoutDeliverySection<TFieldValues extends FieldValues>({
                 control={control}
                 disabled={disabled}
                 label="Dirección"
-                name={names.addressLine1}
+                name={names.streetLine1}
                 placeholder="Av. España 742 casi Perú"
               />
               <CheckoutInputField
@@ -106,7 +106,7 @@ function CheckoutDeliverySection<TFieldValues extends FieldValues>({
                 description="Punto de referencia para encontrar la entrega más fácil."
                 disabled={disabled}
                 label="Referencia"
-                name={names.reference}
+                name={names.referenceNote}
                 placeholder="Portón negro frente a la farmacia"
               />
             </>

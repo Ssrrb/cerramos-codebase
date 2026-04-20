@@ -32,15 +32,17 @@ import type {
 import type { CheckoutDeliveryMode } from "./types";
 
 export interface CheckoutDeliveryFieldNames<TFieldValues extends FieldValues> {
-  addressLine1: FieldPath<TFieldValues>;
-  addressLine2: FieldPath<TFieldValues>;
-  city: FieldPath<TFieldValues>;
+  cityId: FieldPath<TFieldValues>;
+  countryId: FieldPath<TFieldValues>;
   email: FieldPath<TFieldValues>;
   mode: FieldPath<TFieldValues>;
   notes: FieldPath<TFieldValues>;
   phone: FieldPath<TFieldValues>;
+  referenceNote: FieldPath<TFieldValues>;
   recipientName: FieldPath<TFieldValues>;
-  reference: FieldPath<TFieldValues>;
+  stateId: FieldPath<TFieldValues>;
+  streetLine1: FieldPath<TFieldValues>;
+  streetLine2: FieldPath<TFieldValues>;
 }
 
 interface CheckoutInputFieldProps<TFieldValues extends FieldValues> {

@@ -29,6 +29,10 @@ import {
   type CheckoutPaymentStage,
 } from "./checkout-payment-section";
 import {
+  checkoutParaguayCountryOption,
+  getCheckoutParaguayCityName,
+} from "./checkout-paraguay-locations";
+import {
   CheckoutVerticalStepper,
   type CheckoutVerticalStepperStep,
 } from "./checkout-vertical-stepper";
@@ -46,10 +50,12 @@ const deliveryFieldNames: CheckoutDeliveryFieldNames<CheckoutDeliveryValues> = {
   email: "email",
   phone: "phone",
   mode: "mode",
-  city: "city",
-  addressLine1: "addressLine1",
-  addressLine2: "addressLine2",
-  reference: "reference",
+  countryId: "countryId",
+  stateId: "stateId",
+  cityId: "cityId",
+  streetLine1: "streetLine1",
+  streetLine2: "streetLine2",
+  referenceNote: "referenceNote",
   notes: "notes",
 };
 
@@ -58,10 +64,13 @@ const defaultDeliveryValues: CheckoutDeliveryValues = {
   email: "",
   phone: "",
   mode: "delivery",
-  city: "",
-  addressLine1: "",
-  addressLine2: "",
-  reference: "",
+  countryId: checkoutParaguayCountryOption.value,
+  stateId: "",
+  cityId: "",
+  streetLine1: "",
+  streetLine2: "",
+  referenceNote: "",
+  postalCode: "",
   notes: "",
 };
 
@@ -73,8 +82,10 @@ const detailFields: (keyof CheckoutDeliveryValues)[] = [
 
 const sharedDeliveryFields: (keyof CheckoutDeliveryValues)[] = ["mode"];
 const deliveryAddressFields: (keyof CheckoutDeliveryValues)[] = [
-  "city",
-  "addressLine1",
+  "countryId",
+  "stateId",
+  "cityId",
+  "streetLine1",
 ];
 
 type CompletedSteps = Partial<Record<CheckoutStepId, true>>;
@@ -107,8 +118,8 @@ const getDeliverySummary = (values: CheckoutDeliveryValues) => {
   }
 
   const addressParts = [
-    compactValue(values.addressLine1),
-    compactValue(values.city),
+    compactValue(values.streetLine1),
+    getCheckoutParaguayCityName(values.cityId) ?? compactValue(values.cityId),
   ].filter(Boolean);
 
   return [

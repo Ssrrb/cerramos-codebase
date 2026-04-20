@@ -57,16 +57,19 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
     onPaymentConfirm?: () => Promise<string | null | undefined>;
     onReset?: () => void;
     onSubmit?: (values: {
-      addressLine1: string;
-      addressLine2: string;
-      city: string;
+      cityId: string;
+      countryId: string;
       email: string;
       mode: "delivery" | "pickup";
       notes: string;
       phone: string;
+      postalCode: string;
       quantity: number;
+      referenceNote: string;
       recipientName: string;
-      reference: string;
+      stateId: string;
+      streetLine1: string;
+      streetLine2: string;
     }) => Promise<string | null | undefined>;
     orderReference?: string | null;
     paymentStage?: string;
@@ -90,16 +93,19 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
         <button
           onClick={async () => {
             const result = await onSubmit?.({
-              addressLine1: "Av. Espana 742",
-              addressLine2: "",
-              city: "Asuncion",
+              cityId: "city_py_asu_asuncion",
+              countryId: "country_py",
               email: "buyer@example.com",
               mode: "delivery",
               notes: "",
+              postalCode: "",
               phone: "0981000000",
               quantity: 2,
+              referenceNote: "",
               recipientName: "Buyer Name",
-              reference: "",
+              stateId: "state_py_asu",
+              streetLine1: "Av. Espana 742",
+              streetLine2: "",
             });
 
             setSubmitResult(result ?? "success");

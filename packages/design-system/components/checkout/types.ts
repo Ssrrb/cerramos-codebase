@@ -52,13 +52,16 @@ export interface CheckoutDeliveryModeAvailability {
 }
 
 export interface CheckoutDeliveryValues {
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
+  cityId: string;
+  countryId: string;
   email: string;
   mode: CheckoutDeliveryMode;
   notes?: string;
+  postalCode?: string;
   phone: string;
+  referenceNote?: string;
   recipientName: string;
-  reference?: string;
+  stateId: string;
+  streetLine1: string;
+  streetLine2?: string;
 }

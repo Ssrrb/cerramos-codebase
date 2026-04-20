@@ -1,6 +1,11 @@
 import type { CheckoutPaymentStage } from "@repo/design-system/components/checkout/checkout-payment-section";
 import { CheckoutProgressiveFlow } from "@repo/design-system/components/checkout/checkout-progressive-flow";
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
+import {
+  checkoutParaguayCountryOption,
+  checkoutParaguayStateOptions,
+  getCheckoutParaguayCityOptions,
+} from "@repo/design-system/components/checkout/checkout-paraguay-locations";
 import type {
   CheckoutDeliveryValues,
   CheckoutMerchantSummary,
@@ -10,8 +15,12 @@ import type {
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
 
-// TODO: remove this legacy Paraguay resolver after new submits
-// the current state refactor should fetch state then city ids instead of city/barrio.
+const centralStateOption = checkoutParaguayStateOptions.find(
+  (option) => option.label === "Central"
+);
+const sanLorenzoCityOption = getCheckoutParaguayCityOptions(
+  centralStateOption?.value
+).find((option) => option.label === "San Lorenzo");
 const merchantVerified: CheckoutMerchantSummary = {
   name: "Casa Nube",
   avatarUrl:
@@ -43,10 +52,13 @@ const defaultDeliveryValues: CheckoutDeliveryValues = {
   email: "camila@cerramos.com",
   phone: "0981 123 456",
   mode: "delivery",
-  city: "Asunción",
-  addressLine1: "Av. España 742 casi Perú",
-  addressLine2: "Barrio Jara",
-  reference: "Portón negro frente a la farmacia",
+  countryId: checkoutParaguayCountryOption.value,
+  stateId: centralStateOption?.value ?? "",
+  cityId: sanLorenzoCityOption?.value ?? "",
+  streetLine1: "Av. España 742 casi Perú",
+  streetLine2: "Depto 204, Torre 2",
+  referenceNote: "Portón negro frente a la farmacia",
+  postalCode: "",
   notes: "",
 };
 

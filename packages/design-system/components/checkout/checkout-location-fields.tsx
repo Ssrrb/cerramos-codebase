@@ -5,11 +5,13 @@ import type { Control, FieldValues } from "react-hook-form";
 import { useController, useWatch } from "react-hook-form";
 import {
   type CheckoutDeliveryFieldNames,
+  CheckoutInputField,
   CheckoutSelectField,
 } from "./checkout-form-fields";
 import {
-  checkoutParaguayCityOptions,
-  getCheckoutParaguayBarrioOptions,
+  checkoutParaguayCountryOption,
+  checkoutParaguayStateOptions,
+  getCheckoutParaguayCityOptions,
 } from "./checkout-paraguay-locations";
 
 interface CheckoutLocationFieldsProps<TFieldValues extends FieldValues> {
@@ -25,62 +27,98 @@ function CheckoutLocationFields<TFieldValues extends FieldValues>({
   names,
   requiredCityMessage,
 }: CheckoutLocationFieldsProps<TFieldValues>) {
-  // TODO(address-normalization): replace the hardcoded Paraguay city -> barrio
-  // selectors with database-backed country/state/city inputs wired to
-  // canonical ids. Barrio-specific behavior should be removed in favor of the
-  // normalized streetLine2 field once checkout submits the new address model.
-  const city = useWatch({
+  const countryId = useWatch({
     control,
-    name: names.city,
+    name: names.countryId,
   }) as string | undefined;
-  const barrio = useWatch({
+  const stateId = useWatch({
     control,
-    name: names.addressLine2,
+    name: names.stateId,
   }) as string | undefined;
-  const { field: barrioField } = useController({
+  const cityId = useWatch({
     control,
-    name: names.addressLine2,
+    name: names.cityId,
+  }) as string | undefined;
+  const { field: countryField } = useController({
+    control,
+    name: names.countryId,
   });
-  const previousCityRef = useRef(city);
+  const { field: cityField } = useController({
+    control,
+    name: names.cityId,
+  });
+  const previousStateRef = useRef(stateId);
 
-  const barrioOptions = useMemo(
-    () => getCheckoutParaguayBarrioOptions(city),
-    [city]
+  const cityOptions = useMemo(
+    () => getCheckoutParaguayCityOptions(stateId),
+    [stateId]
   );
 
   useEffect(() => {
-    if (previousCityRef.current !== city) {
-      previousCityRef.current = city;
-      barrioField.onChange("");
+    if (countryId === checkoutParaguayCountryOption.value) {
       return;
     }
 
-    previousCityRef.current = city;
-  }, [barrioField, city]);
+    countryField.onChange(checkoutParaguayCountryOption.value);
+  }, [countryField, countryId]);
 
   useEffect(() => {
-    if (!barrio) {
+    if (previousStateRef.current !== stateId) {
+      previousStateRef.current = stateId;
+      cityField.onChange("");
       return;
     }
 
-    const isBarrioValid = barrioOptions.some(
-      (option) => option.value === barrio
-    );
+    previousStateRef.current = stateId;
+  }, [cityField, stateId]);
 
-    if (!isBarrioValid) {
-      barrioField.onChange("");
+  useEffect(() => {
+    if (!cityId) {
+      return;
     }
-  }, [barrio, barrioField, barrioOptions]);
+
+    const isCityValid = cityOptions.some((option) => option.value === cityId);
+
+    if (!isCityValid) {
+      cityField.onChange("");
+    }
+  }, [cityField, cityId, cityOptions]);
 
   return (
     <div className="grid gap-5 sm:grid-cols-2">
       <CheckoutSelectField
         control={control}
+        description="Por ahora coordinamos entregas solo dentro de Paraguay."
+        disabled
+        label="País"
+        name={names.countryId}
+        options={[checkoutParaguayCountryOption]}
+      />
+      <CheckoutSelectField
+        control={control}
         disabled={disabled}
+        label="Departamento"
+        name={names.stateId}
+        options={checkoutParaguayStateOptions}
+        placeholder="Seleccioná un departamento"
+        rules={{
+          required: "Indicá el departamento de entrega.",
+        }}
+      />
+      <CheckoutSelectField
+        control={control}
+        description={
+          stateId
+            ? "Mostramos solo las ciudades disponibles para el departamento elegido."
+            : "Elegí primero un departamento para ver las ciudades disponibles."
+        }
+        disabled={disabled || !stateId}
         label="Ciudad"
-        name={names.city}
-        options={checkoutParaguayCityOptions}
-        placeholder="Seleccioná una ciudad"
+        name={names.cityId}
+        options={cityOptions}
+        placeholder={
+          stateId ? "Seleccioná una ciudad" : "Primero seleccioná un departamento"
+        }
         rules={
           requiredCityMessage
             ? {
@@ -89,20 +127,13 @@ function CheckoutLocationFields<TFieldValues extends FieldValues>({
             : undefined
         }
       />
-      <CheckoutSelectField
+      <CheckoutInputField
         control={control}
-        description={
-          city
-            ? "Mostramos solo los barrios disponibles para la ciudad elegida."
-            : "Elegí primero una ciudad para ver los barrios disponibles."
-        }
-        disabled={disabled || !city}
-        label="Barrio"
-        name={names.addressLine2}
-        options={barrioOptions}
-        placeholder={
-          city ? "Seleccioná un barrio" : "Primero seleccioná una ciudad"
-        }
+        description="Opcional. Departamento, piso, torre o barrio para complementar la dirección."
+        disabled={disabled}
+        label="Complemento"
+        name={names.streetLine2}
+        placeholder="Depto 204, Torre 2, Barrio Jara"
       />
     </div>
   );

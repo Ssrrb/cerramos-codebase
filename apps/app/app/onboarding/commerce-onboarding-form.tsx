@@ -1,5 +1,4 @@
 "use client";
-
 import { CommerceOnboardingFormView } from "@repo/design-system/components/registration";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -26,6 +25,7 @@ const CommerceOnboardingForm = ({
   name,
 }: CommerceOnboardingFormProps) => {
   const router = useRouter();
+  const [hasMounted, setHasMounted] = useState(false);
   const [businessName, setBusinessName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLogoUploading, setIsLogoUploading] = useState(false);
@@ -33,6 +33,10 @@ const CommerceOnboardingForm = ({
     useState<UploadedImageValue>(EMPTY_LOGO_IMAGE);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -173,6 +177,10 @@ const CommerceOnboardingForm = ({
       }
     });
   };
+
+  if (!hasMounted) {
+    return null;
+  }
 
   return (
     <CommerceOnboardingFormView

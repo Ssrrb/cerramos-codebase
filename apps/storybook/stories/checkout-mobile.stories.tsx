@@ -10,6 +10,8 @@ import type {
 import type { Meta, StoryObj } from "@storybook/react";
 import { useEffect, useState } from "react";
 
+// TODO: remove this legacy Paraguay resolver after new submits
+// the current state refactor should fetch state then city ids instead of city/barrio.
 const merchantVerified: CheckoutMerchantSummary = {
   name: "Casa Nube",
   avatarUrl:

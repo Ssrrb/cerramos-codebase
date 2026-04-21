@@ -19,12 +19,13 @@ import {
   CheckoutTextareaField,
 } from "./checkout-form-fields";
 import { CheckoutLocationFields } from "./checkout-location-fields";
-import type { CheckoutDeliveryMode } from "./types";
+import type { CheckoutDeliveryMode, CheckoutLocationData } from "./types";
 
 interface CheckoutDeliverySectionProps<TFieldValues extends FieldValues> {
   className?: string;
   control: Control<TFieldValues>;
   disabled?: boolean;
+  locationData?: CheckoutLocationData;
   names: CheckoutDeliveryFieldNames<TFieldValues>;
 }
 
@@ -32,6 +33,7 @@ function CheckoutDeliverySection<TFieldValues extends FieldValues>({
   className,
   control,
   disabled,
+  locationData,
   names,
 }: CheckoutDeliverySectionProps<TFieldValues>) {
   const deliveryMode = useWatch({
@@ -91,6 +93,7 @@ function CheckoutDeliverySection<TFieldValues extends FieldValues>({
               <CheckoutLocationFields
                 control={control}
                 disabled={disabled}
+                locationData={locationData}
                 names={names}
               />
               <CheckoutInputField
@@ -105,9 +108,9 @@ function CheckoutDeliverySection<TFieldValues extends FieldValues>({
                 control={control}
                 description="Punto de referencia para encontrar la entrega más fácil."
                 disabled={disabled}
-                label="Referencia"
-                name={names.referenceNote}
-                placeholder="Portón negro frente a la farmacia"
+                label="Codigo Postal"
+                name={names.postalCode}
+                placeholder="1000"
               />
             </>
           ) : null}

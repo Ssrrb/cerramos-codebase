@@ -409,7 +409,6 @@ databaseTest(
         customerId: customerProfileId,
         deliveryInfoId: deliveryInfo.id,
         expiresAt: new Date(Date.now() + 86_400_000),
-        fulfillmentType: "delivery",
         productLinkId: productLink.id,
         quantity: 1,
         subtotal: 1000,
@@ -485,6 +484,93 @@ databaseTest(
     });
   }
 );
+
+databaseTest("orders require a unique delivery snapshot", async () => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const geography = await insertParaguayGeography(suffix);
+  const [commerce] = await database
+    .insert(schema.commerce)
+    .values({
+      name: `Delivery Snapshot Commerce ${suffix}`,
+      slug: `delivery-snapshot-commerce-${suffix}`,
+    })
+    .returning({ id: schema.commerce.id });
+
+  const productRecord = await insertProductWithPrimaryImage({
+    commerceId: commerce.id,
+    name: `Snapshot Producto ${suffix}`,
+    objectKey: `products/${commerce.id}/images/snapshot-product-${suffix}.png`,
+  });
+
+  const [productLink] = await database
+    .insert(schema.productLink)
+    .values({
+      commerceId: commerce.id,
+      currency: "PYG",
+      deliveryEnabled: true,
+      paymentRequired: false,
+      pickupEnabled: true,
+      productId: productRecord.id,
+      slug: `snapshot-product-link-${suffix}`,
+      status: "active",
+      title: `Snapshot Link ${suffix}`,
+      unitPrice: 1000,
+    })
+    .returning({ id: schema.productLink.id });
+
+  const customerProfileId = createTextId("customer_profile");
+
+  await database.insert(schema.customerProfile).values({
+    email: `snapshot-${suffix}@example.com`,
+    id: customerProfileId,
+    name: "Snapshot Buyer",
+    phone: "0981777888",
+  });
+
+  const [deliveryInfo] = await database
+    .insert(schema.deliveryInfo)
+    .values({
+      cityId: geography.cityId,
+      countryId: geography.countryId,
+      customerId: customerProfileId,
+      email: `snapshot-${suffix}@example.com`,
+      mode: "delivery",
+      notes: "Leave at reception",
+      phone: "0981777888",
+      recipientName: "Snapshot Buyer",
+      stateId: geography.stateId,
+      streetLine1: "Calle Principal 123",
+    })
+    .returning({ id: schema.deliveryInfo.id });
+
+  await database.insert(schema.order).values({
+    commerceId: commerce.id,
+    currency: "PYG",
+    customerId: customerProfileId,
+    deliveryInfoId: deliveryInfo.id,
+    expiresAt: new Date(Date.now() + 86_400_000),
+    productLinkId: productLink.id,
+    quantity: 1,
+    subtotal: 1000,
+    total: 1000,
+  });
+
+  await expect(
+    database.insert(schema.order).values({
+      commerceId: commerce.id,
+      currency: "PYG",
+      customerId: customerProfileId,
+      deliveryInfoId: deliveryInfo.id,
+      expiresAt: new Date(Date.now() + 86_400_000),
+      productLinkId: productLink.id,
+      quantity: 1,
+      subtotal: 1000,
+      total: 1000,
+    })
+  ).rejects.toMatchObject({
+    cause: { code: "23505" },
+  });
+});
 
 databaseTest("user mirror updates keep profile tables in sync", async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

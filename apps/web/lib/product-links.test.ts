@@ -158,6 +158,23 @@ const customerProfileTable = {
   name: "customerProfile.name",
   userId: "customerProfile.userId",
 };
+const customerAddressTable = {
+  __name: "customerAddress",
+  cityId: "customerAddress.cityId",
+  countryId: "customerAddress.countryId",
+  customerId: "customerAddress.customerId",
+  id: "customerAddress.id",
+  isDefault: "customerAddress.isDefault",
+  label: "customerAddress.label",
+  phone: "customerAddress.phone",
+  postalCode: "customerAddress.postalCode",
+  recipientName: "customerAddress.recipientName",
+  referenceNote: "customerAddress.referenceNote",
+  stateId: "customerAddress.stateId",
+  streetLine1: "customerAddress.streetLine1",
+  streetLine2: "customerAddress.streetLine2",
+  updatedAt: "customerAddress.updatedAt",
+};
 const countryTable = {
   __name: "country",
   id: "country.id",
@@ -214,6 +231,7 @@ vi.mock("@repo/database", () => ({
     city: cityTable,
     commerce: commerceTable,
     country: countryTable,
+    customerAddress: customerAddressTable,
     customerProfile: customerProfileTable,
     deliveryInfo: deliveryInfoTable,
     order: orderTable,
@@ -250,6 +268,39 @@ const baseRecord = {
   trustState: "verified" as const,
   unitPrice: 145_000,
 };
+
+const buildLegacyCheckoutPayload = (
+  overrides: Partial<{
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    customerAddressId: string;
+    email: string;
+    mode: "delivery" | "pickup";
+    notes: string;
+    phone: string;
+    quantity: number;
+    recipientName: string;
+    reference: string;
+    saveAddress: boolean;
+    saveAsDefault: boolean;
+  }> = {}
+) => ({
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  customerAddressId: "",
+  email: "buyer@example.com",
+  mode: "pickup" as const,
+  notes: "",
+  phone: "0981000000",
+  quantity: 1,
+  recipientName: "Buyer Name",
+  reference: "",
+  saveAddress: false,
+  saveAsDefault: false,
+  ...overrides,
+});
 
 describe("web product links", () => {
   beforeEach(() => {
@@ -655,18 +706,14 @@ describe("web product links", () => {
     const result = await createOrderFromProductLink(
       "mate-shop",
       "mate-premium",
-      {
+      buildLegacyCheckoutPayload({
         addressLine1: "Buyer street",
-        addressLine2: "",
         city: "Asuncion",
-        email: "buyer@example.com",
         mode: "delivery",
         notes: "Leave at reception",
-        phone: "0981000000",
         quantity: 3,
-        recipientName: "Buyer Name",
         reference: "Depto 2",
-      }
+      })
     );
 
     expect(result).toEqual({
@@ -690,7 +737,6 @@ describe("web product links", () => {
     expect(orderInsert?.values).toMatchObject({
       commerceId: "commerce_1",
       currency: "USD",
-      fulfillmentType: "delivery",
       paymentStatus: "pending",
       productLinkId: "link_1",
       quantity: 3,
@@ -700,6 +746,7 @@ describe("web product links", () => {
     expect(deliveryInsert?.values).toMatchObject({
       cityId: "city_asuncion",
       countryId: "country_py",
+      customerAddressId: null,
       referenceNote: "Depto 2",
       stateId: "state_capital",
       streetLine1: "Buyer street",
@@ -788,18 +835,10 @@ describe("web product links", () => {
     await createOrderFromProductLink(
       "mate-shop",
       "mate-premium",
-      {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
+      buildLegacyCheckoutPayload({
         mode: "pickup",
-        notes: "",
-        phone: "0981000000",
         quantity: 3,
-        recipientName: "Buyer Name",
-        reference: "",
-      },
+      }),
       {
         customerId: "customer_auth_1",
         userId: "user_1",
@@ -882,18 +921,17 @@ describe("web product links", () => {
     );
 
     const { createOrderFromProductLink } = await import("./product-links");
-    await createOrderFromProductLink("mate-shop", "mate-premium", {
+    await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      buildLegacyCheckoutPayload({
       addressLine1: "Buyer street",
-      addressLine2: "",
       city: "Asuncion",
-      email: "buyer@example.com",
       mode: "delivery",
       notes: "Leave at reception",
-      phone: "0981000000",
-      quantity: 1,
-      recipientName: "Buyer Name",
       reference: "Depto 2",
-    });
+      })
+    );
 
     const orderItemInsert = insertedValues.find(
       ({ table }) => table === "orderItem"
@@ -901,6 +939,244 @@ describe("web product links", () => {
 
     expect(orderItemInsert?.values).toMatchObject({
       imageObjectKey: "products/commerce_1/images/mate.png",
+    });
+  });
+
+  test("uses a selected saved address as the delivery snapshot source", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([
+        {
+          email: "auth@example.com",
+          id: "customer_auth_1",
+          name: "Authenticated Buyer",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          cityId: "city_saved",
+          countryId: "country_saved",
+          customerId: "customer_auth_1",
+          id: "address_1",
+          isDefault: false,
+          label: "Casa",
+          phone: "0981888999",
+          postalCode: "1209",
+          recipientName: "Saved Buyer",
+          referenceNote: "Frente al parque",
+          stateId: "state_saved",
+          streetLine1: "Saved street 123",
+          streetLine2: "Depto 2",
+        },
+      ]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+
+        switch (table.__name) {
+          case "deliveryInfo":
+            return {
+              returning: async () => [{ id: "delivery_1" }],
+            };
+          case "order":
+            return {
+              returning: async () => [{ id: "order_1" }],
+            };
+          case "paymentIntent":
+            return {
+              returning: async () => [{ id: "payment_1" }],
+            };
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+    await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      {
+        cityId: "city_ignored",
+        countryId: "country_ignored",
+        customerAddressId: "address_1",
+        email: "buyer@example.com",
+        mode: "delivery",
+        notes: "Leave at reception",
+        phone: "0981000000",
+        postalCode: "",
+        quantity: 1,
+        referenceNote: "",
+        recipientName: "Buyer Name",
+        saveAddress: false,
+        saveAsDefault: false,
+        stateId: "state_ignored",
+        streetLine1: "Edited street",
+        streetLine2: "",
+      },
+      {
+        customerId: "customer_auth_1",
+        userId: "user_1",
+      }
+    );
+
+    const deliveryInsert = insertedValues.find(
+      ({ table }) => table === "deliveryInfo"
+    );
+
+    expect(deliveryInsert?.values).toMatchObject({
+      cityId: "city_saved",
+      countryId: "country_saved",
+      customerAddressId: "address_1",
+      postalCode: "1209",
+      referenceNote: "Frente al parque",
+      stateId: "state_saved",
+      streetLine1: "Saved street 123",
+      streetLine2: "Depto 2",
+    });
+  });
+
+  test("saves a new customer address and links it to the delivery snapshot", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        paymentRequired: false,
+      },
+    ]);
+    txSelectWhereMock
+      .mockResolvedValueOnce([{ stock: 5 }])
+      .mockResolvedValueOnce([
+        {
+          email: "auth@example.com",
+          id: "customer_auth_1",
+          name: "Authenticated Buyer",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          cityId: "city_asuncion",
+          countryId: "country_py",
+          stateId: "state_capital",
+        },
+      ]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+
+        switch (table.__name) {
+          case "customerAddress":
+            return {
+              returning: async () => [
+                {
+                  cityId: "city_asuncion",
+                  countryId: "country_py",
+                  customerId: "customer_auth_1",
+                  id: "address_new",
+                  isDefault: true,
+                  label: null,
+                  phone: "0981000000",
+                  postalCode: "1000",
+                  recipientName: "Buyer Name",
+                  referenceNote: "Portón negro",
+                  stateId: "state_capital",
+                  streetLine1: "Buyer street",
+                  streetLine2: "Depto 2",
+                },
+              ],
+            };
+          case "deliveryInfo":
+            return {
+              returning: async () => [{ id: "delivery_1" }],
+            };
+          case "order":
+            return {
+              returning: async () => [{ id: "order_1" }],
+            };
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+    await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      {
+        cityId: "city_asuncion",
+        countryId: "country_py",
+        customerAddressId: "",
+        email: "buyer@example.com",
+        mode: "delivery",
+        notes: "Leave at reception",
+        phone: "0981000000",
+        postalCode: "1000",
+        quantity: 1,
+        referenceNote: "Portón negro",
+        recipientName: "Buyer Name",
+        saveAddress: true,
+        saveAsDefault: true,
+        stateId: "state_capital",
+        streetLine1: "Buyer street",
+        streetLine2: "Depto 2",
+      },
+      {
+        customerId: "customer_auth_1",
+        userId: "user_1",
+      }
+    );
+
+    const savedAddressInsert = insertedValues.find(
+      ({ table }) => table === "customerAddress"
+    );
+    const deliveryInsert = insertedValues.find(
+      ({ table }) => table === "deliveryInfo"
+    );
+
+    expect(savedAddressInsert?.values).toMatchObject({
+      cityId: "city_asuncion",
+      countryId: "country_py",
+      customerId: "customer_1",
+      isDefault: true,
+      phone: "0981000000",
+      postalCode: "1000",
+      recipientName: "Buyer Name",
+      referenceNote: "Portón negro",
+      stateId: "state_capital",
+      streetLine1: "Buyer street",
+      streetLine2: "Depto 2",
+    });
+    expect(deliveryInsert?.values).toMatchObject({
+      customerAddressId: "address_new",
     });
   });
 
@@ -964,18 +1240,7 @@ describe("web product links", () => {
     const result = await createOrderFromProductLink(
       "mate-shop",
       "mate-premium",
-      {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 1,
-        recipientName: "Buyer Name",
-        reference: "",
-      }
+      buildLegacyCheckoutPayload()
     );
 
     expect(result).toEqual({
@@ -998,18 +1263,11 @@ describe("web product links", () => {
     const { createOrderFromProductLink } = await import("./product-links");
 
     await expect(
-      createOrderFromProductLink("mate-shop", "mate-premium", {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 1,
-        recipientName: "Buyer Name",
-        reference: "",
-      })
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload()
+      )
     ).rejects.toThrow(
       "El pago online todavia no esta disponible para este link."
     );
@@ -1026,18 +1284,11 @@ describe("web product links", () => {
     const { createOrderFromProductLink } = await import("./product-links");
 
     await expect(
-      createOrderFromProductLink("mate-shop", "mate-premium", {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 1,
-        recipientName: "Buyer Name",
-        reference: "",
-      })
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload()
+      )
     ).rejects.toThrow("Este link no permite retiro.");
   });
 
@@ -1061,18 +1312,11 @@ describe("web product links", () => {
     const { createOrderFromProductLink } = await import("./product-links");
 
     await expect(
-      createOrderFromProductLink("mate-shop", "mate-premium", {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 1,
-        recipientName: "Buyer Name",
-        reference: "",
-      })
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload()
+      )
     ).rejects.toThrow("Este producto se quedó sin stock.");
   });
 
@@ -1091,18 +1335,13 @@ describe("web product links", () => {
     const { createOrderFromProductLink } = await import("./product-links");
 
     await expect(
-      createOrderFromProductLink("mate-shop", "mate-premium", {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 3,
-        recipientName: "Buyer Name",
-        reference: "",
-      })
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload({
+          quantity: 3,
+        })
+      )
     ).rejects.toThrow("La cantidad seleccionada supera el stock disponible.");
   });
 
@@ -1132,18 +1371,13 @@ describe("web product links", () => {
     const { createOrderFromProductLink } = await import("./product-links");
 
     await expect(
-      createOrderFromProductLink("mate-shop", "mate-premium", {
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        email: "buyer@example.com",
-        mode: "pickup",
-        notes: "",
-        phone: "0981000000",
-        quantity: 2,
-        recipientName: "Buyer Name",
-        reference: "",
-      })
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload({
+          quantity: 2,
+        })
+      )
     ).rejects.toThrow("Este producto se quedó sin stock.");
   });
 

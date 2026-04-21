@@ -99,6 +99,13 @@
       "when": 1776211200000,
       "tag": "0013_normalize_checkout_addresses",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1776643200000,
+      "tag": "0014_delivery_snapshot_simplification",
+      "breakpoints": true
     }
   ]
 }

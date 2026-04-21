@@ -75,7 +75,7 @@ function DrawerContent({
           className
         )}
         onOpenAutoFocus={(event) => {
-          const target = event.currentTarget;
+          const target = event.currentTarget as HTMLElement | null;
           setTimeout(() => {
             target?.focus();
           }, 0);

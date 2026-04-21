@@ -21,9 +21,11 @@ import { CheckoutDeliverySection } from "./checkout-delivery-section";
 import { CheckoutDeliveryStepSection } from "./checkout-delivery-step-section";
 import {
   checkoutParaguayCountryOption,
+  checkoutParaguayLocationData,
   checkoutParaguayStateOptions,
   getCheckoutParaguayCityOptions,
 } from "./checkout-paraguay-locations";
+import type { CheckoutLocationData } from "./types";
 import type { CheckoutDeliveryValues } from "./types";
 
 const centralStateOption = checkoutParaguayStateOptions.find(
@@ -47,16 +49,22 @@ const names = {
   countryId: "countryId",
   stateId: "stateId",
   cityId: "cityId",
+  customerAddressId: "customerAddressId",
   streetLine1: "streetLine1",
   streetLine2: "streetLine2",
+  postalCode: "postalCode",
   referenceNote: "referenceNote",
   notes: "notes",
+  saveAddress: "saveAddress",
+  saveAsDefault: "saveAsDefault",
 } as const;
 
 function DeliveryStepHarness({
   defaultValues,
+  locationData,
 }: {
   defaultValues?: Partial<CheckoutDeliveryValues>;
+  locationData?: CheckoutLocationData;
 }) {
   const form = useForm<CheckoutDeliveryValues>({
     defaultValues: {
@@ -67,11 +75,14 @@ function DeliveryStepHarness({
       countryId: checkoutParaguayCountryOption.value,
       stateId: "",
       cityId: "",
+      customerAddressId: "",
       streetLine1: "",
       streetLine2: "",
       referenceNote: "",
       postalCode: "",
       notes: "",
+      saveAddress: false,
+      saveAsDefault: false,
       ...defaultValues,
     },
   });
@@ -81,7 +92,11 @@ function DeliveryStepHarness({
 
   return (
     <>
-      <CheckoutDeliveryStepSection control={form.control} names={names} />
+      <CheckoutDeliveryStepSection
+        control={form.control}
+        locationData={locationData}
+        names={names}
+      />
       <button
         onClick={() => form.setValue("stateId", centralStateOption?.value ?? "")}
         type="button"
@@ -118,16 +133,56 @@ function DeliverySectionHarness() {
       countryId: checkoutParaguayCountryOption.value,
       stateId: "",
       cityId: "",
+      customerAddressId: "",
       streetLine1: "",
       streetLine2: "",
       referenceNote: "",
       postalCode: "",
       notes: "",
+      saveAddress: false,
+      saveAsDefault: false,
     },
   });
 
   return <CheckoutDeliverySection control={form.control} names={names} />;
 }
+
+const multipleCountryLocationData: CheckoutLocationData = {
+  cities: [
+    {
+      label: "Asunción",
+      stateId: "state_db_asuncion",
+      value: "city_db_asuncion",
+    },
+    {
+      label: "Recoleta",
+      stateId: "state_db_buenos_aires",
+      value: "city_db_recoleta",
+    },
+  ],
+  countries: [
+    {
+      label: "Argentina",
+      value: "country_db_ar",
+    },
+    {
+      label: "Paraguay",
+      value: "country_db_py",
+    },
+  ],
+  states: [
+    {
+      countryId: "country_db_ar",
+      label: "Buenos Aires",
+      value: "state_db_buenos_aires",
+    },
+    {
+      countryId: "country_db_py",
+      label: "Asunción",
+      value: "state_db_asuncion",
+    },
+  ],
+};
 
 describe("checkout location fields", () => {
   beforeAll(() => {
@@ -234,5 +289,32 @@ describe("checkout location fields", () => {
     expect(screen.getByLabelText("Departamento")).toBeDefined();
     expect(screen.getByLabelText("Ciudad")).toBeDefined();
     expect(screen.getByLabelText("Complemento")).toBeDefined();
+  });
+
+  test("uses the provided DB-backed location data instead of the static Paraguay fallback", async () => {
+    render(
+      <DeliveryStepHarness
+        defaultValues={{
+          countryId: "country_db_ar",
+          stateId: "state_db_buenos_aires",
+          cityId: "city_db_recoleta",
+        }}
+        locationData={multipleCountryLocationData}
+      />
+    );
+
+    expect(checkoutParaguayLocationData.countries[0]?.value).toBe("country_py");
+
+    expect(screen.getByLabelText("País").textContent).toContain("Argentina");
+    expect(screen.getByLabelText("Departamento").textContent).toContain(
+      "Buenos Aires"
+    );
+    expect(screen.getByLabelText("Ciudad").textContent).toContain("Recoleta");
+
+    fireEvent.click(screen.getByRole("button", { name: "set-state-asuncion" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-city").textContent).toBe("");
+    });
   });
 });

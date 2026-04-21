@@ -5,9 +5,11 @@ import type { CheckoutPaymentStage } from "@repo/design-system/components/checko
 import { CheckoutUpayCardLoader } from "@repo/design-system/components/checkout/checkout-upay-card-loader";
 import type {
   CheckoutDeliveryValues,
+  CheckoutLocationData,
   CheckoutMerchantSummary,
   CheckoutOrderSummary,
   CheckoutProductSummary,
+  CheckoutSavedAddress,
 } from "@repo/design-system/components/checkout/types";
 import {
   Alert,
@@ -26,6 +28,8 @@ interface ProductLinkCheckoutClientProps {
   deliveryEnabled: boolean;
   googleEnabled?: boolean;
   initialAuthUser?: CheckoutAuthUser | null;
+  initialLocationData: CheckoutLocationData;
+  initialSavedAddresses?: CheckoutSavedAddress[];
   merchant: CheckoutMerchantSummary;
   orderSummary: CheckoutOrderSummary;
   paymentRequired: boolean;
@@ -51,7 +55,9 @@ export const ProductLinkCheckoutClient = ({
   commerceSlug,
   deliveryEnabled,
   googleEnabled = false,
+  initialLocationData,
   initialAuthUser = null,
+  initialSavedAddresses = [],
   merchant,
   orderSummary,
   paymentRequired,
@@ -94,12 +100,6 @@ export const ProductLinkCheckoutClient = ({
             La confirmación comercial del pedido llegará por separado.
           </AlertDescription>
         </Alert>
-        <div className="rounded-[1.25rem] border border-border/70 bg-background px-4 py-3">
-          <p className="font-medium text-foreground text-sm">Referencia</p>
-          <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
-            {orderReference}
-          </p>
-        </div>
         <CheckoutUpayCardLoader formId={upayFormId} />
       </div>
     );
@@ -113,13 +113,18 @@ export const ProductLinkCheckoutClient = ({
           initialUser={initialAuthUser}
         />
       }
+      allowSavedAddresses={Boolean(initialAuthUser)}
       confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado."
       defaultValues={{
+        email: initialAuthUser?.email ?? "",
+        countryId: initialLocationData.countries[0]?.value ?? "",
         mode: deliveryEnabled ? "delivery" : "pickup",
+        recipientName: initialAuthUser?.name ?? "",
       }}
       deliveryEnabled={deliveryEnabled}
       footerContent="Powered by Cheki"
       isOrderConfirmed={isOrderConfirmed}
+      locationData={initialLocationData}
       merchant={merchant}
       onPaymentConfirm={async () => {
         await wait(1000);
@@ -199,6 +204,7 @@ export const ProductLinkCheckoutClient = ({
       pickupEnabled={pickupEnabled}
       processorSlot={paymentProcessorSlot}
       product={product}
+      savedAddresses={initialSavedAddresses}
       submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
     />
   );

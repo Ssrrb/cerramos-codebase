@@ -59,6 +59,7 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
     onSubmit?: (values: {
       cityId: string;
       countryId: string;
+      customerAddressId?: string;
       email: string;
       mode: "delivery" | "pickup";
       notes: string;
@@ -67,6 +68,8 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
       quantity: number;
       referenceNote: string;
       recipientName: string;
+      saveAddress?: boolean;
+      saveAsDefault?: boolean;
       stateId: string;
       streetLine1: string;
       streetLine2: string;
@@ -93,8 +96,9 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
         <button
           onClick={async () => {
             const result = await onSubmit?.({
-              cityId: "city_py_asu_asuncion",
-              countryId: "country_py",
+              cityId: "city_db_asuncion",
+              countryId: "country_db_py",
+              customerAddressId: "",
               email: "buyer@example.com",
               mode: "delivery",
               notes: "",
@@ -103,7 +107,9 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
               quantity: 2,
               referenceNote: "",
               recipientName: "Buyer Name",
-              stateId: "state_py_asu",
+              saveAddress: false,
+              saveAsDefault: false,
+              stateId: "state_db_asuncion",
               streetLine1: "Av. Espana 742",
               streetLine2: "",
             });
@@ -134,6 +140,29 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
 const baseProps = {
   commerceSlug: "mate-shop",
   deliveryEnabled: true,
+  initialLocationData: {
+    cities: [
+      {
+        label: "Asunción",
+        stateId: "state_db_asuncion",
+        value: "city_db_asuncion",
+      },
+    ],
+    countries: [
+      {
+        label: "Paraguay",
+        value: "country_db_py",
+      },
+    ],
+    states: [
+      {
+        countryId: "country_db_py",
+        label: "Asunción",
+        value: "state_db_asuncion",
+      },
+    ],
+  },
+  initialSavedAddresses: [],
   merchant: {
     name: "Mate Shop",
     trustState: "verified" as const,
@@ -257,6 +286,7 @@ describe("product link checkout client", () => {
     expect(screen.getByTestId("order-reference").textContent).toBe(
       "ord_payment"
     );
+    expect(screen.queryByText("Referencia")).toBeNull();
     expect(screen.getByTestId("upay-loader").textContent).toBe("form_payment");
 
     await React.act(async () => {

@@ -5,11 +5,12 @@ import {
   paraguayCountry,
   paraguayStates,
 } from "./paraguay-geography";
-
-interface CheckoutLocationOption {
-  label: string;
-  value: string;
-}
+import type {
+  CheckoutLocationCity,
+  CheckoutLocationData,
+  CheckoutLocationOption,
+  CheckoutLocationState,
+} from "./types";
 
 const mapLocationOption = ({
   id,
@@ -22,16 +23,44 @@ const mapLocationOption = ({
   value: id,
 });
 
+const mapStateOption = ({
+  countryId,
+  id,
+  name,
+}: {
+  countryId: string;
+  id: string;
+  name: string;
+}): CheckoutLocationState => ({
+  countryId,
+  label: name,
+  value: id,
+});
+
+const mapCityOption = ({
+  id,
+  name,
+  stateId,
+}: {
+  id: string;
+  name: string;
+  stateId: string;
+}): CheckoutLocationCity => ({
+  label: name,
+  stateId,
+  value: id,
+});
+
 const checkoutParaguayCountryOption = mapLocationOption(paraguayCountry);
 
-const checkoutParaguayStateOptions: CheckoutLocationOption[] = paraguayStates
+const checkoutParaguayStateOptions: CheckoutLocationState[] = paraguayStates
   .slice()
   .sort((left, right) => left.name.localeCompare(right.name, "es-PY"))
-  .map(mapLocationOption);
+  .map(mapStateOption);
 
 const getCheckoutParaguayCityOptions = (
   stateId: string | undefined
-): CheckoutLocationOption[] => {
+): CheckoutLocationCity[] => {
   if (!stateId) {
     return [];
   }
@@ -39,7 +68,16 @@ const getCheckoutParaguayCityOptions = (
   return paraguayCities
     .filter((city) => city.stateId === stateId)
     .sort((left, right) => left.name.localeCompare(right.name, "es-PY"))
-    .map(mapLocationOption);
+    .map(mapCityOption);
+};
+
+const checkoutParaguayLocationData: CheckoutLocationData = {
+  cities: paraguayCities
+    .slice()
+    .sort((left, right) => left.name.localeCompare(right.name, "es-PY"))
+    .map(mapCityOption),
+  countries: [checkoutParaguayCountryOption],
+  states: checkoutParaguayStateOptions,
 };
 
 const getCheckoutParaguayStateName = (stateId: string | undefined) =>
@@ -49,10 +87,10 @@ const getCheckoutParaguayCityName = (cityId: string | undefined) =>
   paraguayCities.find((city) => city.id === cityId)?.name;
 
 export {
+  checkoutParaguayLocationData,
   checkoutParaguayCountryOption,
   checkoutParaguayStateOptions,
   getCheckoutParaguayCityName,
   getCheckoutParaguayCityOptions,
   getCheckoutParaguayStateName,
 };
-export type { CheckoutLocationOption };

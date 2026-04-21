@@ -44,11 +44,6 @@ export const productStatusEnum = pgEnum("ProductStatus", [
   "inactive",
 ]);
 
-export const fulfillmentTypeEnum = pgEnum("FulfillmentType", [
-  "delivery",
-  "pickup",
-]);
-
 export const deliveryModeEnum = pgEnum("DeliveryMode", ["delivery", "pickup"]);
 
 export const orderStatusEnum = pgEnum("OrderStatus", [
@@ -526,6 +521,12 @@ export const deliveryInfo = pgTable(
     customerId: text("customerId").references(() => customerProfile.id, {
       onDelete: "set null",
     }),
+    customerAddressId: text("customerAddressId").references(
+      () => customerAddress.id,
+      {
+        onDelete: "set null",
+      }
+    ),
     mode: deliveryModeEnum("mode").notNull(),
     recipientName: text("recipientName").notNull(),
     email: text("email").notNull(),
@@ -577,9 +578,7 @@ export const order = pgTable(
     paymentStatus: paymentStatusEnum("paymentStatus")
       .notNull()
       .default("not_required"),
-    fulfillmentType: fulfillmentTypeEnum("fulfillmentType").notNull(),
     quantity: integer("quantity").notNull().default(1),
-    note: text("note"),
     subtotal: integer("subtotal").notNull(),
     total: integer("total").notNull(),
     currency: text("currency").notNull().default("PYG"),
@@ -594,6 +593,7 @@ export const order = pgTable(
     index("Order_productLinkId_idx").on(table.productLinkId),
     index("Order_customerId_idx").on(table.customerId),
     index("Order_deliveryInfoId_idx").on(table.deliveryInfoId),
+    uniqueIndex("Order_deliveryInfoId_key").on(table.deliveryInfoId),
   ]
 );
 

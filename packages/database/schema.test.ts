@@ -23,6 +23,7 @@ describe("schema profile exports", () => {
     expect(getTableName(schema.state)).toBe("State");
     expect(getTableName(schema.city)).toBe("City");
     expect(getTableName(schema.customerAddress)).toBe("CustomerAddress");
+    expect(schema.deliveryInfo.customerAddressId.name).toBe("customerAddressId");
     expect(schema.deliveryInfo.countryId.name).toBe("countryId");
     expect(schema.deliveryInfo.stateId.name).toBe("stateId");
     expect(schema.deliveryInfo.cityId.name).toBe("cityId");
@@ -30,5 +31,8 @@ describe("schema profile exports", () => {
     expect(schema.deliveryInfo.referenceNote.name).toBe("referenceNote");
     expect(schema.customerAddress.streetLine1.name).toBe("streetLine1");
     expect(schema.customerAddress.isDefault.name).toBe("isDefault");
+    expect(schema.deliveryInfo.notes.name).toBe("notes");
+    expect("fulfillmentType" in schema.order).toBe(false);
+    expect("note" in schema.order).toBe(false);
   });
 });

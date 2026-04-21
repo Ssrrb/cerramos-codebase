@@ -1,0 +1,72 @@
+---
+title: ADR 0002: Checkout Delivery Snapshots And Saved Addresses
+description: Why orders now use `deliveryInfo` as the only fulfillment snapshot and how saved customer addresses relate to checkout.
+type: reference
+summary: Decision record for the checkout refactor that separates reusable customer addresses from immutable order fulfillment data.
+---
+
+## Status
+
+Accepted.
+
+## Context
+
+The checkout flow already had two different address concepts:
+
+- `customerAddress` as reusable buyer profile data
+- `deliveryInfo` as order-linked delivery data
+
+At the same time, `order` still duplicated fulfillment fields:
+
+- `order.fulfillmentType`
+- `order.note`
+
+That created ambiguity about which record was the real fulfillment truth for an order and made it harder to add saved-address reuse in checkout without leaking mutable profile data into operational order state.
+
+## Decision
+
+- `deliveryInfo` is the single source of truth for fulfillment data attached to an order.
+- `order` no longer stores `fulfillmentType` or `note`.
+- Each `order` owns exactly one `deliveryInfo`, enforced with a unique constraint on `order.deliveryInfoId`.
+- `customerAddress` remains reusable buyer profile data and is not used as operational fulfillment truth.
+- `deliveryInfo.customerAddressId` may optionally reference the saved address that the snapshot was copied from.
+- Checkout may prefill from a saved `customerAddress`, but the submitted order always persists its own immutable `deliveryInfo` snapshot.
+- Saving a new address from checkout requires explicit buyer intent instead of automatic persistence.
+
+## Rationale
+
+This keeps two concerns separate:
+
+- reusable account data for faster future checkout
+- immutable snapshot data for the specific order that was placed
+
+That separation matters because address books are mutable, while order fulfillment history must remain stable and auditable.
+
+By removing fulfillment duplication from `order`, the model becomes easier to reason about:
+
+- fulfillment mode lives on `deliveryInfo`
+- delivery notes live on `deliveryInfo`
+- address lineage is optional metadata, not a second source of truth
+
+The unique order-to-delivery snapshot relationship also makes the lifecycle easier to defend operationally. A snapshot reused by multiple orders would make edits, audits, and support investigations ambiguous.
+
+The explicit save step follows the product requirement that persistent buyer data should only be stored with consent.
+
+## Tradeoffs
+
+- The flow now writes both `customerAddress` and `deliveryInfo` when a buyer explicitly saves a new address during checkout.
+- `deliveryInfo.customerAddressId` adds one more nullable relationship to the schema.
+- The migration is intentionally strict: if multiple historical orders share one `deliveryInfo`, it fails instead of silently preserving a shape that conflicts with the new contract.
+
+Those costs are acceptable because they preserve a cleaner domain boundary:
+
+- `customerAddress` is for buyer convenience
+- `deliveryInfo` is for order execution and auditability
+
+## Consequences
+
+- Authenticated checkout can list and reuse saved addresses.
+- Editing a prefilled saved address in checkout turns it back into a new unsaved address draft.
+- Pickup orders do not use or create `customerAddress`.
+- Historical order fulfillment reads should come from `deliveryInfo`, not from any buyer profile address table.
+- Future address-management UI can evolve independently without changing the fulfillment contract for existing orders.

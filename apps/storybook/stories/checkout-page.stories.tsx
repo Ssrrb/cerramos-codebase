@@ -12,6 +12,7 @@ import type {
   CheckoutMerchantSummary,
   CheckoutOrderSummary,
   CheckoutProductSummary,
+  CheckoutSavedAddress,
 } from "@repo/design-system/components/checkout/types";
 import {
   AuthModal,
@@ -83,6 +84,23 @@ const signedInUser = {
   avatarUrl: "https://github.com/shadcn.png",
 };
 
+const signedInSavedAddresses: CheckoutSavedAddress[] = [
+  {
+    cityId: sanLorenzoCityOption?.value ?? "city_py_san_lorenzo",
+    countryId: checkoutParaguayCountryOption.value,
+    id: "address_storybook_home",
+    isDefault: true,
+    label: "Casa",
+    postalCode: "1000",
+    recipientName: "Camila Ferreira",
+    referenceNote: "Portón negro frente a la farmacia",
+    stateId: centralStateOption?.value ?? "state_py_central",
+    streetLine1: "Av. España 742 casi Perú",
+    streetLine2: "Depto 204, Torre 2",
+    summary: "Av. España 742 casi Perú, San Lorenzo",
+  },
+];
+
 const wait = (ms: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
@@ -91,10 +109,12 @@ const wait = (ms: number) =>
 function CheckoutPageStory({
   defaultValues = defaultDeliveryValues,
   paymentRequired = true,
+  savedAddresses = [],
   user = null,
 }: {
   defaultValues?: Partial<CheckoutDeliveryValues>;
   paymentRequired?: boolean;
+  savedAddresses?: CheckoutSavedAddress[];
   user?: {
     name: string;
     avatarUrl?: string;
@@ -151,6 +171,7 @@ function CheckoutPageStory({
             </div>
           )
         }
+        allowSavedAddresses={Boolean(user)}
         confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial sigue por separado."
         defaultValues={defaultValues}
         footerContent="Powered by Cheki"
@@ -190,6 +211,7 @@ function CheckoutPageStory({
           ) : undefined
         }
         product={product}
+        savedAddresses={savedAddresses}
         submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
       />
       <AuthModal
@@ -221,7 +243,12 @@ export const GuestConversion: Story = {
 
 export const SignedInConversion: Story = {
   args: {},
-  render: () => <CheckoutPageStory user={signedInUser} />,
+  render: () => (
+    <CheckoutPageStory
+      savedAddresses={signedInSavedAddresses}
+      user={signedInUser}
+    />
+  ),
 };
 
 export const MobileGuestConversion: Story = {

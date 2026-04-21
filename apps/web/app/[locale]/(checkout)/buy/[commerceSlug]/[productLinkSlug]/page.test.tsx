@@ -3,12 +3,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
   createCheckoutViewModelMock,
+  getCheckoutLocationDataMock,
+  getCurrentCustomerProfileMock,
   getPublicProductLinkCheckoutMock,
+  listCheckoutSavedAddressesMock,
   getSessionMock,
   notFoundMock,
 } = vi.hoisted(() => ({
   createCheckoutViewModelMock: vi.fn(),
+  getCheckoutLocationDataMock: vi.fn(),
+  getCurrentCustomerProfileMock: vi.fn(),
   getPublicProductLinkCheckoutMock: vi.fn(),
+  listCheckoutSavedAddressesMock: vi.fn(),
   getSessionMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
@@ -24,11 +30,20 @@ vi.mock("@/lib/product-links", () => ({
   getPublicProductLinkCheckout: getPublicProductLinkCheckoutMock,
 }));
 
+vi.mock("@/lib/checkout-locations", () => ({
+  getCheckoutLocationData: getCheckoutLocationDataMock,
+}));
+
+vi.mock("@/lib/checkout-customer-addresses", () => ({
+  listCheckoutSavedAddresses: listCheckoutSavedAddressesMock,
+}));
+
 vi.mock("@repo/auth/keys", () => ({
   isGoogleAuthEnabled: () => false,
 }));
 
 vi.mock("@repo/auth/server", () => ({
+  getCurrentCustomerProfile: getCurrentCustomerProfileMock,
   getSession: getSessionMock,
 }));
 
@@ -59,14 +74,43 @@ const checkoutRecord = {
   unitPrice: 145_000,
 };
 
+const locationData = {
+  cities: [
+    {
+      label: "Asunción",
+      stateId: "state_db_asuncion",
+      value: "city_db_asuncion",
+    },
+  ],
+  countries: [
+    {
+      label: "Paraguay",
+      value: "country_db_py",
+    },
+  ],
+  states: [
+    {
+      countryId: "country_db_py",
+      label: "Asunción",
+      value: "state_db_asuncion",
+    },
+  ],
+};
+
 describe("product link checkout page", () => {
   beforeEach(() => {
     vi.resetModules();
     createCheckoutViewModelMock.mockReset();
+    getCheckoutLocationDataMock.mockReset();
+    getCurrentCustomerProfileMock.mockReset();
     getPublicProductLinkCheckoutMock.mockReset();
+    listCheckoutSavedAddressesMock.mockReset();
     getSessionMock.mockReset();
     notFoundMock.mockClear();
     getSessionMock.mockResolvedValue(null);
+    getCurrentCustomerProfileMock.mockResolvedValue(null);
+    getCheckoutLocationDataMock.mockResolvedValue(locationData);
+    listCheckoutSavedAddressesMock.mockResolvedValue([]);
   });
 
   test("generates noindex metadata for active checkout pages", async () => {
@@ -99,9 +143,30 @@ describe("product link checkout page", () => {
     getSessionMock.mockResolvedValue({
       user: {
         email: "buyer@example.com",
+        id: "user_1",
         name: "Buyer Name",
       },
     });
+    getCurrentCustomerProfileMock.mockResolvedValue({
+      id: "customer_1",
+    });
+    listCheckoutSavedAddressesMock.mockResolvedValue([
+      {
+        cityId: "city_db_asuncion",
+        countryId: "country_db_py",
+        id: "address_1",
+        isDefault: true,
+        label: "Casa",
+        phone: "0981000000",
+        postalCode: "1000",
+        recipientName: "Buyer Name",
+        referenceNote: "Portón negro",
+        stateId: "state_db_asuncion",
+        streetLine1: "Av. España 742",
+        streetLine2: null,
+        summary: "Av. España 742, Asunción",
+      },
+    ]);
     createCheckoutViewModelMock.mockReturnValue({
       merchant: {
         name: "Mate Shop",
@@ -128,6 +193,8 @@ describe("product link checkout page", () => {
     expect(html).toContain("mate-shop");
     expect(html).toContain("mate-premium");
     expect(html).toContain("buyer@example.com");
+    expect(html).toContain("country_db_py");
+    expect(html).toContain("address_1");
     expect(html).toContain("paymentRequired&quot;:true");
   });
 

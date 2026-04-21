@@ -37,6 +37,9 @@ const normalizedCheckoutOrderPayloadSchema = checkoutOrderPayloadBaseSchema
     countryId: z.string().trim().max(64).default(""),
     stateId: z.string().trim().max(64).default(""),
     cityId: z.string().trim().max(64).default(""),
+    customerAddressId: z.string().trim().max(64).default(""),
+    saveAddress: z.boolean().default(false),
+    saveAsDefault: z.boolean().default(false),
     streetLine1: z.string().trim().max(160).default(""),
     streetLine2: z.string().trim().max(160).default(""),
     postalCode: z.string().trim().max(32).default(""),
@@ -85,7 +88,10 @@ const legacyCheckoutOrderPayloadSchema = checkoutOrderPayloadBaseSchema
     addressLine1: z.string().trim().max(160).default(""),
     addressLine2: z.string().trim().max(160).default(""),
     city: z.string().trim().max(120).default(""),
+    customerAddressId: z.string().trim().max(64).default(""),
     reference: z.string().trim().max(160).default(""),
+    saveAddress: z.boolean().default(false),
+    saveAsDefault: z.boolean().default(false),
   })
   .superRefine((value, context) => {
     if (value.mode !== "delivery") {
@@ -176,11 +182,28 @@ const LEGACY_PARAGUAY_CITY_ALIASES: Record<string, string> = {
 
 interface ResolvedDeliveryAddress {
   cityId: string | null;
+  customerAddressId: string | null;
   countryId: string | null;
   postalCode: string | null;
   referenceNote: string | null;
   stateId: string | null;
   streetLine1: string | null;
+  streetLine2: string | null;
+}
+
+interface SavedCustomerAddressRecord {
+  cityId: string;
+  countryId: string;
+  customerId: string;
+  id: string;
+  isDefault: boolean;
+  label: string | null;
+  phone: string | null;
+  postalCode: string | null;
+  recipientName: string | null;
+  referenceNote: string | null;
+  stateId: string;
+  streetLine1: string;
   streetLine2: string | null;
 }
 
@@ -526,6 +549,7 @@ const resolveDeliveryAddress = async (
   if (payload.mode === "pickup") {
     return {
       cityId: null,
+      customerAddressId: null,
       countryId: null,
       postalCode: null,
       referenceNote: null,
@@ -559,6 +583,7 @@ const resolveDeliveryAddress = async (
 
     return {
       cityId: payload.cityId,
+      customerAddressId: null,
       countryId: payload.countryId,
       postalCode: payload.postalCode || null,
       referenceNote: payload.referenceNote || null,
@@ -595,6 +620,7 @@ const resolveDeliveryAddress = async (
 
   return {
     cityId: resolvedCity.cityId,
+    customerAddressId: null,
     countryId: resolvedCity.countryId,
     postalCode: null,
     referenceNote: payload.reference || null,
@@ -602,6 +628,122 @@ const resolveDeliveryAddress = async (
     streetLine1: payload.addressLine1,
     streetLine2: payload.addressLine2 || null,
   };
+};
+
+const resolveSelectedCustomerAddress = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  customerId: string,
+  customerAddressId: string
+): Promise<SavedCustomerAddressRecord> => {
+  const [savedAddress] = await tx
+    .select({
+      cityId: schema.customerAddress.cityId,
+      countryId: schema.customerAddress.countryId,
+      customerId: schema.customerAddress.customerId,
+      id: schema.customerAddress.id,
+      isDefault: schema.customerAddress.isDefault,
+      label: schema.customerAddress.label,
+      phone: schema.customerAddress.phone,
+      postalCode: schema.customerAddress.postalCode,
+      recipientName: schema.customerAddress.recipientName,
+      referenceNote: schema.customerAddress.referenceNote,
+      stateId: schema.customerAddress.stateId,
+      streetLine1: schema.customerAddress.streetLine1,
+      streetLine2: schema.customerAddress.streetLine2,
+    })
+    .from(schema.customerAddress)
+    .where(
+      and(
+        eq(schema.customerAddress.id, customerAddressId),
+        eq(schema.customerAddress.customerId, customerId)
+      )
+    );
+
+  if (!savedAddress) {
+    throw new ProductLinkCheckoutError(
+      "La direccion guardada seleccionada no existe para este usuario."
+    );
+  }
+
+  return savedAddress;
+};
+
+const applyDefaultAddressSelection = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  customerId: string,
+  customerAddressId: string
+) => {
+  await tx
+    .update(schema.customerAddress)
+    .set({
+      isDefault: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.customerAddress.customerId, customerId));
+
+  await tx
+    .update(schema.customerAddress)
+    .set({
+      isDefault: true,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.customerAddress.id, customerAddressId),
+        eq(schema.customerAddress.customerId, customerId)
+      )
+    );
+};
+
+const persistCustomerAddressForCheckout = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  customerId: string,
+  payload: CheckoutOrderPayload
+): Promise<SavedCustomerAddressRecord | null> => {
+  if (payload.mode !== "delivery" || !("countryId" in payload)) {
+    return null;
+  }
+
+  const [savedAddress] = await tx
+    .insert(schema.customerAddress)
+    .values({
+      cityId: payload.cityId,
+      countryId: payload.countryId,
+      customerId,
+      isDefault: payload.saveAsDefault,
+      phone: payload.phone,
+      postalCode: payload.postalCode || null,
+      recipientName: payload.recipientName,
+      referenceNote: payload.referenceNote || null,
+      stateId: payload.stateId,
+      streetLine1: payload.streetLine1,
+      streetLine2: payload.streetLine2 || null,
+    })
+    .returning({
+      cityId: schema.customerAddress.cityId,
+      countryId: schema.customerAddress.countryId,
+      customerId: schema.customerAddress.customerId,
+      id: schema.customerAddress.id,
+      isDefault: schema.customerAddress.isDefault,
+      label: schema.customerAddress.label,
+      phone: schema.customerAddress.phone,
+      postalCode: schema.customerAddress.postalCode,
+      recipientName: schema.customerAddress.recipientName,
+      referenceNote: schema.customerAddress.referenceNote,
+      stateId: schema.customerAddress.stateId,
+      streetLine1: schema.customerAddress.streetLine1,
+      streetLine2: schema.customerAddress.streetLine2,
+    });
+
+  if (payload.saveAsDefault) {
+    await applyDefaultAddressSelection(tx, customerId, savedAddress.id);
+    return {
+      ...savedAddress,
+      isDefault: true,
+    };
+  }
+
+  return savedAddress;
 };
 
 export const createOrderFromProductLink = async (
@@ -690,13 +832,82 @@ export const createOrderFromProductLink = async (
       payload,
       authenticatedBuyer
     );
-    const deliveryAddress = await resolveDeliveryAddress(tx, payload);
+    const requestedCustomerAddressId = payload.customerAddressId?.trim();
+    const selectedCustomerAddress =
+      payload.mode === "delivery" && requestedCustomerAddressId
+        ? authenticatedBuyer
+          ? await resolveSelectedCustomerAddress(
+              tx,
+              customerProfile.id,
+              requestedCustomerAddressId
+            )
+          : (() => {
+              throw new ProductLinkCheckoutError(
+                "Necesitas iniciar sesion para usar direcciones guardadas."
+              );
+            })()
+        : null;
+
+    const deliveryAddress = selectedCustomerAddress
+      ? {
+          cityId: selectedCustomerAddress.cityId,
+          customerAddressId: selectedCustomerAddress.id,
+          countryId: selectedCustomerAddress.countryId,
+          postalCode: selectedCustomerAddress.postalCode,
+          referenceNote: selectedCustomerAddress.referenceNote,
+          stateId: selectedCustomerAddress.stateId,
+          streetLine1: selectedCustomerAddress.streetLine1,
+          streetLine2: selectedCustomerAddress.streetLine2,
+        }
+      : await resolveDeliveryAddress(tx, payload);
+
+    let savedCustomerAddress = selectedCustomerAddress;
+
+    if (payload.mode === "delivery" && (payload.saveAddress || payload.saveAsDefault)) {
+      if (!authenticatedBuyer) {
+        throw new ProductLinkCheckoutError(
+          "Necesitas iniciar sesion para guardar direcciones."
+        );
+      }
+
+      if (selectedCustomerAddress) {
+        if (payload.saveAsDefault && !selectedCustomerAddress.isDefault) {
+          await applyDefaultAddressSelection(
+            tx,
+            customerProfile.id,
+            selectedCustomerAddress.id
+          );
+          savedCustomerAddress = {
+            ...selectedCustomerAddress,
+            isDefault: true,
+          };
+        }
+      } else if ("countryId" in payload && payload.saveAddress) {
+        if (payload.saveAsDefault) {
+          await tx
+            .update(schema.customerAddress)
+            .set({
+              isDefault: false,
+              updatedAt: new Date(),
+            })
+            .where(eq(schema.customerAddress.customerId, customerProfile.id));
+        }
+
+        savedCustomerAddress = await persistCustomerAddressForCheckout(
+          tx,
+          customerProfile.id,
+          payload
+        );
+      }
+    }
 
     const [deliveryInfo] = await tx
       .insert(schema.deliveryInfo)
       .values({
         cityId: deliveryAddress.cityId,
         countryId: deliveryAddress.countryId,
+        customerAddressId:
+          savedCustomerAddress?.id ?? deliveryAddress.customerAddressId,
         customerId: customerProfile.id,
         email: payload.email,
         mode: payload.mode,
@@ -723,8 +934,6 @@ export const createOrderFromProductLink = async (
         customerId: customerProfile.id,
         deliveryInfoId: deliveryInfo.id,
         expiresAt,
-        fulfillmentType: payload.mode,
-        note: payload.notes || null,
         orderStatus,
         paymentStatus,
         productLinkId: record.productLinkId,

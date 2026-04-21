@@ -9,14 +9,15 @@ import {
   CheckoutSelectField,
 } from "./checkout-form-fields";
 import {
+  checkoutParaguayLocationData,
   checkoutParaguayCountryOption,
-  checkoutParaguayStateOptions,
-  getCheckoutParaguayCityOptions,
 } from "./checkout-paraguay-locations";
+import type { CheckoutLocationData } from "./types";
 
 interface CheckoutLocationFieldsProps<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>;
   disabled?: boolean;
+  locationData?: CheckoutLocationData;
   names: CheckoutDeliveryFieldNames<TFieldValues>;
   requiredCityMessage?: string;
 }
@@ -24,6 +25,7 @@ interface CheckoutLocationFieldsProps<TFieldValues extends FieldValues> {
 function CheckoutLocationFields<TFieldValues extends FieldValues>({
   control,
   disabled,
+  locationData = checkoutParaguayLocationData,
   names,
   requiredCityMessage,
 }: CheckoutLocationFieldsProps<TFieldValues>) {
@@ -43,24 +45,65 @@ function CheckoutLocationFields<TFieldValues extends FieldValues>({
     control,
     name: names.countryId,
   });
+  const { field: stateField } = useController({
+    control,
+    name: names.stateId,
+  });
   const { field: cityField } = useController({
     control,
     name: names.cityId,
   });
   const previousStateRef = useRef(stateId);
+  const previousCountryRef = useRef(countryId);
+
+  const countryOptions = locationData.countries;
+  const stateOptions = useMemo(
+    () =>
+      locationData.states
+        .filter((option) => option.countryId === countryId)
+        .map(({ countryId: _countryId, ...option }) => option),
+    [countryId, locationData.states]
+  );
 
   const cityOptions = useMemo(
-    () => getCheckoutParaguayCityOptions(stateId),
-    [stateId]
+    () =>
+      locationData.cities
+        .filter((option) => option.stateId === stateId)
+        .map(({ stateId: _stateId, ...option }) => option),
+    [locationData.cities, stateId]
   );
 
   useEffect(() => {
-    if (countryId === checkoutParaguayCountryOption.value) {
+    if (countryId) {
       return;
     }
 
-    countryField.onChange(checkoutParaguayCountryOption.value);
-  }, [countryField, countryId]);
+    const defaultCountryId =
+      countryOptions[0]?.value ?? checkoutParaguayCountryOption.value;
+
+    if (!defaultCountryId) {
+      return;
+    }
+
+    countryField.onChange(defaultCountryId);
+  }, [countryField, countryId, countryOptions]);
+
+  useEffect(() => {
+    if (previousCountryRef.current === countryId) {
+      return;
+    }
+
+    previousCountryRef.current = countryId;
+
+    const isStateValid = stateOptions.some((option) => option.value === stateId);
+
+    if (isStateValid) {
+      return;
+    }
+
+    stateField.onChange("");
+    cityField.onChange("");
+  }, [cityField, countryId, stateField, stateId, stateOptions]);
 
   useEffect(() => {
     if (previousStateRef.current !== stateId) {
@@ -88,19 +131,27 @@ function CheckoutLocationFields<TFieldValues extends FieldValues>({
     <div className="grid gap-5 sm:grid-cols-2">
       <CheckoutSelectField
         control={control}
-        description="Por ahora coordinamos entregas solo dentro de Paraguay."
-        disabled
+        description={
+          countryOptions.length > 1
+            ? "Elegí el país para ver los departamentos disponibles."
+            : "Por ahora coordinamos entregas solo dentro de Paraguay."
+        }
+        disabled={disabled || countryOptions.length <= 1}
         label="País"
         name={names.countryId}
-        options={[checkoutParaguayCountryOption]}
+        options={countryOptions}
       />
       <CheckoutSelectField
         control={control}
-        disabled={disabled}
+        disabled={disabled || !countryId}
         label="Departamento"
         name={names.stateId}
-        options={checkoutParaguayStateOptions}
-        placeholder="Seleccioná un departamento"
+        options={stateOptions}
+        placeholder={
+          countryId
+            ? "Seleccioná un departamento"
+            : "Primero seleccioná un país"
+        }
         rules={{
           required: "Indicá el departamento de entrega.",
         }}

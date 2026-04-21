@@ -265,25 +265,22 @@ describe("add product form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
     await waitFor(() =>
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/products/product_legacy",
-        {
-          body: JSON.stringify({
-            category: "Electrodomesticos",
-            deliveryIncluded: true,
-            description: "Descripcion original",
-            imageObjectKey: "products/commerce_1/images/licuadora.png",
-            name: "Licuadora Cerramos",
-            status: "active",
-            stock: 14,
-            unitPrice: 185_000,
-          }),
-          headers: {
-            "content-type": "application/json",
-          },
-          method: "PATCH",
-        }
-      )
+      expect(fetchMock).toHaveBeenCalledWith("/api/products/product_legacy", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Descripcion original",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          name: "Licuadora Cerramos",
+          status: "active",
+          stock: 14,
+          unitPrice: 185_000,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "PATCH",
+      })
     );
 
     expect(screen.queryByText("La imagen del producto es obligatoria.")).toBe(

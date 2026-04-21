@@ -95,19 +95,23 @@ import * as authClientModule from "@repo/auth/client";
 import * as nextNavigationModule from "next/navigation";
 import { SignInForm } from "./sign-in-form";
 
-const navigationMocks = (nextNavigationModule as typeof nextNavigationModule & {
-  __mocks: {
-    push: ReturnType<typeof vi.fn>;
-    refresh: ReturnType<typeof vi.fn>;
-  };
-}).__mocks;
+const navigationMocks = (
+  nextNavigationModule as typeof nextNavigationModule & {
+    __mocks: {
+      push: ReturnType<typeof vi.fn>;
+      refresh: ReturnType<typeof vi.fn>;
+    };
+  }
+).__mocks;
 
-const authClientMocks = (authClientModule as typeof authClientModule & {
-  __mocks: {
-    signInEmail: ReturnType<typeof vi.fn>;
-    signInSocial: ReturnType<typeof vi.fn>;
-  };
-}).__mocks;
+const authClientMocks = (
+  authClientModule as typeof authClientModule & {
+    __mocks: {
+      signInEmail: ReturnType<typeof vi.fn>;
+      signInSocial: ReturnType<typeof vi.fn>;
+    };
+  }
+).__mocks;
 
 describe("sign-in form", () => {
   afterEach(() => {

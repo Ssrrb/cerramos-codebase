@@ -61,13 +61,11 @@ export const ProductRowActions = ({ product }: ProductRowActionsProps) => {
       const response = await fetch(`/api/products/${product.id}`, {
         method: "DELETE",
       });
-      const payload = (await response.json().catch(() => null)) as
-        | {
-            error?: string;
-            id?: string;
-            success?: boolean;
-          }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+        id?: string;
+        success?: boolean;
+      } | null;
 
       if (!response.ok) {
         setDeleteError(payload?.error ?? "No se pudo eliminar el producto.");
@@ -161,7 +159,9 @@ export const ProductRowActions = ({ product }: ProductRowActionsProps) => {
             ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
             <Button
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}

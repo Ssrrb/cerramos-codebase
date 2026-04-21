@@ -1,12 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextResponse } from "next/server";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const { createSignedReadUrlMock, fetchMock, requireCommerceContextForRequestMock } =
-  vi.hoisted(() => ({
-    createSignedReadUrlMock: vi.fn(),
-    fetchMock: vi.fn(),
-    requireCommerceContextForRequestMock: vi.fn(),
-  }));
+const {
+  createSignedReadUrlMock,
+  fetchMock,
+  requireCommerceContextForRequestMock,
+} = vi.hoisted(() => ({
+  createSignedReadUrlMock: vi.fn(),
+  fetchMock: vi.fn(),
+  requireCommerceContextForRequestMock: vi.fn(),
+}));
 
 vi.mock("@repo/auth/server", () => ({
   requireCommerceContextForRequest: requireCommerceContextForRequestMock,
@@ -78,7 +81,9 @@ describe("app commerce logo route", () => {
 
   test("returns 400 when object key is missing", async () => {
     const { GET } = await import("./route");
-    const response = await GET(new Request("http://localhost/api/commerce/logo"));
+    const response = await GET(
+      new Request("http://localhost/api/commerce/logo")
+    );
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({

@@ -71,6 +71,41 @@
       "when": 1775857800000,
       "tag": "0009_drop_legacy_product_image_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776105785528,
+      "tag": "0010_unified_auth_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776267000000,
+      "tag": "0011_fix_user_profile_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776267600000,
+      "tag": "0012_fix_customer_profile_relink",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776268200000,
+      "tag": "0013_normalize_checkout_addresses",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1776643200000,
+      "tag": "0014_delivery_snapshot_simplification",
+      "breakpoints": true
     }
   ]
 }

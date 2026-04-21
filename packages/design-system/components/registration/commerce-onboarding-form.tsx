@@ -1,10 +1,19 @@
 "use client";
 
-import { CameraIcon, ImagePlusIcon, LoaderCircleIcon, Trash2Icon } from "lucide-react";
-import { useId, useRef } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@repo/design-system/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/design-system/components/ui/avatar";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Input } from "@repo/design-system/components/ui/input";
+import {
+  CameraIcon,
+  ImagePlusIcon,
+  LoaderCircleIcon,
+  Trash2Icon,
+} from "lucide-react";
+import { useId, useRef } from "react";
 
 type UploadedImageValue = {
   fileName: string;
@@ -83,7 +92,7 @@ export const CommerceOnboardingFormView = ({
                 </p>
               </div>
             </div>
-            <div className="mt-5 grid gap-3 rounded-2xl border border-dashed border-border/80 bg-muted/20 p-4 text-sm">
+            <div className="mt-5 grid gap-3 rounded-2xl border border-border/80 border-dashed bg-muted/20 p-4 text-sm">
               <div className="space-y-1">
                 <p className="font-medium">Logo opcional</p>
                 <p className="text-muted-foreground leading-6">
@@ -121,7 +130,9 @@ export const CommerceOnboardingFormView = ({
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{logoImage.fileName}</p>
+                      <p className="truncate font-medium">
+                        {logoImage.fileName}
+                      </p>
                       <p className="text-muted-foreground text-sm">
                         Listo para mostrarse en tu checkout.
                       </p>
@@ -222,8 +233,12 @@ export const CommerceOnboardingFormView = ({
               <p className="font-medium text-sm">Lo que quedara listo ahora</p>
               <ul className="mt-2 space-y-2 text-muted-foreground text-sm leading-6">
                 <li>Tu comercio quedara creado y vinculado a tu cuenta.</li>
-                <li>El logo aparecera en el panel y en la experiencia de compra.</li>
-                <li>Luego podras cargar productos y compartir tu primer checkout.</li>
+                <li>
+                  El logo aparecera en el panel y en la experiencia de compra.
+                </li>
+                <li>
+                  Luego podras cargar productos y compartir tu primer checkout.
+                </li>
               </ul>
             </div>
 

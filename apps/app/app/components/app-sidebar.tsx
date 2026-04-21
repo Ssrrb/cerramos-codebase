@@ -78,7 +78,8 @@ interface AppSidebarProps {
 
 const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
   const [isMounted, setIsMounted] = useState(false);
-  const commerceInitial = activeCommerce.name.trim().charAt(0).toUpperCase() || "C";
+  const commerceInitial =
+    activeCommerce.name.trim().charAt(0).toUpperCase() || "C";
   const commerceLogoSrc = resolveCommerceLogoImageSrc(
     activeCommerce.logoImageUrl,
     process.env.NEXT_PUBLIC_GCS_BUCKET_NAME ?? process.env.GCS_BUCKET_NAME

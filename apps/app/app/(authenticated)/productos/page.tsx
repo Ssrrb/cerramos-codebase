@@ -111,27 +111,29 @@ const ProductsPage = async () => {
 
   const productLinksByProductId = new Map<string, ProductLinkTableRow>(
     await Promise.all(
-      productLinks.map(async (productLink): Promise<[string, ProductLinkTableRow]> => [
-        productLink.productId,
-        {
-          currency: "PYG",
-          deliveryEnabled: productLink.deliveryEnabled,
-          description: productLink.description,
-          expiresAt: productLink.expiresAt?.toISOString() ?? null,
-          id: productLink.id,
-          imageUrl: await resolveProductImage(productLink.imageUrl ?? ""),
-          paymentRequired: productLink.paymentRequired,
-          pickupEnabled: productLink.pickupEnabled,
-          publicPath: buildProductLinkPublicPath(
-            context.commerce.slug,
-            productLink.slug
-          ),
-          slug: productLink.slug,
-          status: productLink.status,
-          title: productLink.title,
-          unitPrice: productLink.unitPrice,
-        },
-      ])
+      productLinks.map(
+        async (productLink): Promise<[string, ProductLinkTableRow]> => [
+          productLink.productId,
+          {
+            currency: "PYG",
+            deliveryEnabled: productLink.deliveryEnabled,
+            description: productLink.description,
+            expiresAt: productLink.expiresAt?.toISOString() ?? null,
+            id: productLink.id,
+            imageUrl: await resolveProductImage(productLink.imageUrl ?? ""),
+            paymentRequired: productLink.paymentRequired,
+            pickupEnabled: productLink.pickupEnabled,
+            publicPath: buildProductLinkPublicPath(
+              context.commerce.slug,
+              productLink.slug
+            ),
+            slug: productLink.slug,
+            status: productLink.status,
+            title: productLink.title,
+            unitPrice: productLink.unitPrice,
+          },
+        ]
+      )
     )
   );
 

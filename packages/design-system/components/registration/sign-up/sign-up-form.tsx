@@ -41,6 +41,7 @@ export interface SignUpFormViewProps {
   onNameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSwitchToSignIn?: () => void;
   onUsageChange: (value: UsageValue) => void;
   password: string;
   privacyUrl?: string;
@@ -67,6 +68,7 @@ export const SignUpFormView = ({
   onGoogleClick,
   onNameChange,
   onPasswordChange,
+  onSwitchToSignIn,
   onSubmit,
   onUsageChange,
   password,
@@ -181,12 +183,22 @@ export const SignUpFormView = ({
 
               <p className="mt-6 text-center text-muted-foreground text-sm">
                 Already have an account?{" "}
-                <a
-                  className="font-medium text-foreground transition-colors hover:text-primary"
-                  href={accountHref}
-                >
-                  Log In
-                </a>
+                {onSwitchToSignIn ? (
+                  <button
+                    className="font-medium text-foreground transition-colors hover:text-primary"
+                    onClick={onSwitchToSignIn}
+                    type="button"
+                  >
+                    Log In
+                  </button>
+                ) : (
+                  <a
+                    className="font-medium text-foreground transition-colors hover:text-primary"
+                    href={accountHref}
+                  >
+                    Log In
+                  </a>
+                )}
               </p>
             </div>
           </div>

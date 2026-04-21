@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const {
-  buildCommerceLogoKeyMock,
-  createSignedUploadUrlMock,
-  getSessionMock,
-} = vi.hoisted(() => ({
-  buildCommerceLogoKeyMock: vi.fn(),
-  createSignedUploadUrlMock: vi.fn(),
-  getSessionMock: vi.fn(),
-}));
+const { buildCommerceLogoKeyMock, createSignedUploadUrlMock, getSessionMock } =
+  vi.hoisted(() => ({
+    buildCommerceLogoKeyMock: vi.fn(),
+    createSignedUploadUrlMock: vi.fn(),
+    getSessionMock: vi.fn(),
+  }));
 
 vi.mock("@repo/auth/server", () => ({
   getSession: getSessionMock,

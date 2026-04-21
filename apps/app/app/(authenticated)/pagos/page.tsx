@@ -1,4 +1,4 @@
-import { Payment,columns } from "./columns";
+import { columns, type Payment } from "./columns";
 import { DataTable } from "./data-table";
 
 const getData = async (): Promise<Payment[]> => {
@@ -8,7 +8,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 134,
       status: "pending",
       fullName: "John Doe",
-      userId:"44",
+      userId: "44",
       email: "johndoe@gmail.com",
     },
     {
@@ -16,7 +16,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 124,
       status: "success",
       fullName: "Jane Doe",
-      userId:"35",
+      userId: "35",
       email: "janedoe@gmail.com",
     },
     {
@@ -24,7 +24,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 167,
       status: "success",
       fullName: "Mike Galloway",
-      userId:"11",
+      userId: "11",
       email: "mikegalloway@gmail.com",
     },
     {
@@ -32,7 +32,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 156,
       status: "failed",
       fullName: "Minerva Robinson",
-      userId:"20",
+      userId: "20",
       email: "minerbarobinson@gmail.com",
     },
     {
@@ -40,7 +40,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 145,
       status: "success",
       fullName: "Mable Clayton",
-      userId:"21",
+      userId: "21",
       email: "mableclayton@gmail.com",
     },
     {
@@ -48,7 +48,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 189,
       status: "pending",
       fullName: "Nathan McDaniel",
-      userId:"64",
+      userId: "64",
       email: "nathanmcdaniel@gmail.com",
     },
     {
@@ -56,7 +56,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 178,
       status: "success",
       fullName: "Myrtie Lamb",
-      userId:"18",
+      userId: "18",
       email: "myrtielamb@gmail.com",
     },
     {
@@ -64,7 +64,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 190,
       status: "success",
       fullName: "Leona Bryant",
-      userId:"59",
+      userId: "59",
       email: "leonabryant@gmail.com",
     },
     {
@@ -72,7 +72,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 134,
       status: "failed",
       fullName: "Aaron Willis",
-      userId:"69",
+      userId: "69",
       email: "aaronwillis@gmail.com",
     },
     {
@@ -80,7 +80,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 543,
       status: "success",
       fullName: "Joel Keller",
-      userId:"18",
+      userId: "18",
       email: "joelkeller@gmail.com",
     },
     {
@@ -88,7 +88,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 234,
       status: "pending",
       fullName: "Daniel Ellis",
-      userId:"88",
+      userId: "88",
       email: "danielellis@gmail.com",
     },
     {
@@ -96,7 +96,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 345,
       status: "success",
       fullName: "Gordon Kennedy",
-      userId:"80",
+      userId: "80",
       email: "gordonkennedy@gmail.com",
     },
     {
@@ -104,7 +104,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 335,
       status: "failed",
       fullName: "Emily Hoffman",
-      userId:"24",
+      userId: "24",
       email: "emilyhoffman@gmail.com",
     },
     {
@@ -112,7 +112,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 664,
       status: "pending",
       fullName: "Jeffery Garrett",
-      userId:"38",
+      userId: "38",
       email: "jefferygarrett@gmail.com",
     },
     {
@@ -120,7 +120,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 332,
       status: "success",
       fullName: "Ralph Baker",
-      userId:"82",
+      userId: "82",
       email: "ralphbaker@gmail.com",
     },
     {
@@ -128,7 +128,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 413,
       status: "failed",
       fullName: "Seth Fields",
-      userId:"54",
+      userId: "54",
       email: "sethfields@gmail.com",
     },
     {
@@ -136,7 +136,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 345,
       status: "pending",
       fullName: "Julia Webb",
-      userId:"24",
+      userId: "24",
       email: "juliawebb@gmail.com",
     },
     {
@@ -144,7 +144,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 754,
       status: "success",
       fullName: "Gary Banks",
-      userId:"41",
+      userId: "41",
       email: "garybanks@gmail.com",
     },
     {
@@ -152,7 +152,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 643,
       status: "failed",
       fullName: "Flora Chambers",
-      userId:"68",
+      userId: "68",
       email: "florachambers@gmail.com",
     },
     {
@@ -160,7 +160,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 543,
       status: "pending",
       fullName: "Steve Hanson",
-      userId:"33",
+      userId: "33",
       email: "stevehanson@gmail.com",
     },
     {
@@ -168,7 +168,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 324,
       status: "success",
       fullName: "Lola Robinson",
-      userId:"18",
+      userId: "18",
       email: "lolarobinson@gmail.com",
     },
     {
@@ -176,7 +176,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 123,
       status: "pending",
       fullName: "Ethel Waters",
-      userId:"34",
+      userId: "34",
       email: "ethelwaters@gmail.com",
     },
     {
@@ -184,7 +184,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 422,
       status: "failed",
       fullName: "Grace Edwards",
-      userId:"67",
+      userId: "67",
       email: "graceedwards@gmail.com",
     },
     {
@@ -192,7 +192,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 712,
       status: "success",
       fullName: "Sallie Wong",
-      userId:"79",
+      userId: "79",
       email: "salliewong@gmail.com",
     },
     {
@@ -200,7 +200,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 360,
       status: "success",
       fullName: "Bryan Gutierrez",
-      userId:"59",
+      userId: "59",
       email: "bryangutierrez@gmail.com",
     },
     {
@@ -208,7 +208,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 454,
       status: "pending",
       fullName: "Erik Rice",
-      userId:"17",
+      userId: "17",
       email: "erikrice@gmail.com",
     },
     {
@@ -216,7 +216,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 382,
       status: "success",
       fullName: "Jordan Atkins",
-      userId:"74",
+      userId: "74",
       email: "jordanatkins@gmail.com",
     },
     {
@@ -224,7 +224,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 328,
       status: "failed",
       fullName: "Bill Brewer",
-      userId:"98",
+      userId: "98",
       email: "billbrewer@gmail.com",
     },
     {
@@ -232,7 +232,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 250,
       status: "success",
       fullName: "Edwin Morris",
-      userId:"87",
+      userId: "87",
       email: "edwinmorris@gmail.com",
     },
     {
@@ -240,7 +240,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 658,
       status: "success",
       fullName: "Harold Becker",
-      userId:"61",
+      userId: "61",
       email: "haroldbecker@gmail.com",
     },
     {
@@ -248,7 +248,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 691,
       status: "success",
       fullName: "Hannah Rodriguez",
-      userId:"77",
+      userId: "77",
       email: "hannahrodriguez@gmail.com",
     },
     {
@@ -256,7 +256,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 969,
       status: "success",
       fullName: "Zachary Beck",
-      userId:"83",
+      userId: "83",
       email: "zacharybeck@gmail.com",
     },
     {
@@ -264,7 +264,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 617,
       status: "failed",
       fullName: "Frances Potter",
-      userId:"68",
+      userId: "68",
       email: "francespotter@gmail.com",
     },
     {
@@ -272,7 +272,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 173,
       status: "success",
       fullName: "Raymond Murray",
-      userId:"55",
+      userId: "55",
       email: "raymondmurray@gmail.com",
     },
     {
@@ -280,7 +280,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 843,
       status: "success",
       fullName: "Adam Sherman",
-      userId:"32",
+      userId: "32",
       email: "adamsherman@gmail.com",
     },
     {
@@ -288,7 +288,7 @@ const getData = async (): Promise<Payment[]> => {
       amount: 914,
       status: "pending",
       fullName: "Anne Cruz",
-      userId:"19",
+      userId: "19",
       email: "annecruz@gmail.com",
     },
   ];
@@ -298,10 +298,10 @@ const PaymentsPage = async () => {
   const data = await getData();
   return (
     <div className="">
-      <div className="mb-8 px-4 py-2 bg-secondary rounded-md">
+      <div className="mb-8 rounded-md bg-secondary px-4 py-2">
         <h1 className="font-semibold">All Payments</h1>
       </div>
-      <DataTable columns={columns} data={data}/>
+      <DataTable columns={columns} data={data} />
     </div>
   );
 };

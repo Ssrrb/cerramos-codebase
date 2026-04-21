@@ -4,7 +4,10 @@ import {
   normalizeStoredMediaReference,
 } from "./object-key";
 
-const COMMERCE_LOGO_ROUTE_PATHNAMES = ["/api/commerce/logo", "/api/commerce-logos"];
+const COMMERCE_LOGO_ROUTE_PATHNAMES = [
+  "/api/commerce/logo",
+  "/api/commerce-logos",
+];
 
 export const normalizeCommerceLogoObjectKey = (
   value: string,

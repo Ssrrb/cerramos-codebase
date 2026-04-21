@@ -19,5 +19,10 @@ export const AuthChrome = () => {
   const navigation =
     authNavigation[pathname as keyof typeof authNavigation] ??
     authNavigation["/sign-in"];
-  return <AuthChromeView ctaHref={navigation.ctaHref} ctaLabel={navigation.ctaLabel} />;
+  return (
+    <AuthChromeView
+      ctaHref={navigation.ctaHref}
+      ctaLabel={navigation.ctaLabel}
+    />
+  );
 };

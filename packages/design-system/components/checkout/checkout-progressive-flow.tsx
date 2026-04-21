@@ -1,15 +1,6 @@
 "use client";
 
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "../ui/alert";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Form } from "../ui/form";
-import { cn } from "../../lib/utils";
-import {
   ArrowLeft,
   CheckCircle2,
   CreditCardIcon,
@@ -17,8 +8,13 @@ import {
   ReceiptTextIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { cn } from "../../lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Form } from "../ui/form";
 import { CheckoutDeliveryStepSection } from "./checkout-delivery-step-section";
 import { CheckoutDetailsStepSection } from "./checkout-details-step-section";
 import type { CheckoutDeliveryFieldNames } from "./checkout-form-fields";
@@ -33,15 +29,21 @@ import {
   type CheckoutPaymentStage,
 } from "./checkout-payment-section";
 import {
+  checkoutParaguayLocationData,
+  checkoutParaguayCountryOption,
+} from "./checkout-paraguay-locations";
+import {
   CheckoutVerticalStepper,
   type CheckoutVerticalStepperStep,
 } from "./checkout-vertical-stepper";
 import type {
   CheckoutDeliveryMode,
   CheckoutDeliveryValues,
+  CheckoutLocationData,
   CheckoutMerchantSummary,
   CheckoutOrderSummary,
   CheckoutProductSummary,
+  CheckoutSavedAddress,
   CheckoutStepId,
 } from "./types";
 
@@ -50,11 +52,17 @@ const deliveryFieldNames: CheckoutDeliveryFieldNames<CheckoutDeliveryValues> = {
   email: "email",
   phone: "phone",
   mode: "mode",
-  city: "city",
-  addressLine1: "addressLine1",
-  addressLine2: "addressLine2",
-  reference: "reference",
+  countryId: "countryId",
+  stateId: "stateId",
+  cityId: "cityId",
+  customerAddressId: "customerAddressId",
+  streetLine1: "streetLine1",
+  streetLine2: "streetLine2",
+  postalCode: "postalCode",
+  referenceNote: "referenceNote",
   notes: "notes",
+  saveAddress: "saveAddress",
+  saveAsDefault: "saveAsDefault",
 };
 
 const defaultDeliveryValues: CheckoutDeliveryValues = {
@@ -62,12 +70,23 @@ const defaultDeliveryValues: CheckoutDeliveryValues = {
   email: "",
   phone: "",
   mode: "delivery",
-  city: "",
-  addressLine1: "",
-  addressLine2: "",
-  reference: "",
+  countryId: checkoutParaguayCountryOption.value,
+  stateId: "",
+  cityId: "",
+  customerAddressId: "",
+  streetLine1: "",
+  streetLine2: "",
+  referenceNote: "",
+  postalCode: "",
   notes: "",
+  saveAddress: false,
+  saveAsDefault: false,
 };
+
+const findLocationLabel = (
+  value: string | undefined,
+  options: Array<{ label: string; value: string }>
+) => options.find((option) => option.value === value)?.label;
 
 const detailFields: (keyof CheckoutDeliveryValues)[] = [
   "recipientName",
@@ -77,8 +96,10 @@ const detailFields: (keyof CheckoutDeliveryValues)[] = [
 
 const sharedDeliveryFields: (keyof CheckoutDeliveryValues)[] = ["mode"];
 const deliveryAddressFields: (keyof CheckoutDeliveryValues)[] = [
-  "city",
-  "addressLine1",
+  "countryId",
+  "stateId",
+  "cityId",
+  "streetLine1",
 ];
 
 type CompletedSteps = Partial<Record<CheckoutStepId, true>>;
@@ -101,7 +122,10 @@ const getDetailsSummary = (values: CheckoutDeliveryValues) =>
     Boolean
   );
 
-const getDeliverySummary = (values: CheckoutDeliveryValues) => {
+const getDeliverySummary = (
+  values: CheckoutDeliveryValues,
+  locationData: CheckoutLocationData
+) => {
   if (values.mode === "pickup") {
     return [
       "Retiro en local",
@@ -111,8 +135,9 @@ const getDeliverySummary = (values: CheckoutDeliveryValues) => {
   }
 
   const addressParts = [
-    compactValue(values.addressLine1),
-    compactValue(values.city),
+    compactValue(values.streetLine1),
+    findLocationLabel(values.cityId, locationData.cities) ??
+      compactValue(values.cityId),
   ].filter(Boolean);
 
   return [
@@ -132,12 +157,14 @@ const getConfirmationMessage = (
     ? `Registramos tu pedido y simulamos el pago como procesado. ${merchantName} seguirá la confirmación comercial por separado.`
     : `${merchantName} usará tus datos para coordinar la entrega o el retiro.`;
 
-interface CheckoutProgressiveFlowProps {
+export interface CheckoutProgressiveFlowProps {
+  allowSavedAddresses?: boolean;
   className?: string;
   confirmationMessage?: string;
   defaultValues?: Partial<CheckoutDeliveryValues>;
   deliveryEnabled?: boolean;
   isOrderConfirmed?: boolean;
+  locationData?: CheckoutLocationData;
   merchant: CheckoutMerchantSummary;
   onPaymentConfirm?: () => Promise<string | null | undefined>;
   onReset?: () => void;
@@ -152,17 +179,25 @@ interface CheckoutProgressiveFlowProps {
   pickupEnabled?: boolean;
   processorSlot?: ReactNode;
   product: CheckoutProductSummary;
+  savedAddresses?: CheckoutSavedAddress[];
   secureLabel?: string;
+  showHeader?: boolean;
   submitLabel?: string;
+  user?: {
+    name: string;
+    avatarUrl?: string;
+  } | null;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this shared checkout component intentionally centralizes the sequential form, order, payment, and confirmation states.
 function CheckoutProgressiveFlow({
+  allowSavedAddresses = false,
   className,
   confirmationMessage,
   deliveryEnabled = true,
   defaultValues,
   isOrderConfirmed = false,
+  locationData = checkoutParaguayLocationData,
   merchant,
   onPaymentConfirm,
   onReset,
@@ -175,15 +210,23 @@ function CheckoutProgressiveFlow({
   pickupEnabled = true,
   processorSlot,
   product,
+  savedAddresses = [],
   secureLabel,
+  showHeader = true,
   submitLabel = "Confirmar pedido",
+  user,
 }: CheckoutProgressiveFlowProps) {
+  const defaultCountryId =
+    defaultValues?.countryId ??
+    locationData.countries[0]?.value ??
+    checkoutParaguayCountryOption.value;
   const fallbackMode =
     !deliveryEnabled && pickupEnabled ? "pickup" : "delivery";
   const form = useForm<CheckoutDeliveryValues>({
     defaultValues: {
       ...defaultDeliveryValues,
       ...defaultValues,
+      countryId: defaultCountryId,
       mode: defaultValues?.mode ?? fallbackMode,
     },
     mode: "onTouched",
@@ -211,8 +254,20 @@ function CheckoutProgressiveFlow({
   const formValues = useWatch({
     control: form.control,
   }) as CheckoutDeliveryValues;
+  const lastAppliedSavedAddressId = useRef<string | null>(null);
 
   const deliveryMode = (formValues?.mode ?? "delivery") as CheckoutDeliveryMode;
+  const preferredSavedAddress = useMemo(
+    () => savedAddresses.find((address) => address.isDefault) ?? savedAddresses[0] ?? null,
+    [savedAddresses]
+  );
+  const selectedSavedAddress = useMemo(
+    () =>
+      savedAddresses.find(
+        (address) => address.id === (formValues?.customerAddressId ?? "").trim()
+      ) ?? null,
+    [formValues?.customerAddressId, savedAddresses]
+  );
   const resolvedOrderReference = orderReference ?? localOrderReference;
   const isConfirmed = isOrderConfirmed || lifecycleState === "confirmed";
   const isLocked = isSubmitting || isPaymentProcessing || isConfirmed;
@@ -281,6 +336,122 @@ function CheckoutProgressiveFlow({
       form.setValue("mode", "delivery");
     }
   }, [deliveryEnabled, deliveryMode, form, pickupEnabled]);
+
+  useEffect(() => {
+    if (deliveryMode !== "pickup") {
+      return;
+    }
+
+    if (
+      form.getValues("customerAddressId") ||
+      form.getValues("saveAddress") ||
+      form.getValues("saveAsDefault")
+    ) {
+      form.setValue("customerAddressId", "");
+      form.setValue("saveAddress", false);
+      form.setValue("saveAsDefault", false);
+    }
+  }, [deliveryMode, form]);
+
+  useEffect(() => {
+    if (deliveryMode !== "delivery" || form.getValues("customerAddressId")) {
+      return;
+    }
+
+    if (!preferredSavedAddress) {
+      lastAppliedSavedAddressId.current = null;
+      return;
+    }
+
+    const hasStartedAddressEntry = [
+      form.getValues("stateId"),
+      form.getValues("cityId"),
+      form.getValues("streetLine1"),
+      form.getValues("streetLine2"),
+      form.getValues("postalCode"),
+      form.getValues("referenceNote"),
+    ].some((value) => value?.trim());
+
+    if (hasStartedAddressEntry) {
+      return;
+    }
+
+    form.setValue("customerAddressId", preferredSavedAddress.id, {
+      shouldDirty: true,
+    });
+  }, [deliveryMode, form, preferredSavedAddress]);
+
+  useEffect(() => {
+    if (!selectedSavedAddress) {
+      lastAppliedSavedAddressId.current = null;
+      return;
+    }
+
+    if (lastAppliedSavedAddressId.current === selectedSavedAddress.id) {
+      return;
+    }
+
+    form.setValue("countryId", selectedSavedAddress.countryId, {
+      shouldDirty: true,
+    });
+    form.setValue("stateId", selectedSavedAddress.stateId, {
+      shouldDirty: true,
+    });
+    form.setValue("cityId", selectedSavedAddress.cityId, {
+      shouldDirty: true,
+    });
+    form.setValue("streetLine1", selectedSavedAddress.streetLine1, {
+      shouldDirty: true,
+    });
+    form.setValue("streetLine2", selectedSavedAddress.streetLine2 ?? "", {
+      shouldDirty: true,
+    });
+    form.setValue("postalCode", selectedSavedAddress.postalCode ?? "", {
+      shouldDirty: true,
+    });
+    form.setValue("referenceNote", selectedSavedAddress.referenceNote ?? "", {
+      shouldDirty: true,
+    });
+    form.setValue("saveAddress", false, { shouldDirty: true });
+    form.setValue("saveAsDefault", selectedSavedAddress.isDefault, {
+      shouldDirty: true,
+    });
+    lastAppliedSavedAddressId.current = selectedSavedAddress.id;
+  }, [form, selectedSavedAddress]);
+
+  useEffect(() => {
+    if (!selectedSavedAddress) {
+      return;
+    }
+
+    const addressMatchesSelection =
+      formValues.countryId === selectedSavedAddress.countryId &&
+      formValues.stateId === selectedSavedAddress.stateId &&
+      formValues.cityId === selectedSavedAddress.cityId &&
+      formValues.streetLine1 === selectedSavedAddress.streetLine1 &&
+      (formValues.streetLine2 ?? "") === (selectedSavedAddress.streetLine2 ?? "") &&
+      (formValues.postalCode ?? "") === (selectedSavedAddress.postalCode ?? "") &&
+      (formValues.referenceNote ?? "") ===
+        (selectedSavedAddress.referenceNote ?? "");
+
+    if (addressMatchesSelection) {
+      return;
+    }
+
+    form.setValue("customerAddressId", "", { shouldDirty: true });
+    form.setValue("saveAsDefault", false, { shouldDirty: true });
+    lastAppliedSavedAddressId.current = null;
+  }, [
+    form,
+    formValues.cityId,
+    formValues.countryId,
+    formValues.postalCode,
+    formValues.referenceNote,
+    formValues.stateId,
+    formValues.streetLine1,
+    formValues.streetLine2,
+    selectedSavedAddress,
+  ]);
 
   useEffect(() => {
     if (!orderReference) {
@@ -420,15 +591,18 @@ function CheckoutProgressiveFlow({
       title: "Entrega",
       isCompleted: !!completedSteps.delivery,
       isVisible: !!completedSteps.details || activeStep === "delivery",
-      summaryLines: getDeliverySummary(form.getValues()),
+      summaryLines: getDeliverySummary(form.getValues(), locationData),
       content: (
         <div className="space-y-4">
           <CheckoutDeliveryStepSection
+            allowSavedAddresses={allowSavedAddresses}
             control={form.control}
             deliveryEnabled={deliveryEnabled}
             disabled={isLocked}
+            locationData={locationData}
             names={deliveryFieldNames}
             pickupEnabled={pickupEnabled}
+            savedAddresses={savedAddresses}
           />
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
@@ -558,7 +732,9 @@ function CheckoutProgressiveFlow({
           )}
         >
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
-            <CheckoutHeader secureLabel={secureLabel} />
+            {showHeader ? (
+              <CheckoutHeader secureLabel={secureLabel} user={user} />
+            ) : null}
             <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
               <div className="space-y-4 pb-24 sm:space-y-5 lg:space-y-6 lg:pb-0">
                 <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">
@@ -644,7 +820,9 @@ function CheckoutProgressiveFlow({
         )}
       >
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:gap-4 lg:gap-6">
-          <CheckoutHeader secureLabel={secureLabel} />
+          {showHeader ? (
+            <CheckoutHeader secureLabel={secureLabel} user={user} />
+          ) : null}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
             <div className="space-y-4 pb-24 sm:space-y-5 md:pb-28 lg:space-y-6 lg:pb-0">
               <div className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 shadow-xs sm:px-5 sm:py-4">

@@ -68,17 +68,20 @@ const sanitizePathSegment = (value: string) =>
   value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w.\-]+/g, "-")
+    .replace(/[^\w.-]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
     .toLowerCase();
 
-const getBucketName = (bucketName?: string) => bucketName ?? keys().GCS_BUCKET_NAME;
+const getBucketName = (bucketName?: string) =>
+  bucketName ?? keys().GCS_BUCKET_NAME;
 
 const toExpiryDate = (seconds: number) => new Date(Date.now() + seconds * 1000);
 
 const getUploadTtlSeconds = (seconds?: number) =>
-  seconds ?? keys().GCS_UPLOAD_URL_TTL_SECONDS ?? DEFAULT_UPLOAD_URL_TTL_SECONDS;
+  seconds ??
+  keys().GCS_UPLOAD_URL_TTL_SECONDS ??
+  DEFAULT_UPLOAD_URL_TTL_SECONDS;
 
 const getReadTtlSeconds = (seconds?: number) =>
   seconds ?? keys().GCS_READ_URL_TTL_SECONDS ?? DEFAULT_READ_URL_TTL_SECONDS;
@@ -157,12 +160,15 @@ export const createSignedUploadUrl = async ({
   const resolvedBucketName = getBucketName(bucketName);
   const expiresAt = toExpiryDate(getUploadTtlSeconds(expiresInSeconds));
   const storage = createStorageClient();
-  const [url] = await storage.bucket(resolvedBucketName).file(objectKey).getSignedUrl({
-    action: "write",
-    contentType,
-    expires: expiresAt,
-    version: "v4",
-  });
+  const [url] = await storage
+    .bucket(resolvedBucketName)
+    .file(objectKey)
+    .getSignedUrl({
+      action: "write",
+      contentType,
+      expires: expiresAt,
+      version: "v4",
+    });
 
   return {
     bucketName: resolvedBucketName,
@@ -186,11 +192,14 @@ export const createSignedReadUrl = async ({
   const resolvedBucketName = getBucketName(bucketName);
   const expiresAt = toExpiryDate(getReadTtlSeconds(expiresInSeconds));
   const storage = createStorageClient();
-  const [url] = await storage.bucket(resolvedBucketName).file(objectKey).getSignedUrl({
-    action: "read",
-    expires: expiresAt,
-    version: "v4",
-  });
+  const [url] = await storage
+    .bucket(resolvedBucketName)
+    .file(objectKey)
+    .getSignedUrl({
+      action: "read",
+      expires: expiresAt,
+      version: "v4",
+    });
 
   return {
     bucketName: resolvedBucketName,

@@ -105,7 +105,8 @@ describe("products page", () => {
           deliveryIncluded: false,
           description: "Descripcion",
           id: "product_2",
-          image: "imagenes-cerramos/products/commerce_1/images/bucket-object.png",
+          image:
+            "imagenes-cerramos/products/commerce_1/images/bucket-object.png",
           name: "Bucket prefixed",
           status: "draft",
           stock: 1,

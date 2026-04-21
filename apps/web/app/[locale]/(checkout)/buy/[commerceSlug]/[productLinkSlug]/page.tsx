@@ -1,6 +1,9 @@
-import React from "react";
+import { isGoogleAuthEnabled } from "@repo/auth/keys";
+import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { listCheckoutSavedAddresses } from "@/lib/checkout-customer-addresses";
+import { getCheckoutLocationData } from "@/lib/checkout-locations";
 import {
   createCheckoutViewModel,
   getPublicProductLinkCheckout,
@@ -54,11 +57,29 @@ const ProductLinkCheckoutPage = async ({
   }
 
   const viewModel = createCheckoutViewModel(checkout);
+  const locationData = await getCheckoutLocationData();
+  const session = await getSession();
+  const customerProfile = session?.user.id
+    ? await getCurrentCustomerProfile()
+    : null;
+  const savedAddresses = customerProfile
+    ? await listCheckoutSavedAddresses(customerProfile.id)
+    : [];
+  const initialAuthUser = session?.user.email
+    ? {
+        email: session.user.email,
+        name: session.user.name ?? null,
+      }
+    : null;
 
   return (
     <ProductLinkCheckoutClient
       commerceSlug={commerceSlug}
       deliveryEnabled={checkout.deliveryEnabled}
+      googleEnabled={isGoogleAuthEnabled()}
+      initialLocationData={locationData}
+      initialAuthUser={initialAuthUser}
+      initialSavedAddresses={savedAddresses}
       merchant={viewModel.merchant}
       orderSummary={viewModel.orderSummary}
       paymentRequired={checkout.paymentRequired}

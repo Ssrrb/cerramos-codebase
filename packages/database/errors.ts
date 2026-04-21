@@ -66,9 +66,7 @@ export const isUniqueConstraintError = (
       getErrorString(candidate, "constraint"),
       getErrorString(candidate, "message"),
       getErrorString(candidate, "detail"),
-    ].some((value) =>
-      value.toLowerCase().includes(normalizedConstraintName)
-    )
+    ].some((value) => value.toLowerCase().includes(normalizedConstraintName))
   );
 };
 

@@ -11,7 +11,9 @@ import {
 import { CheckoutOrderSummaryPanel } from "./checkout-order-summary-panel";
 
 vi.mock("@repo/design-system/components/ui/drawer", () => ({
-  Drawer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Drawer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   DrawerContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -21,7 +23,9 @@ vi.mock("@repo/design-system/components/ui/drawer", () => ({
   DrawerHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  DrawerTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DrawerTitle: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   DrawerTrigger: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -56,14 +60,14 @@ describe("checkout order summary quantity", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Reducir cantidad" }).getAttribute(
-        "disabled"
-      )
+      screen
+        .getByRole("button", { name: "Reducir cantidad" })
+        .getAttribute("disabled")
     ).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: "Aumentar cantidad" }).getAttribute(
-        "disabled"
-      )
+      screen
+        .getByRole("button", { name: "Aumentar cantidad" })
+        .getAttribute("disabled")
     ).not.toBeNull();
   });
 

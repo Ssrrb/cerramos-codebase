@@ -151,7 +151,9 @@ export const blog = {
     }
 
     try {
-      const data = (await basehub.query(blog.postsQuery as never)) as BlogPostsResult;
+      const data = (await basehub.query(
+        blog.postsQuery as never
+      )) as BlogPostsResult;
       return data.blog.posts.items;
     } catch {
       return [];

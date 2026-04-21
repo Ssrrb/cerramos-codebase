@@ -44,6 +44,25 @@ export interface CheckoutOrderSummary {
   totalLabel: string;
 }
 
+export interface CheckoutLocationOption {
+  label: string;
+  value: string;
+}
+
+export interface CheckoutLocationState extends CheckoutLocationOption {
+  countryId: string;
+}
+
+export interface CheckoutLocationCity extends CheckoutLocationOption {
+  stateId: string;
+}
+
+export interface CheckoutLocationData {
+  cities: CheckoutLocationCity[];
+  countries: CheckoutLocationOption[];
+  states: CheckoutLocationState[];
+}
+
 export type CheckoutDeliveryMode = "delivery" | "pickup";
 
 export interface CheckoutDeliveryModeAvailability {
@@ -51,14 +70,36 @@ export interface CheckoutDeliveryModeAvailability {
   pickup: boolean;
 }
 
+export interface CheckoutSavedAddress {
+  cityId: string;
+  countryId: string;
+  id: string;
+  isDefault: boolean;
+  label?: string | null;
+  phone?: string | null;
+  postalCode?: string | null;
+  recipientName?: string | null;
+  referenceNote?: string | null;
+  stateId: string;
+  streetLine1: string;
+  streetLine2?: string | null;
+  summary: string;
+}
+
 export interface CheckoutDeliveryValues {
-  addressLine1: string;
-  addressLine2?: string;
-  city: string;
+  cityId: string;
+  countryId: string;
+  customerAddressId?: string;
   email: string;
   mode: CheckoutDeliveryMode;
   notes?: string;
+  postalCode?: string;
   phone: string;
+  referenceNote?: string;
   recipientName: string;
-  reference?: string;
+  saveAddress?: boolean;
+  saveAsDefault?: boolean;
+  stateId: string;
+  streetLine1: string;
+  streetLine2?: string;
 }

@@ -56,7 +56,9 @@ describe("commerce onboarding form view", () => {
     expect(
       screen.getByText(/sebastian, agrega el nombre de tu negocio/i)
     ).toBeDefined();
-    expect(screen.getByText("No se pudo configurar tu comercio.")).toBeDefined();
+    expect(
+      screen.getByText("No se pudo configurar tu comercio.")
+    ).toBeDefined();
     expect(screen.getByText("No se pudo subir el logo.")).toBeDefined();
     expect(onBusinessNameChangeMock).toHaveBeenCalledWith("Tienda Centro");
     expect(onLogoFileSelectMock).toHaveBeenCalled();

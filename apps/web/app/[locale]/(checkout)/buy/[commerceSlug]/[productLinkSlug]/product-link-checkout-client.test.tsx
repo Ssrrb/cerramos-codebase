@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import * as React from "react";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -8,21 +9,40 @@ import {
   screen,
   waitFor,
 } from "../../../../../../../app/node_modules/@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ProductLinkCheckoutClient } from "./product-link-checkout-client";
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean | undefined;
 }
 
-vi.mock("@repo/design-system/components/checkout/checkout-upay-card-loader", () => ({
-  CheckoutUpayCardLoader: ({ formId }: { formId?: string | null }) => (
-    <div data-testid="upay-loader">{formId ?? "missing-form-id"}</div>
+vi.mock(
+  "@repo/design-system/components/checkout/checkout-upay-card-loader",
+  () => ({
+    CheckoutUpayCardLoader: ({ formId }: { formId?: string | null }) => (
+      <div data-testid="upay-loader">{formId ?? "missing-form-id"}</div>
+    ),
+  })
+);
+
+vi.mock("./checkout-auth-action", () => ({
+  CheckoutAuthAction: ({
+    googleEnabled,
+    initialUser,
+  }: {
+    googleEnabled?: boolean;
+    initialUser?: { email: string; name?: string | null } | null;
+  }) => (
+    <div>
+      {googleEnabled ? "auth-enabled" : "auth-disabled"}:
+      {initialUser?.email ?? "guest"}
+    </div>
   ),
 }));
 
-vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () => ({
-  CheckoutProgressiveFlow: ({
+vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
+  CheckoutPage: ({
+    accountAction,
+    footerContent,
     isOrderConfirmed,
     onPaymentConfirm,
     onReset,
@@ -31,30 +51,42 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
     paymentStage,
     processorSlot,
   }: {
+    accountAction?: React.ReactNode;
+    footerContent?: React.ReactNode;
     isOrderConfirmed?: boolean;
     onPaymentConfirm?: () => Promise<string | null | undefined>;
     onReset?: () => void;
     onSubmit?: (values: {
-      addressLine1: string;
-      addressLine2: string;
-      city: string;
+      cityId: string;
+      countryId: string;
+      customerAddressId?: string;
       email: string;
       mode: "delivery" | "pickup";
       notes: string;
       phone: string;
+      postalCode: string;
       quantity: number;
+      referenceNote: string;
       recipientName: string;
-      reference: string;
+      saveAddress?: boolean;
+      saveAsDefault?: boolean;
+      stateId: string;
+      streetLine1: string;
+      streetLine2: string;
     }) => Promise<string | null | undefined>;
     orderReference?: string | null;
     paymentStage?: string;
     processorSlot?: React.ReactNode;
   }) => {
     const [submitResult, setSubmitResult] = React.useState<string | null>(null);
-    const [paymentResult, setPaymentResult] = React.useState<string | null>(null);
+    const [paymentResult, setPaymentResult] = React.useState<string | null>(
+      null
+    );
 
     return (
       <div>
+        <div data-testid="account-action">{accountAction}</div>
+        <div data-testid="footer-content">{footerContent}</div>
         <div data-testid="confirmed">{String(Boolean(isOrderConfirmed))}</div>
         <div data-testid="order-reference">{orderReference ?? "none"}</div>
         <div data-testid="payment-stage">{paymentStage ?? "idle"}</div>
@@ -64,16 +96,22 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
         <button
           onClick={async () => {
             const result = await onSubmit?.({
-              addressLine1: "Av. Espana 742",
-              addressLine2: "",
-              city: "Asuncion",
+              cityId: "city_db_asuncion",
+              countryId: "country_db_py",
+              customerAddressId: "",
               email: "buyer@example.com",
               mode: "delivery",
               notes: "",
+              postalCode: "",
               phone: "0981000000",
               quantity: 2,
+              referenceNote: "",
               recipientName: "Buyer Name",
-              reference: "",
+              saveAddress: false,
+              saveAsDefault: false,
+              stateId: "state_db_asuncion",
+              streetLine1: "Av. Espana 742",
+              streetLine2: "",
             });
 
             setSubmitResult(result ?? "success");
@@ -102,6 +140,29 @@ vi.mock("@repo/design-system/components/checkout/checkout-progressive-flow", () 
 const baseProps = {
   commerceSlug: "mate-shop",
   deliveryEnabled: true,
+  initialLocationData: {
+    cities: [
+      {
+        label: "Asunción",
+        stateId: "state_db_asuncion",
+        value: "city_db_asuncion",
+      },
+    ],
+    countries: [
+      {
+        label: "Paraguay",
+        value: "country_db_py",
+      },
+    ],
+    states: [
+      {
+        countryId: "country_db_py",
+        label: "Asunción",
+        value: "state_db_asuncion",
+      },
+    ],
+  },
+  initialSavedAddresses: [],
   merchant: {
     name: "Mate Shop",
     trustState: "verified" as const,
@@ -150,10 +211,7 @@ describe("product link checkout client", () => {
     } as Response);
 
     render(
-      <ProductLinkCheckoutClient
-        {...baseProps}
-        paymentRequired={false}
-      />
+      <ProductLinkCheckoutClient {...baseProps} paymentRequired={false} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: "submit" }));
@@ -173,6 +231,33 @@ describe("product link checkout client", () => {
     });
 
     expect(screen.getByTestId("order-reference").textContent).toBe("none");
+  });
+
+  test("renders the shared checkout page chrome props", () => {
+    render(<ProductLinkCheckoutClient {...baseProps} />);
+
+    expect(screen.getByTestId("account-action").textContent).toBe(
+      "auth-disabled:guest"
+    );
+    expect(screen.getByTestId("footer-content").textContent).toContain(
+      "Powered by Cheki"
+    );
+  });
+
+  test("passes the server-resolved auth user into the checkout auth action", () => {
+    render(
+      <ProductLinkCheckoutClient
+        {...baseProps}
+        initialAuthUser={{
+          email: "buyer@example.com",
+          name: "Buyer",
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("account-action").textContent).toBe(
+      "auth-disabled:buyer@example.com"
+    );
   });
 
   test("transitions payment checkouts from initializing to ready and confirms them", async () => {
@@ -195,10 +280,13 @@ describe("product link checkout client", () => {
       fireEvent.click(screen.getByRole("button", { name: "submit" }));
     });
 
-    expect(screen.getByTestId("payment-stage").textContent).toBe("initializing");
+    expect(screen.getByTestId("payment-stage").textContent).toBe(
+      "initializing"
+    );
     expect(screen.getByTestId("order-reference").textContent).toBe(
       "ord_payment"
     );
+    expect(screen.queryByText("Referencia")).toBeNull();
     expect(screen.getByTestId("upay-loader").textContent).toBe("form_payment");
 
     await React.act(async () => {
@@ -253,10 +341,7 @@ describe("product link checkout client", () => {
     } as Response);
 
     render(
-      <ProductLinkCheckoutClient
-        {...baseProps}
-        paymentRequired={false}
-      />
+      <ProductLinkCheckoutClient {...baseProps} paymentRequired={false} />
     );
 
     fireEvent.click(screen.getByRole("button", { name: "submit" }));

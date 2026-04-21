@@ -1,9 +1,4 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SignUpFormView } from "./sign-up-form";
 
@@ -157,7 +152,9 @@ describe("sign-up form", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(onSubmitMock).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole("radio", { name: /trabajo en proyectos personales/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /trabajo en proyectos personales/i })
+    );
     expect(onUsageChangeMock).toHaveBeenCalledWith("explore");
 
     rerender(
@@ -180,7 +177,9 @@ describe("sign-up form", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Continuar con Google" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continuar con Google" })
+    );
     fireEvent.change(screen.getByLabelText("Tu nombre"), {
       target: { value: "Sebastian" },
     });

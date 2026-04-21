@@ -1,7 +1,9 @@
-import { z } from "zod";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 
 const createOrderFromProductLinkMock = vi.fn();
+const getCurrentCustomerProfileMock = vi.fn();
+const getSessionMock = vi.fn();
 
 class ProductLinkCheckoutError extends Error {
   constructor(message: string) {
@@ -12,16 +14,22 @@ class ProductLinkCheckoutError extends Error {
 
 vi.mock("@/lib/product-links", () => {
   const checkoutOrderPayloadSchema = z.object({
-    addressLine1: z.string(),
-    addressLine2: z.string(),
-    city: z.string(),
+    cityId: z.string(),
+    countryId: z.string(),
+    customerAddressId: z.string().default(""),
     email: z.string().email(),
     mode: z.enum(["delivery", "pickup"]),
     notes: z.string(),
+    postalCode: z.string(),
     phone: z.string(),
     quantity: z.number().int().min(1),
+    referenceNote: z.string(),
     recipientName: z.string(),
-    reference: z.string(),
+    saveAddress: z.boolean().default(false),
+    saveAsDefault: z.boolean().default(false),
+    stateId: z.string(),
+    streetLine1: z.string(),
+    streetLine2: z.string(),
   });
 
   return {
@@ -31,9 +39,17 @@ vi.mock("@/lib/product-links", () => {
   };
 });
 
+vi.mock("@repo/auth/server", () => ({
+  getCurrentCustomerProfile: getCurrentCustomerProfileMock,
+  getSession: getSessionMock,
+}));
+
 describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
   beforeEach(() => {
     createOrderFromProductLinkMock.mockReset();
+    getCurrentCustomerProfileMock.mockReset();
+    getSessionMock.mockReset();
+    getSessionMock.mockResolvedValue(null);
   });
 
   test("returns 400 for product link checkout domain errors", async () => {
@@ -46,16 +62,22 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
     const response = await POST(
       new Request("http://localhost/api/buy/mate-shop/mate-premium/orders", {
         body: JSON.stringify({
-          addressLine1: "",
-          addressLine2: "",
-          city: "",
+          cityId: "",
+          countryId: "country_py",
+          customerAddressId: "",
           email: "buyer@example.com",
           mode: "pickup",
           notes: "",
+          postalCode: "",
           phone: "0981000000",
           quantity: 1,
+          referenceNote: "",
           recipientName: "Buyer Name",
-          reference: "",
+          saveAddress: false,
+          saveAsDefault: false,
+          stateId: "",
+          streetLine1: "",
+          streetLine2: "",
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -84,16 +106,22 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
     const response = await POST(
       new Request("http://localhost/api/buy/mate-shop/mate-premium/orders", {
         body: JSON.stringify({
-          addressLine1: "",
-          addressLine2: "",
-          city: "",
+          cityId: "",
+          countryId: "country_py",
+          customerAddressId: "",
           email: "buyer@example.com",
           mode: "pickup",
           notes: "",
+          postalCode: "",
           phone: "0981000000",
           quantity: 1,
+          referenceNote: "",
           recipientName: "Buyer Name",
-          reference: "",
+          saveAddress: false,
+          saveAsDefault: false,
+          stateId: "",
+          streetLine1: "",
+          streetLine2: "",
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -118,16 +146,22 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
     const response = await POST(
       new Request("http://localhost/api/buy/mate-shop/mate-premium/orders", {
         body: JSON.stringify({
-          addressLine1: "",
-          addressLine2: "",
-          city: "",
+          cityId: "",
+          countryId: "country_py",
+          customerAddressId: "",
           email: "buyer@example.com",
           mode: "pickup",
           notes: "",
+          postalCode: "",
           phone: "0981000000",
           quantity: 0,
+          referenceNote: "",
           recipientName: "Buyer Name",
-          reference: "",
+          saveAddress: false,
+          saveAsDefault: false,
+          stateId: "",
+          streetLine1: "",
+          streetLine2: "",
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -144,5 +178,68 @@ describe("POST /api/buy/[commerceSlug]/[productLinkSlug]/orders", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: "Invalid checkout data.",
     });
+  });
+
+  test("passes the authenticated buyer customer profile to order creation", async () => {
+    const { POST } = await import("./route");
+
+    getSessionMock.mockResolvedValueOnce({
+      user: {
+        customerId: "customer_session",
+        id: "user_1",
+      },
+    });
+    getCurrentCustomerProfileMock.mockResolvedValueOnce({
+      id: "customer_profile_1",
+    });
+    createOrderFromProductLinkMock.mockResolvedValueOnce({
+      orderId: "order_1",
+      paymentIntentId: null,
+      paymentRequired: false,
+      success: true,
+      upayFormId: null,
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/buy/mate-shop/mate-premium/orders", {
+        body: JSON.stringify({
+          cityId: "",
+          countryId: "country_py",
+          customerAddressId: "",
+          email: "buyer@example.com",
+          mode: "pickup",
+          notes: "",
+          postalCode: "",
+          phone: "0981000000",
+          quantity: 1,
+          referenceNote: "",
+          recipientName: "Buyer Name",
+          saveAddress: false,
+          saveAsDefault: false,
+          stateId: "",
+          streetLine1: "",
+          streetLine2: "",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }),
+      {
+        params: Promise.resolve({
+          commerceSlug: "mate-shop",
+          productLinkSlug: "mate-premium",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(createOrderFromProductLinkMock).toHaveBeenCalledWith(
+      "mate-shop",
+      "mate-premium",
+      expect.any(Object),
+      {
+        customerId: "customer_profile_1",
+        userId: "user_1",
+      }
+    );
   });
 });

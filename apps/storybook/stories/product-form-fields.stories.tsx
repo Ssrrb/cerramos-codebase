@@ -1,7 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Meta, StoryObj } from "@storybook/react";
-import type { ReactNode } from "react";
-import { useForm } from "react-hook-form";
 import { ProductBasicsSection } from "@repo/design-system/components/product/product-basics-section";
 import { ProductCategorySelect } from "@repo/design-system/components/product/product-category-select";
 import { ProductDeliveryToggle } from "@repo/design-system/components/product/product-delivery-toggle";
@@ -11,6 +8,9 @@ import { ProductNameField } from "@repo/design-system/components/product/product
 import { ProductStatusSelect } from "@repo/design-system/components/product/product-status-select";
 import { ProductStockField } from "@repo/design-system/components/product/product-stock-field";
 import { Form } from "@repo/design-system/components/ui/form";
+import type { Meta, StoryObj } from "@storybook/react";
+import type { ReactNode } from "react";
+import { useForm } from "react-hook-form";
 import {
   addProductFormSchema,
   defaultAddProductFormValues,
@@ -45,11 +45,7 @@ const categoryOptions = productCategorySuggestions.map((category) => ({
 
 const StoryFormProvider = Form as any;
 
-const StoryForm = ({
-  children,
-}: {
-  children: (form: any) => ReactNode;
-}) => {
+const StoryForm = ({ children }: { children: (form: any) => ReactNode }) => {
   const form = useForm<any>({
     defaultValues: defaultAddProductFormValues,
     resolver: zodResolver(addProductFormSchema),
@@ -76,7 +72,10 @@ export const DescriptionField: Story = {
   render: () => (
     <StoryForm>
       {(form) => (
-        <ProductDescriptionField control={form.control as any} name="description" />
+        <ProductDescriptionField
+          control={form.control as any}
+          name="description"
+        />
       )}
     </StoryForm>
   ),
@@ -99,7 +98,9 @@ export const StatusField: Story = {
 export const StockField: Story = {
   render: () => (
     <StoryForm>
-      {(form) => <ProductStockField control={form.control as any} name="stock" />}
+      {(form) => (
+        <ProductStockField control={form.control as any} name="stock" />
+      )}
     </StoryForm>
   ),
 };

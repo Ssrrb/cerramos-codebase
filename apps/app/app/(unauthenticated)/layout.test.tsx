@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { expect, test, vi } from "vitest";
 
 vi.mock("./globals.css", () => ({}));

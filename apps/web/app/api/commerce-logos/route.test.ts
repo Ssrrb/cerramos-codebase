@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const {
-  createSignedReadUrlMock,
-  extractCommerceLogoObjectKeyMock,
-  fetchMock,
-} = vi.hoisted(() => ({
-  createSignedReadUrlMock: vi.fn(),
-  extractCommerceLogoObjectKeyMock: vi.fn(),
-  fetchMock: vi.fn(),
-}));
+const { createSignedReadUrlMock, extractCommerceLogoObjectKeyMock, fetchMock } =
+  vi.hoisted(() => ({
+    createSignedReadUrlMock: vi.fn(),
+    extractCommerceLogoObjectKeyMock: vi.fn(),
+    fetchMock: vi.fn(),
+  }));
 
 vi.mock("@repo/storage", () => ({
   createSignedReadUrl: createSignedReadUrlMock,

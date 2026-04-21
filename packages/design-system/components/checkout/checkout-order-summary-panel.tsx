@@ -1,3 +1,5 @@
+import { MinusIcon, PlusIcon, ReceiptTextIcon } from "lucide-react";
+import { cn } from "../../lib/utils";
 import {
   Drawer,
   DrawerContent,
@@ -7,8 +9,6 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 import { Separator } from "../ui/separator";
-import { cn } from "../../lib/utils";
-import { MinusIcon, PlusIcon, ReceiptTextIcon } from "lucide-react";
 import { CheckoutProductMedia } from "./checkout-product-media";
 import type { CheckoutOrderSummary, CheckoutProductSummary } from "./types";
 
@@ -65,7 +65,9 @@ function CheckoutSummaryContent({
           <p className="line-clamp-4 text-muted-foreground text-sm leading-relaxed">
             {product.description}
           </p>
-          <p className="font-medium text-foreground text-sm">{product.priceLabel}</p>
+          <p className="font-medium text-foreground text-sm">
+            {product.priceLabel}
+          </p>
         </div>
       </div>
 
@@ -73,7 +75,9 @@ function CheckoutSummaryContent({
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="font-medium text-foreground text-sm">Cantidad</p>
-            <p className="mt-1 text-muted-foreground text-sm">{stockStatusLabel}</p>
+            <p className="mt-1 text-muted-foreground text-sm">
+              {stockStatusLabel}
+            </p>
           </div>
           <div className="inline-flex items-center rounded-full border border-border/70 bg-background p-1">
             <button

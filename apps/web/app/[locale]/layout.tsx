@@ -27,9 +27,7 @@ const RootLayout = async ({ children, params }: RootLayoutProperties) => {
     >
       <body>
         <AnalyticsProvider>
-          <DesignSystemProvider>
-            {children}
-          </DesignSystemProvider>
+          <DesignSystemProvider>{children}</DesignSystemProvider>
           <Toolbar />
           <CMSToolbar />
         </AnalyticsProvider>

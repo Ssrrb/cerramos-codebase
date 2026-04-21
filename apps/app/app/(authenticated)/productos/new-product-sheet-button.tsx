@@ -1,9 +1,9 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import type React from "react";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Sheet, SheetTrigger } from "@repo/design-system/components/ui/sheet";
+import { Plus } from "lucide-react";
+import type React from "react";
 import AddProduct from "../../components/add-product";
 
 interface NewProductSheetButtonProps {

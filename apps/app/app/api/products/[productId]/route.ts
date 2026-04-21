@@ -149,7 +149,10 @@ export const DELETE = async (
       });
 
     if (!product) {
-      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Product not found." },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({

@@ -140,7 +140,8 @@ describe("products route", () => {
 
     txInsertMock.mockImplementation((table: { id?: string }) => ({
       values: (values: Record<string, unknown>) => {
-        const tableName = table.id === "product.id" ? "product" : "productImage";
+        const tableName =
+          table.id === "product.id" ? "product" : "productImage";
         insertedValues.push({
           table: tableName,
           values,
@@ -173,7 +174,7 @@ describe("products route", () => {
           name: "Licuadora Cerramos",
           status: "active",
           stock: 14,
-          unitPrice: 185000,
+          unitPrice: 185_000,
         }),
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -198,7 +199,7 @@ describe("products route", () => {
         name: "Licuadora Cerramos",
         status: "active",
         stock: 14,
-        unitPrice: 185000,
+        unitPrice: 185_000,
       },
     });
     expect(productImageInsert).toMatchObject({
@@ -210,7 +211,9 @@ describe("products route", () => {
     });
     expect(productInsert?.values.id).toEqual(expect.any(String));
     expect(productInsert?.values.primaryImageId).toEqual(expect.any(String));
-    expect(productImageInsert?.values.id).toBe(productInsert?.values.primaryImageId);
+    expect(productImageInsert?.values.id).toBe(
+      productInsert?.values.primaryImageId
+    );
     expect(productImageInsert?.values.productId).toBe(productInsert?.values.id);
   });
 

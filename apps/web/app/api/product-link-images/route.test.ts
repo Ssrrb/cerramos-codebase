@@ -8,16 +8,15 @@ const {
   logWarnMock,
   objectExistsMock,
   parseErrorMock,
-} =
-  vi.hoisted(() => ({
-    createSignedReadUrlMock: vi.fn(),
-    extractProductImageObjectKeyMock: vi.fn(),
-    fetchMock: vi.fn(),
-    logErrorMock: vi.fn(),
-    logWarnMock: vi.fn(),
-    objectExistsMock: vi.fn(),
-    parseErrorMock: vi.fn(),
-  }));
+} = vi.hoisted(() => ({
+  createSignedReadUrlMock: vi.fn(),
+  extractProductImageObjectKeyMock: vi.fn(),
+  fetchMock: vi.fn(),
+  logErrorMock: vi.fn(),
+  logWarnMock: vi.fn(),
+  objectExistsMock: vi.fn(),
+  parseErrorMock: vi.fn(),
+}));
 
 vi.mock("@repo/storage", () => ({
   createSignedReadUrl: createSignedReadUrlMock,

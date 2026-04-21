@@ -26,7 +26,10 @@ interface SidebarAccountMenuProps {
   user: SidebarAccountUser;
 }
 
-const SidebarAccountMenu = ({ activeCommerce, user }: SidebarAccountMenuProps) => {
+const SidebarAccountMenu = ({
+  activeCommerce,
+  user,
+}: SidebarAccountMenuProps) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const displayName = user.name?.trim() || user.email;

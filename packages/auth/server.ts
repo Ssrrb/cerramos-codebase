@@ -1,20 +1,21 @@
 import "server-only";
 
 import { database, schema } from "@repo/database";
+import { log } from "@repo/observability/log";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getSessionCookie } from "better-auth/cookies";
 import { nextCookies } from "better-auth/next-js";
 import { asc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { cache } from "react";
-import { log } from "@repo/observability/log";
+import { syncCustomerProfileForUser } from "./customer-profile";
 import { keys } from "./keys";
 import {
-  AUTH_COOKIE_PREFIX,
   type ActiveCommerce,
+  AUTH_COOKIE_PREFIX,
   type AuthenticatedAppContext,
   type AuthUser,
   buildTrustedOrigins,
@@ -41,7 +42,7 @@ export interface AuthContext {
 }
 
 const authKeys = keys();
-const trustedOrigins = buildTrustedOrigins([
+export const trustedOrigins = buildTrustedOrigins([
   authKeys.BETTER_AUTH_URL,
   process.env.NEXT_PUBLIC_APP_URL,
   process.env.NEXT_PUBLIC_WEB_URL,
@@ -57,7 +58,9 @@ export const betterAuthServer = betterAuth({
     cookiePrefix: AUTH_COOKIE_PREFIX,
     crossSubDomainCookies,
     database: {
-      generateId: false,
+      // Keep auth IDs explicit and string-backed. This avoids runtime/schema
+      // drift when a database was bootstrapped with UUID auth tables.
+      generateId: () => crypto.randomUUID(),
     },
   },
   baseURL: authKeys.BETTER_AUTH_URL,
@@ -65,6 +68,27 @@ export const betterAuthServer = betterAuth({
     provider: "pg",
     schema,
   }),
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          await syncCustomerProfileForUser(session.userId);
+        },
+      },
+    },
+    user: {
+      create: {
+        after: async (user) => {
+          await syncCustomerProfileForUser(user.id);
+        },
+      },
+      update: {
+        after: async (user) => {
+          await syncCustomerProfileForUser(user.id);
+        },
+      },
+    },
+  },
   emailAndPassword: {
     autoSignIn: true,
     enabled: true,
@@ -117,6 +141,29 @@ type SessionResult = Awaited<
 const getSignInUrl = () =>
   authKeys.NEXT_PUBLIC_AUTH_SIGN_IN_URL ?? DEFAULT_AUTH_SIGN_IN_URL;
 
+const getErrorCauseChain = (error: unknown) => {
+  const messages: string[] = [];
+  const visited = new Set<unknown>();
+  let current: unknown = error;
+
+  while (current && typeof current === "object" && !visited.has(current)) {
+    visited.add(current);
+
+    const message =
+      "message" in current && typeof current.message === "string"
+        ? current.message
+        : null;
+
+    if (message && !messages.includes(message)) {
+      messages.push(message);
+    }
+
+    current = "cause" in current ? current.cause : undefined;
+  }
+
+  return messages;
+};
+
 const getSessionState = cache(async (): Promise<SessionResult> => {
   const requestHeaders = await headers();
 
@@ -125,10 +172,13 @@ const getSessionState = cache(async (): Promise<SessionResult> => {
       headers: requestHeaders,
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown session lookup failure";
+    const [
+      errorMessage = "Unknown session lookup failure",
+      ...errorCauseChain
+    ] = getErrorCauseChain(error);
 
     log.warn("Better Auth session lookup failed", {
+      errorCauseChain,
       errorMessage,
     });
 
@@ -145,6 +195,16 @@ const getSessionToken = cache(async () => {
 });
 
 export const getSession = async () => getSessionState();
+
+export const getCurrentCustomerProfile = cache(async () => {
+  const session = await getSessionState();
+
+  if (!session?.user.id) {
+    return null;
+  }
+
+  return syncCustomerProfileForUser(session.user.id);
+});
 
 export const requireSession = async () => {
   const session = await getSessionState();
@@ -181,46 +241,51 @@ const resolveCommerceById = async (
   };
 };
 
-export const getCurrentCommerce = cache(async (): Promise<ActiveCommerce | null> => {
-  const session = await getSessionState();
+export const getCurrentCommerce = cache(
+  async (): Promise<ActiveCommerce | null> => {
+    const session = await getSessionState();
 
-  if (!session?.user.id) {
-    return null;
-  }
-
-  if (session.user.commerceId && session.user.role) {
-    const activeCommerce = await resolveCommerceById(
-      session.user.commerceId,
-      session.user.role
-    );
-
-    if (activeCommerce) {
-      return activeCommerce;
+    if (!session?.user.id) {
+      return null;
     }
+
+    if (session.user.commerceId && session.user.role) {
+      const activeCommerce = await resolveCommerceById(
+        session.user.commerceId,
+        session.user.role
+      );
+
+      if (activeCommerce) {
+        return activeCommerce;
+      }
+    }
+
+    // Better Auth caches the session cookie payload, so commerceId can be stale
+    // immediately after onboarding completes. Resolve membership from the
+    // database by user id and treat the linked commerce as the source of truth.
+    const [activeCommerce] = await database
+      .select({
+        id: schema.commerce.id,
+        logoImageUrl: schema.commerce.logoImageUrl,
+        name: schema.commerce.name,
+        role: schema.user.role,
+        slug: schema.commerce.slug,
+      })
+      .from(schema.user)
+      .innerJoin(
+        schema.commerce,
+        eq(schema.user.commerceId, schema.commerce.id)
+      )
+      .where(eq(schema.user.id, session.user.id))
+      .limit(1);
+
+    if (!activeCommerce) {
+      return null;
+    }
+
+    return activeCommerce;
   }
-
-  // Better Auth caches the session cookie payload, so commerceId can be stale
-  // immediately after onboarding completes. Resolve membership from the
-  // database by user id and treat the linked commerce as the source of truth.
-  const [activeCommerce] = await database
-    .select({
-      id: schema.commerce.id,
-      logoImageUrl: schema.commerce.logoImageUrl,
-      name: schema.commerce.name,
-      role: schema.user.role,
-      slug: schema.commerce.slug,
-    })
-    .from(schema.user)
-    .innerJoin(schema.commerce, eq(schema.user.commerceId, schema.commerce.id))
-    .where(eq(schema.user.id, session.user.id))
-    .limit(1);
-
-  if (!activeCommerce) {
-    return null;
-  }
-
-  return activeCommerce;
-});
+);
 
 export const getAuthenticatedAppContext = cache(
   async (): Promise<AuthenticatedAppContext | null> => {
@@ -247,17 +312,18 @@ export const getAuthenticatedAppContext = cache(
   }
 );
 
-export const requireCommerceContext = async (): Promise<AuthenticatedAppContext> => {
-  await requireSession();
+export const requireCommerceContext =
+  async (): Promise<AuthenticatedAppContext> => {
+    await requireSession();
 
-  const context = await getAuthenticatedAppContext();
+    const context = await getAuthenticatedAppContext();
 
-  if (!context) {
-    redirect(ONBOARDING_URL);
-  }
+    if (!context) {
+      redirect(ONBOARDING_URL);
+    }
 
-  return context;
-};
+    return context;
+  };
 
 export const requireCommerceIdForRequest = async () => {
   const session = await getSessionState();

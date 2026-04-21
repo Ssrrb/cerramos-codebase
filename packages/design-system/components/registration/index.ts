@@ -1,10 +1,11 @@
+export type { AuthChromeProps } from "./auth-chrome";
 export { AuthChrome } from "./auth-chrome";
 export { AuthLegalLinks } from "./auth-legal-links";
-export { CommerceOnboardingFormView } from "./commerce-onboarding-form";
+export { AuthModal } from "./auth-modal";
 export { CerramosLogo } from "./cerramos-logo";
-export { SignInFormView } from "./sign-in/sign-in-form";
-export { SignUpFormView } from "./sign-up/sign-up-form";
-export type { AuthChromeProps } from "./auth-chrome";
 export type { CommerceOnboardingFormViewProps } from "./commerce-onboarding-form";
+export { CommerceOnboardingFormView } from "./commerce-onboarding-form";
 export type { SignInFormViewProps } from "./sign-in/sign-in-form";
+export { SignInFormView } from "./sign-in/sign-in-form";
 export type { SignUpFormViewProps, UsageValue } from "./sign-up/sign-up-form";
+export { SignUpFormView } from "./sign-up/sign-up-form";

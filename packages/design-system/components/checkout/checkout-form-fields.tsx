@@ -7,6 +7,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@repo/design-system/components/ui/field";
+import { Checkbox } from "@repo/design-system/components/ui/checkbox";
 import { FormField } from "@repo/design-system/components/ui/form";
 import { Input } from "@repo/design-system/components/ui/input";
 import {
@@ -32,15 +33,21 @@ import type {
 import type { CheckoutDeliveryMode } from "./types";
 
 export interface CheckoutDeliveryFieldNames<TFieldValues extends FieldValues> {
-  addressLine1: FieldPath<TFieldValues>;
-  addressLine2: FieldPath<TFieldValues>;
-  city: FieldPath<TFieldValues>;
+  cityId: FieldPath<TFieldValues>;
+  countryId: FieldPath<TFieldValues>;
+  customerAddressId: FieldPath<TFieldValues>;
   email: FieldPath<TFieldValues>;
   mode: FieldPath<TFieldValues>;
   notes: FieldPath<TFieldValues>;
   phone: FieldPath<TFieldValues>;
+  postalCode: FieldPath<TFieldValues>;
+  referenceNote: FieldPath<TFieldValues>;
   recipientName: FieldPath<TFieldValues>;
-  reference: FieldPath<TFieldValues>;
+  saveAddress: FieldPath<TFieldValues>;
+  saveAsDefault: FieldPath<TFieldValues>;
+  stateId: FieldPath<TFieldValues>;
+  streetLine1: FieldPath<TFieldValues>;
+  streetLine2: FieldPath<TFieldValues>;
 }
 
 interface CheckoutInputFieldProps<TFieldValues extends FieldValues> {
@@ -179,6 +186,14 @@ interface CheckoutTextareaFieldProps<TFieldValues extends FieldValues> {
   rules?: RegisterOptions<TFieldValues, FieldPath<TFieldValues>>;
 }
 
+interface CheckoutCheckboxFieldProps<TFieldValues extends FieldValues> {
+  control: Control<TFieldValues>;
+  description?: string;
+  disabled?: boolean;
+  label: string;
+  name: FieldPath<TFieldValues>;
+}
+
 function CheckoutTextareaField<TFieldValues extends FieldValues>({
   control,
   description,
@@ -214,6 +229,49 @@ function CheckoutTextareaField<TFieldValues extends FieldValues>({
         </Field>
       )}
       rules={rules}
+    />
+  );
+}
+
+function CheckoutCheckboxField<TFieldValues extends FieldValues>({
+  control,
+  description,
+  disabled,
+  label,
+  name,
+}: CheckoutCheckboxFieldProps<TFieldValues>) {
+  const checkboxId = useId();
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={fieldState.invalid}>
+          <FieldContent>
+            <label
+              className="flex items-start gap-3 rounded-[1rem] border border-border/70 bg-muted/15 px-3 py-3"
+              htmlFor={checkboxId}
+            >
+              <Checkbox
+                checked={Boolean(field.value)}
+                disabled={disabled}
+                id={checkboxId}
+                onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+              />
+              <div className="space-y-1">
+                <FieldLabel className="leading-none" htmlFor={checkboxId}>
+                  {label}
+                </FieldLabel>
+                {description ? (
+                  <FieldDescription>{description}</FieldDescription>
+                ) : null}
+              </div>
+            </label>
+            <FieldError errors={[fieldState.error]} />
+          </FieldContent>
+        </Field>
+      )}
     />
   );
 }
@@ -296,6 +354,7 @@ function CheckoutDeliveryModeField<TFieldValues extends FieldValues>({
 }
 
 export {
+  CheckoutCheckboxField,
   CheckoutDeliveryModeField,
   CheckoutInputField,
   CheckoutSelectField,

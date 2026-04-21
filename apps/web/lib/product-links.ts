@@ -3,7 +3,9 @@ import {
   database,
   eq,
   gte,
+  isForeignKeyConstraintError,
   isMissingRelationError,
+  isUniqueConstraintError,
   schema,
   sql,
 } from "@repo/database";
@@ -168,6 +170,34 @@ export class ProductLinkCheckoutError extends Error {
     this.name = "ProductLinkCheckoutError";
   }
 }
+
+const resolveCheckoutPersistenceError = (error: unknown) => {
+  if (error instanceof ProductLinkCheckoutError) {
+    return error;
+  }
+
+  if (isForeignKeyConstraintError(error)) {
+    return new ProductLinkCheckoutError(
+      "Los datos del pedido cambiaron antes de confirmarse. Revisa la entrega y volvé a intentar."
+    );
+  }
+
+  if (
+    isUniqueConstraintError(error, "CustomerAddress_customerId_default_key")
+  ) {
+    return new ProductLinkCheckoutError(
+      "No se pudo guardar la direccion como predeterminada. Intentá de nuevo."
+    );
+  }
+
+  if (isUniqueConstraintError(error, "Order_deliveryInfoId_key")) {
+    return new ProductLinkCheckoutError(
+      "No se pudo reservar la entrega del pedido. Intentá de nuevo."
+    );
+  }
+
+  return null;
+};
 
 const formatPriceLabel = (value: number) =>
   `Gs. ${new Intl.NumberFormat("es-PY").format(value)}`;
@@ -780,224 +810,231 @@ export const createOrderFromProductLink = async (
   );
   const totalAmount = record.unitPrice * payload.quantity;
 
-  return database.transaction(async (tx) => {
-    const [productSnapshot] = await tx
-      .select({
-        stock: schema.product.stock,
-      })
-      .from(schema.product)
-      .where(eq(schema.product.id, record.productId));
-
-    if (!productSnapshot || productSnapshot.stock <= 0) {
-      throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
-    }
-
-    if (payload.quantity > productSnapshot.stock) {
-      throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
-    }
-
-    const [reservedProduct] = await tx
-      .update(schema.product)
-      .set({
-        stock: sql`${schema.product.stock} - ${payload.quantity}`,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(schema.product.id, record.productId),
-          gte(schema.product.stock, payload.quantity)
-        )
-      )
-      .returning({
-        stock: schema.product.stock,
-      });
-
-    if (!reservedProduct) {
-      const [currentProduct] = await tx
+  try {
+    return await database.transaction(async (tx) => {
+      const [productSnapshot] = await tx
         .select({
           stock: schema.product.stock,
         })
         .from(schema.product)
         .where(eq(schema.product.id, record.productId));
 
-      throw new ProductLinkCheckoutError(
-        currentProduct && currentProduct.stock > 0
-          ? EXCEEDS_STOCK_ERROR
-          : OUT_OF_STOCK_ERROR
-      );
-    }
-
-    const customerProfile = await resolveOrderCustomerProfile(
-      tx,
-      payload,
-      authenticatedBuyer
-    );
-    const requestedCustomerAddressId = payload.customerAddressId?.trim();
-    const selectedCustomerAddress =
-      payload.mode === "delivery" && requestedCustomerAddressId
-        ? authenticatedBuyer
-          ? await resolveSelectedCustomerAddress(
-              tx,
-              customerProfile.id,
-              requestedCustomerAddressId
-            )
-          : (() => {
-              throw new ProductLinkCheckoutError(
-                "Necesitas iniciar sesion para usar direcciones guardadas."
-              );
-            })()
-        : null;
-
-    const deliveryAddress = selectedCustomerAddress
-      ? {
-          cityId: selectedCustomerAddress.cityId,
-          customerAddressId: selectedCustomerAddress.id,
-          countryId: selectedCustomerAddress.countryId,
-          postalCode: selectedCustomerAddress.postalCode,
-          referenceNote: selectedCustomerAddress.referenceNote,
-          stateId: selectedCustomerAddress.stateId,
-          streetLine1: selectedCustomerAddress.streetLine1,
-          streetLine2: selectedCustomerAddress.streetLine2,
-        }
-      : await resolveDeliveryAddress(tx, payload);
-
-    let savedCustomerAddress = selectedCustomerAddress;
-
-    if (payload.mode === "delivery" && (payload.saveAddress || payload.saveAsDefault)) {
-      if (!authenticatedBuyer) {
-        throw new ProductLinkCheckoutError(
-          "Necesitas iniciar sesion para guardar direcciones."
-        );
+      if (!productSnapshot || productSnapshot.stock <= 0) {
+        throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
       }
 
-      if (selectedCustomerAddress) {
-        if (payload.saveAsDefault && !selectedCustomerAddress.isDefault) {
-          await applyDefaultAddressSelection(
-            tx,
-            customerProfile.id,
-            selectedCustomerAddress.id
-          );
-          savedCustomerAddress = {
-            ...selectedCustomerAddress,
-            isDefault: true,
-          };
-        }
-      } else if ("countryId" in payload && payload.saveAddress) {
-        if (payload.saveAsDefault) {
-          await tx
-            .update(schema.customerAddress)
-            .set({
-              isDefault: false,
-              updatedAt: new Date(),
-            })
-            .where(eq(schema.customerAddress.customerId, customerProfile.id));
-        }
-
-        savedCustomerAddress = await persistCustomerAddressForCheckout(
-          tx,
-          customerProfile.id,
-          payload
-        );
+      if (payload.quantity > productSnapshot.stock) {
+        throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
       }
-    }
 
-    const [deliveryInfo] = await tx
-      .insert(schema.deliveryInfo)
-      .values({
-        cityId: deliveryAddress.cityId,
-        countryId: deliveryAddress.countryId,
-        customerAddressId:
-          savedCustomerAddress?.id ?? deliveryAddress.customerAddressId,
-        customerId: customerProfile.id,
-        email: payload.email,
-        mode: payload.mode,
-        notes: payload.notes || null,
-        postalCode: deliveryAddress.postalCode,
-        phone: payload.phone,
-        referenceNote: deliveryAddress.referenceNote,
-        recipientName: payload.recipientName,
-        stateId: deliveryAddress.stateId,
-        streetLine1: deliveryAddress.streetLine1,
-        streetLine2: deliveryAddress.streetLine2,
-      })
-      .returning({
-        id: schema.deliveryInfo.id,
-      });
-
-    const orderStatus = record.paymentRequired ? "pending_payment" : "new";
-    const paymentStatus = record.paymentRequired ? "pending" : "not_required";
-
-    const [order] = await tx
-      .insert(schema.order)
-      .values({
-        commerceId: record.commerceId,
-        customerId: customerProfile.id,
-        deliveryInfoId: deliveryInfo.id,
-        expiresAt,
-        orderStatus,
-        paymentStatus,
-        productLinkId: record.productLinkId,
-        quantity: payload.quantity,
-        subtotal: totalAmount,
-        total: totalAmount,
-        currency: record.currency,
-      })
-      .returning({
-        id: schema.order.id,
-      });
-
-    await tx.insert(schema.orderItem).values({
-      description: record.description,
-      imageObjectKey: record.imageReference,
-      orderId: order.id,
-      productId: record.productId,
-      productLinkId: record.productLinkId,
-      quantity: payload.quantity,
-      title: record.title,
-      totalPrice: totalAmount,
-      unitPrice: record.unitPrice,
-      variantLabel: null,
-    });
-
-    await tx.insert(schema.orderStatusHistory).values({
-      changedByType: "buyer",
-      orderId: order.id,
-      reason: "checkout_created",
-      toStatus: orderStatus,
-    });
-
-    let paymentIntentId: string | null = null;
-
-    if (record.paymentRequired) {
-      const [paymentIntent] = await tx
-        .insert(schema.paymentIntent)
-        .values({
-          amount: totalAmount,
-          currency: record.currency,
-          expiresAt,
-          method: null,
-          orderId: order.id,
-          provider: "pagopar_upay",
-          providerMetadata: {
-            commerceSlug: record.commerceSlug,
-            productLinkSlug: record.slug,
-          },
-          status: "pending",
+      const [reservedProduct] = await tx
+        .update(schema.product)
+        .set({
+          stock: sql`${schema.product.stock} - ${payload.quantity}`,
+          updatedAt: new Date(),
         })
+        .where(
+          and(
+            eq(schema.product.id, record.productId),
+            gte(schema.product.stock, payload.quantity)
+          )
+        )
         .returning({
-          id: schema.paymentIntent.id,
+          stock: schema.product.stock,
         });
 
-      paymentIntentId = paymentIntent.id;
-    }
+      if (!reservedProduct) {
+        const [currentProduct] = await tx
+          .select({
+            stock: schema.product.stock,
+          })
+          .from(schema.product)
+          .where(eq(schema.product.id, record.productId));
 
-    return {
-      orderId: order.id,
-      paymentIntentId,
-      paymentRequired: record.paymentRequired,
-      upayFormId: paymentIntentId,
-    };
-  });
+        throw new ProductLinkCheckoutError(
+          currentProduct && currentProduct.stock > 0
+            ? EXCEEDS_STOCK_ERROR
+            : OUT_OF_STOCK_ERROR
+        );
+      }
+
+      const customerProfile = await resolveOrderCustomerProfile(
+        tx,
+        payload,
+        authenticatedBuyer
+      );
+      const requestedCustomerAddressId = payload.customerAddressId?.trim();
+      const selectedCustomerAddress =
+        payload.mode === "delivery" && requestedCustomerAddressId
+          ? authenticatedBuyer
+            ? await resolveSelectedCustomerAddress(
+                tx,
+                customerProfile.id,
+                requestedCustomerAddressId
+              )
+            : (() => {
+                throw new ProductLinkCheckoutError(
+                  "Necesitas iniciar sesion para usar direcciones guardadas."
+                );
+              })()
+          : null;
+
+      const deliveryAddress = selectedCustomerAddress
+        ? {
+            cityId: selectedCustomerAddress.cityId,
+            customerAddressId: selectedCustomerAddress.id,
+            countryId: selectedCustomerAddress.countryId,
+            postalCode: selectedCustomerAddress.postalCode,
+            referenceNote: selectedCustomerAddress.referenceNote,
+            stateId: selectedCustomerAddress.stateId,
+            streetLine1: selectedCustomerAddress.streetLine1,
+            streetLine2: selectedCustomerAddress.streetLine2,
+          }
+        : await resolveDeliveryAddress(tx, payload);
+
+      let savedCustomerAddress = selectedCustomerAddress;
+
+      if (
+        payload.mode === "delivery" &&
+        (payload.saveAddress || payload.saveAsDefault)
+      ) {
+        if (!authenticatedBuyer) {
+          throw new ProductLinkCheckoutError(
+            "Necesitas iniciar sesion para guardar direcciones."
+          );
+        }
+
+        if (selectedCustomerAddress) {
+          if (payload.saveAsDefault && !selectedCustomerAddress.isDefault) {
+            await applyDefaultAddressSelection(
+              tx,
+              customerProfile.id,
+              selectedCustomerAddress.id
+            );
+            savedCustomerAddress = {
+              ...selectedCustomerAddress,
+              isDefault: true,
+            };
+          }
+        } else if ("countryId" in payload && payload.saveAddress) {
+          if (payload.saveAsDefault) {
+            await tx
+              .update(schema.customerAddress)
+              .set({
+                isDefault: false,
+                updatedAt: new Date(),
+              })
+              .where(eq(schema.customerAddress.customerId, customerProfile.id));
+          }
+
+          savedCustomerAddress = await persistCustomerAddressForCheckout(
+            tx,
+            customerProfile.id,
+            payload
+          );
+        }
+      }
+
+      const [deliveryInfo] = await tx
+        .insert(schema.deliveryInfo)
+        .values({
+          cityId: deliveryAddress.cityId,
+          countryId: deliveryAddress.countryId,
+          customerAddressId:
+            savedCustomerAddress?.id ?? deliveryAddress.customerAddressId,
+          customerId: customerProfile.id,
+          email: payload.email,
+          mode: payload.mode,
+          notes: payload.notes || null,
+          postalCode: deliveryAddress.postalCode,
+          phone: payload.phone,
+          referenceNote: deliveryAddress.referenceNote,
+          recipientName: payload.recipientName,
+          stateId: deliveryAddress.stateId,
+          streetLine1: deliveryAddress.streetLine1,
+          streetLine2: deliveryAddress.streetLine2,
+        })
+        .returning({
+          id: schema.deliveryInfo.id,
+        });
+
+      const orderStatus = record.paymentRequired ? "pending_payment" : "new";
+      const paymentStatus = record.paymentRequired ? "pending" : "not_required";
+
+      const [order] = await tx
+        .insert(schema.order)
+        .values({
+          commerceId: record.commerceId,
+          customerId: customerProfile.id,
+          currency: record.currency,
+          deliveryInfoId: deliveryInfo.id,
+          expiresAt,
+          orderStatus,
+          paymentStatus,
+          productLinkId: record.productLinkId,
+          quantity: payload.quantity,
+          subtotal: totalAmount,
+          total: totalAmount,
+        })
+        .returning({
+          id: schema.order.id,
+        });
+
+      await tx.insert(schema.orderItem).values({
+        description: record.description,
+        imageObjectKey: record.imageReference,
+        orderId: order.id,
+        productId: record.productId,
+        productLinkId: record.productLinkId,
+        quantity: payload.quantity,
+        title: record.title,
+        totalPrice: totalAmount,
+        unitPrice: record.unitPrice,
+        variantLabel: null,
+      });
+
+      await tx.insert(schema.orderStatusHistory).values({
+        changedByType: "buyer",
+        orderId: order.id,
+        reason: "checkout_created",
+        toStatus: orderStatus,
+      });
+
+      let paymentIntentId: string | null = null;
+
+      if (record.paymentRequired) {
+        const [paymentIntent] = await tx
+          .insert(schema.paymentIntent)
+          .values({
+            amount: totalAmount,
+            currency: record.currency,
+            expiresAt,
+            method: null,
+            orderId: order.id,
+            provider: "pagopar_upay",
+            providerMetadata: {
+              commerceSlug: record.commerceSlug,
+              productLinkSlug: record.slug,
+            },
+            status: "pending",
+          })
+          .returning({
+            id: schema.paymentIntent.id,
+          });
+
+        paymentIntentId = paymentIntent.id;
+      }
+
+      return {
+        orderId: order.id,
+        paymentIntentId,
+        paymentRequired: record.paymentRequired,
+        upayFormId: paymentIntentId,
+      };
+    });
+  } catch (error) {
+    throw resolveCheckoutPersistenceError(error) ?? error;
+  }
 };
 
 export const releaseReservedStockForOrder = async (

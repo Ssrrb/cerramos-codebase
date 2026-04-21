@@ -1,4 +1,47 @@
-import { database, schema } from "../packages/database/client.js";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
+const databaseEnvPath = path.resolve(
+  import.meta.dirname,
+  "../packages/database/.env.local"
+);
+
+if (existsSync(databaseEnvPath)) {
+  const envFile = readFileSync(databaseEnvPath, "utf8");
+
+  for (const rawLine of envFile.split(/\r?\n/u)) {
+    const line = rawLine.trim();
+
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf("=");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = line.slice(0, separatorIndex).trim();
+
+    if (!key || process.env[key] !== undefined) {
+      continue;
+    }
+
+    let value = line.slice(separatorIndex + 1).trim();
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+const { database, schema } = await import("../packages/database/client.js");
 
 const paraguayGeography: Record<string, string[]> = {
   Concepción: [

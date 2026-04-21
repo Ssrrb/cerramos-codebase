@@ -71,7 +71,9 @@ const {
   databaseTransactionMock,
   eqMock,
   gteMock,
+  isForeignKeyConstraintErrorMock,
   isMissingRelationErrorMock,
+  isUniqueConstraintErrorMock,
   leftJoinMock,
   selectFromMock,
   selectJoinMock,
@@ -97,7 +99,9 @@ const {
     right,
     type: "gte",
   })),
+  isForeignKeyConstraintErrorMock: vi.fn(() => false),
   isMissingRelationErrorMock: vi.fn(() => false),
+  isUniqueConstraintErrorMock: vi.fn(() => false),
   leftJoinMock: vi.fn(),
   selectFromMock: vi.fn(),
   selectJoinMock: vi.fn(),
@@ -224,7 +228,9 @@ vi.mock("@repo/database", () => ({
   },
   eq: eqMock,
   gte: gteMock,
+  isForeignKeyConstraintError: isForeignKeyConstraintErrorMock,
   isMissingRelationError: isMissingRelationErrorMock,
+  isUniqueConstraintError: isUniqueConstraintErrorMock,
   leftJoin: leftJoinMock,
   sql: sqlMock,
   schema: {
@@ -310,7 +316,9 @@ describe("web product links", () => {
     databaseTransactionMock.mockReset();
     eqMock.mockClear();
     gteMock.mockClear();
+    isForeignKeyConstraintErrorMock.mockReset();
     isMissingRelationErrorMock.mockReset();
+    isUniqueConstraintErrorMock.mockReset();
     leftJoinMock.mockReset();
     selectFromMock.mockReset();
     selectJoinMock.mockReset();
@@ -322,7 +330,9 @@ describe("web product links", () => {
     txSelectWhereMock.mockReset();
     txUpdateMock.mockReset();
     sqlMock.mockClear();
+    isForeignKeyConstraintErrorMock.mockReturnValue(false);
     isMissingRelationErrorMock.mockReturnValue(false);
+    isUniqueConstraintErrorMock.mockReturnValue(false);
 
     databaseSelectMock.mockImplementation(() => ({
       from: selectFromMock,
@@ -1379,6 +1389,54 @@ describe("web product links", () => {
         })
       )
     ).rejects.toThrow("Este producto se quedó sin stock.");
+  });
+
+  test("maps foreign key persistence failures to checkout domain errors", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    isForeignKeyConstraintErrorMock.mockReturnValueOnce(true);
+    databaseTransactionMock.mockRejectedValueOnce({
+      cause: {
+        code: "23503",
+      },
+    });
+
+    const { createOrderFromProductLink } = await import("./product-links");
+
+    await expect(
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload()
+      )
+    ).rejects.toThrow(
+      "Los datos del pedido cambiaron antes de confirmarse. Revisa la entrega y volvé a intentar."
+    );
+  });
+
+  test("maps default address uniqueness failures to checkout domain errors", async () => {
+    selectWhereMock.mockResolvedValueOnce([baseRecord]);
+    isUniqueConstraintErrorMock.mockImplementation(
+      (_error: unknown, constraintName?: string) =>
+        constraintName === "CustomerAddress_customerId_default_key"
+    );
+    databaseTransactionMock.mockRejectedValueOnce({
+      cause: {
+        code: "23505",
+        constraint: "CustomerAddress_customerId_default_key",
+      },
+    });
+
+    const { createOrderFromProductLink } = await import("./product-links");
+
+    await expect(
+      createOrderFromProductLink(
+        "mate-shop",
+        "mate-premium",
+        buildLegacyCheckoutPayload()
+      )
+    ).rejects.toThrow(
+      "No se pudo guardar la direccion como predeterminada. Intentá de nuevo."
+    );
   });
 
   test("releases reserved stock when an order is cancelled", async () => {

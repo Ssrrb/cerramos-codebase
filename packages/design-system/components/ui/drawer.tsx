@@ -59,8 +59,11 @@ function DrawerOverlay({
 function DrawerContent({
   className,
   children,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />

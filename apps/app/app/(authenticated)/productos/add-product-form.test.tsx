@@ -46,6 +46,11 @@ vi.mock("next/image", () => ({
 
 import { AddProductForm } from "./add-product-form";
 
+const goToDetailsStep = () => {
+  fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+  fireEvent.click(screen.getByRole("button", { name: "Completar datos" }));
+};
+
 describe("add product form", () => {
   const consoleErrorSpy = vi.spyOn(console, "error");
   const originalNextPublicBucketName = process.env.NEXT_PUBLIC_GCS_BUCKET_NAME;
@@ -88,6 +93,7 @@ describe("add product form", () => {
     const onSuccess = vi.fn();
 
     render(<AddProductForm onSuccess={onSuccess} />);
+    goToDetailsStep();
 
     fireEvent.change(screen.getByPlaceholderText("Ej. Licuadora Oster 700W"), {
       target: { value: "Licuadora Cerramos" },
@@ -166,6 +172,76 @@ describe("add product form", () => {
     expect(onSuccess).toHaveBeenCalled();
   });
 
+  test("hides stock for services and submits stock as zero", async () => {
+    const onSuccess = vi.fn();
+
+    render(<AddProductForm onSuccess={onSuccess} />);
+
+    fireEvent.click(screen.getByText("Servicio"));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByText("Sí, coordino entrega"));
+    fireEvent.click(screen.getByRole("button", { name: "Completar datos" }));
+
+    expect(screen.queryByLabelText("Stock")).toBeNull();
+
+    fireEvent.change(screen.getByPlaceholderText("Ej. Licuadora Oster 700W"), {
+      target: { value: "Consultoria Cerramos" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Describe que hace especial a este producto."
+      ),
+      {
+        target: { value: "Servicio premium para equipos comerciales." },
+      }
+    );
+    fireEvent.change(screen.getByLabelText("Precio"), {
+      target: { value: "320000", valueAsNumber: 320_000 },
+    });
+
+    const file = new File(["image"], "servicio.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Imagen principal"), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/products", {
+        body: JSON.stringify({
+          category: "Electrodomesticos",
+          deliveryIncluded: true,
+          description: "Servicio premium para equipos comerciales.",
+          imageObjectKey: "products/commerce_1/images/licuadora.png",
+          kind: "service",
+          name: "Consultoria Cerramos",
+          status: "draft",
+          stock: 0,
+          unitPrice: 320_000,
+        }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "POST",
+      })
+    );
+
+    expect(refreshMock).toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalled();
+  });
+
+  test("shows stock again when switching back from service to product", () => {
+    render(<AddProductForm />);
+
+    fireEvent.click(screen.getByText("Servicio"));
+    fireEvent.click(screen.getByText("Producto"));
+    goToDetailsStep();
+
+    expect(screen.getByLabelText("Stock")).toBeDefined();
+  });
+
   test("submits product edits without forcing an image re-upload", async () => {
     fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce({
@@ -196,6 +272,7 @@ describe("add product form", () => {
         }}
       />
     );
+    goToDetailsStep();
 
     fireEvent.change(
       screen.getByPlaceholderText(
@@ -318,9 +395,10 @@ describe("add product form", () => {
           },
         }),
         ok: false,
-      });
+    });
 
     render(<AddProductForm />);
+    goToDetailsStep();
 
     fireEvent.change(screen.getByPlaceholderText("Ej. Licuadora Oster 700W"), {
       target: { value: "Licuadora Cerramos" },
@@ -365,6 +443,7 @@ describe("add product form", () => {
     });
 
     render(<AddProductForm />);
+    goToDetailsStep();
 
     const file = new File(["image"], "licuadora.png", { type: "image/png" });
     fireEvent.change(screen.getByLabelText("Imagen principal"), {
@@ -381,6 +460,7 @@ describe("add product form", () => {
 
   test("does not pass NaN to the stock input when the field is cleared", () => {
     render(<AddProductForm />);
+    goToDetailsStep();
 
     fireEvent.change(
       screen.getAllByPlaceholderText("0")[0] as HTMLInputElement,
@@ -413,9 +493,10 @@ describe("add product form", () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-      });
+    });
 
     render(<AddProductForm />);
+    goToDetailsStep();
 
     fireEvent.change(screen.getByPlaceholderText("Ej. Licuadora Oster 700W"), {
       target: { value: "Licuadora Cerramos" },

@@ -1344,6 +1344,100 @@ describe("web product links", () => {
     ).rejects.toThrow("Este link no permite retiro.");
   });
 
+  test("allows service checkouts with no fulfillment step", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        fulfillmentMode: "none" as const,
+        paymentRequired: false,
+        productKind: "service" as const,
+      },
+    ]);
+    txSelectWhereMock.mockResolvedValueOnce([]);
+
+    const insertedValues: Array<{
+      table: string;
+      values: Record<string, unknown>;
+    }> = [];
+
+    txInsertMock.mockImplementation((table: { __name: string }) => ({
+      values: (values: Record<string, unknown>) => {
+        insertedValues.push({ table: table.__name, values });
+
+        switch (table.__name) {
+          case "customerProfile":
+            return {
+              returning: async () => [{ id: "customer_1" }],
+            };
+          case "deliveryInfo":
+            return {
+              returning: async () => [{ id: "delivery_1" }],
+            };
+          case "order":
+            return {
+              returning: async () => [{ id: "order_1" }],
+            };
+          default:
+            return Promise.resolve(undefined);
+        }
+      },
+    }));
+
+    txUpdateMock.mockImplementation((table: { __name?: string }) => ({
+      set: () => ({
+        where: () => ({
+          returning: async () =>
+            table.__name === "customerProfile"
+              ? [{ id: "customer_1" }]
+              : [{ stock: 2 }],
+        }),
+      }),
+    }));
+
+    databaseTransactionMock.mockImplementation(async (callback) =>
+      callback({
+        insert: txInsertMock,
+        select: txSelectMock,
+        update: txUpdateMock,
+      })
+    );
+
+    const { createOrderFromProductLink } = await import("./product-links");
+    const result = await createOrderFromProductLink(
+      "mate-shop",
+      "mate-premium",
+      buildLegacyCheckoutPayload({
+        mode: "pickup",
+      })
+    );
+
+    expect(result).toEqual({
+      orderId: "order_1",
+      paymentIntentId: null,
+      paymentRequired: false,
+      upayFormId: null,
+    });
+
+    const orderInsert = insertedValues.find(({ table }) => table === "order");
+    const deliveryInsert = insertedValues.find(
+      ({ table }) => table === "deliveryInfo"
+    );
+
+    expect(orderInsert?.values).toMatchObject({
+      fulfillmentMode: "none",
+      productKind: "service",
+    });
+    expect(deliveryInsert?.values).toMatchObject({
+      cityId: null,
+      countryId: null,
+      stateId: null,
+      streetLine1: null,
+    });
+    expect(insertedValues.map(({ table }) => table)).not.toContain(
+      "paymentIntent"
+    );
+  });
+
   test("rejects checkout when the product has no stock left", async () => {
     selectWhereMock.mockResolvedValueOnce([
       {

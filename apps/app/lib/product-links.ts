@@ -186,7 +186,12 @@ export const defaultProductLinkFormValues = (
   billingMode: "one_time",
   description: product.description,
   expiresAt: "",
-  fulfillmentMode: product.kind === "service" ? "none" : "delivery_or_pickup",
+  fulfillmentMode:
+    product.kind === "service"
+      ? product.deliveryIncluded
+        ? "delivery_or_pickup"
+        : "none"
+      : "delivery_or_pickup",
   paymentRequired: false,
   slug: normalizeProductLinkSlug(product.name),
   status: "draft",

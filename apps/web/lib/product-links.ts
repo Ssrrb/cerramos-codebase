@@ -903,12 +903,17 @@ export const createOrderFromProductLink = async (
   const fulfillmentAvailability = fulfillmentModeAvailability(
     record.fulfillmentMode
   );
+  const effectiveDeliveryMode =
+    record.fulfillmentMode === "none" ? "none" : payload.mode;
 
-  if (payload.mode === "delivery" && !fulfillmentAvailability.delivery) {
+  if (
+    effectiveDeliveryMode === "delivery" &&
+    !fulfillmentAvailability.delivery
+  ) {
     throw new ProductLinkCheckoutError("Este link no permite delivery.");
   }
 
-  if (payload.mode === "pickup" && !fulfillmentAvailability.pickup) {
+  if (effectiveDeliveryMode === "pickup" && !fulfillmentAvailability.pickup) {
     throw new ProductLinkCheckoutError("Este link no permite retiro.");
   }
 
@@ -978,8 +983,6 @@ export const createOrderFromProductLink = async (
         payload,
         authenticatedBuyer
       );
-      const effectiveDeliveryMode =
-        record.fulfillmentMode === "none" ? "none" : payload.mode;
       const requestedCustomerAddressId = payload.customerAddressId?.trim();
       const selectedCustomerAddress =
         effectiveDeliveryMode === "delivery" && requestedCustomerAddressId

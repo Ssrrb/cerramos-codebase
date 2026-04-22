@@ -30,13 +30,13 @@ vi.mock("@/env", () => ({
 const loadProxyModule = () => import("./proxy");
 
 describe("web i18n middleware", () => {
-  test("rewrites default-locale checkout URLs without requiring /en in the path", () => {
+  test("rewrites default-locale checkout URLs without requiring /es in the path", () => {
     const request = new NextRequest("https://cerramos.test/buy/mate-shop/mate");
     const response = internationalizationMiddleware(request);
 
     expect(response).toBeDefined();
     expect(response?.headers.get("x-middleware-rewrite") ?? "").toContain(
-      "/en/buy/mate-shop/mate"
+      "/es/buy/mate-shop/mate"
     );
   });
 

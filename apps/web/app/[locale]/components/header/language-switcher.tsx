@@ -31,7 +31,7 @@ export const LanguageSwitcher = () => {
   }, []);
 
   const switchLanguage = (locale: string) => {
-    const defaultLocale = "en";
+    const defaultLocale = "es";
     let newPathname = pathname;
 
     // Case 1: If current locale is default and missing from the URL

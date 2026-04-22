@@ -8,7 +8,7 @@ const locales = [languine.locale.source, ...languine.locale.targets];
 
 const I18nMiddleware = createI18nMiddleware({
   locales,
-  defaultLocale: "en",
+  defaultLocale: "es",
   urlMappingStrategy: "rewriteDefault",
   resolveLocaleFromRequest: (request: NextRequest) => {
     try {
@@ -19,12 +19,12 @@ const I18nMiddleware = createI18nMiddleware({
         .filter((lang) => lang !== "*");
 
       if (acceptedLanguages.length === 0) {
-        return "en";
+        return "es";
       }
 
-      return matchLocale(acceptedLanguages, locales, "en");
+      return matchLocale(acceptedLanguages, locales, "es");
     } catch {
-      return "en";
+      return "es";
     }
   },
 });

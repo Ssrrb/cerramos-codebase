@@ -16,13 +16,13 @@ interface RootLayoutProperties {
 }
 
 const RootLayout = async ({ children, params }: RootLayoutProperties) => {
-  await params;
+  const { locale } = await params;
   const user = await currentUser();
 
   return (
     <html
       className={cn(fonts, "scroll-smooth")}
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
     >
       <body>

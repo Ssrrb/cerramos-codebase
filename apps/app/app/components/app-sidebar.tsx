@@ -42,27 +42,27 @@ import {
 
 const items = [
   {
-    title: "Home",
+    title: "Inicio",
     url: "/",
     icon: Home,
   },
   {
-    title: "Inbox",
+    title: "Bandeja",
     url: "#",
     icon: Inbox,
   },
   {
-    title: "Calendar",
+    title: "Calendario",
     url: "#",
     icon: Calendar,
   },
   {
-    title: "Search",
+    title: "Buscar",
     url: "#",
     icon: Search,
   },
   {
-    title: "Settings",
+    title: "Configuración",
     url: "#",
     icon: Settings,
   },
@@ -125,7 +125,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
       <SidebarSeparator />
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Aplicación</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -136,7 +136,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.title === "Inbox" && (
+                  {item.title === "Bandeja" && (
                     <SidebarMenuBadge>24</SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
@@ -145,9 +145,9 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Products</SidebarGroupLabel>
+          <SidebarGroupLabel>Productos</SidebarGroupLabel>
           <SidebarGroupAction>
-            <Plus /> <span className="sr-only">Add Product</span>
+            <Plus /> <span className="sr-only">Agregar producto</span>
           </SidebarGroupAction>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -155,7 +155,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                 <SidebarMenuButton asChild>
                   <Link href="/productos">
                     <Shirt />
-                    See All Products
+                    Ver todos los productos
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -164,7 +164,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                   <SheetTrigger asChild>
                     <SidebarMenuButton>
                       <Plus />
-                      Add Product
+                      Agregar producto
                     </SidebarMenuButton>
                   </SheetTrigger>
                   <AddProduct />
@@ -175,7 +175,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                   <SheetTrigger asChild>
                     <SidebarMenuButton>
                       <Plus />
-                      Add Category
+                      Agregar categoría
                     </SidebarMenuButton>
                   </SheetTrigger>
                   <AddCategory />
@@ -185,9 +185,9 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Users</SidebarGroupLabel>
+          <SidebarGroupLabel>Usuarios</SidebarGroupLabel>
           <SidebarGroupAction>
-            <Plus /> <span className="sr-only">Add User</span>
+            <Plus /> <span className="sr-only">Agregar usuario</span>
           </SidebarGroupAction>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -195,7 +195,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                 <SidebarMenuButton asChild>
                   <Link href="/clientes">
                     <User />
-                    See All Clients
+                    Ver todos los clientes
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -204,7 +204,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                   <SheetTrigger asChild>
                     <SidebarMenuButton>
                       <Plus />
-                      Add Client
+                      Agregar cliente
                     </SidebarMenuButton>
                   </SheetTrigger>
                   <AddUser />
@@ -214,9 +214,9 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Orders / Payments</SidebarGroupLabel>
+          <SidebarGroupLabel>Pedidos / Pagos</SidebarGroupLabel>
           <SidebarGroupAction>
-            <Plus /> <span className="sr-only">Add Order</span>
+            <Plus /> <span className="sr-only">Agregar pedido</span>
           </SidebarGroupAction>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -224,7 +224,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                 <SidebarMenuButton asChild>
                   <Link href="/users">
                     <ShoppingBasket />
-                    See All Transactions
+                    Ver todas las transacciones
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -233,7 +233,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                   <SheetTrigger asChild>
                     <SidebarMenuButton>
                       <Plus />
-                      Add Order
+                      Agregar pedido
                     </SidebarMenuButton>
                   </SheetTrigger>
                   <AddOrder />

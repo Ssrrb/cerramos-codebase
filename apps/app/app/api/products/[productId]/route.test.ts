@@ -19,6 +19,10 @@ const {
       id: "product.id",
       primaryImageId: "product.primaryImageId",
     },
+    productLink: {
+      commerceId: "productLink.commerceId",
+      productId: "productLink.productId",
+    },
     productImage: {
       id: "productImage.id",
       objectKey: "productImage.objectKey",
@@ -337,7 +341,23 @@ describe("product by id route", () => {
 
   test("deletes a product for the authenticated commerce", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    deleteReturningMock.mockResolvedValue([{ id: "product_1" }]);
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        delete: (table: unknown) => {
+          if (table === schemaMock.productLink) {
+            return {
+              where: async () => undefined,
+            };
+          }
+
+          return {
+            where: () => ({
+              returning: async () => [{ id: "product_1" }],
+            }),
+          };
+        },
+      })
+    );
 
     const { DELETE } = await import("./route");
     const response = await DELETE(
@@ -360,7 +380,23 @@ describe("product by id route", () => {
 
   test("returns 404 when the product does not exist during delete", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    deleteReturningMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        delete: (table: unknown) => {
+          if (table === schemaMock.productLink) {
+            return {
+              where: async () => undefined,
+            };
+          }
+
+          return {
+            where: () => ({
+              returning: async () => [],
+            }),
+          };
+        },
+      })
+    );
 
     const { DELETE } = await import("./route");
     const response = await DELETE(
@@ -382,7 +418,7 @@ describe("product by id route", () => {
 
   test("returns 500 json when product deletion throws unexpectedly", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    deleteReturningMock.mockRejectedValue(new Error("db exploded"));
+    transactionMock.mockRejectedValue(new Error("db exploded"));
 
     const { DELETE } = await import("./route");
     const response = await DELETE(
@@ -404,7 +440,7 @@ describe("product by id route", () => {
 
   test("returns 409 when the product still has public links", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    deleteReturningMock.mockRejectedValue({
+    transactionMock.mockRejectedValue({
       code: "23503",
     });
 
@@ -429,7 +465,7 @@ describe("product by id route", () => {
 
   test("returns 409 when the foreign key violation is wrapped in cause", async () => {
     requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
-    deleteReturningMock.mockRejectedValue({
+    transactionMock.mockRejectedValue({
       cause: {
         code: "23503",
       },
@@ -452,5 +488,50 @@ describe("product by id route", () => {
       error:
         "No puedes eliminar este producto mientras tenga links publicos asociados.",
     });
+  });
+
+  test("deletes the linked public link before removing the product", async () => {
+    requireCommerceIdForRequestMock.mockResolvedValue("commerce_1");
+
+    const deletedTables: unknown[] = [];
+
+    transactionMock.mockImplementation(async (callback) =>
+      callback({
+        delete: (table: unknown) => {
+          deletedTables.push(table);
+
+          if (table === schemaMock.productLink) {
+            return {
+              where: async () => undefined,
+            };
+          }
+
+          return {
+            where: () => ({
+              returning: async () => [{ id: "product_1" }],
+            }),
+          };
+        },
+      })
+    );
+
+    const { DELETE } = await import("./route");
+    const response = await DELETE(
+      new Request("http://localhost/api/products/product_1", {
+        method: "DELETE",
+      }),
+      {
+        params: Promise.resolve({
+          productId: "product_1",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      id: "product_1",
+      success: true,
+    });
+    expect(deletedTables).toEqual([schemaMock.productLink, schemaMock.product]);
   });
 });

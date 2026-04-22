@@ -136,17 +136,30 @@ export const DELETE = async (
   const { productId } = await context.params;
 
   try {
-    const [product] = await database
-      .delete(schema.product)
-      .where(
-        and(
-          eq(schema.product.commerceId, commerceId),
-          eq(schema.product.id, productId)
+    const product = await database.transaction(async (tx) => {
+      await tx
+        .delete(schema.productLink)
+        .where(
+          and(
+            eq(schema.productLink.commerceId, commerceId),
+            eq(schema.productLink.productId, productId)
+          )
+        );
+
+      const [deletedProduct] = await tx
+        .delete(schema.product)
+        .where(
+          and(
+            eq(schema.product.commerceId, commerceId),
+            eq(schema.product.id, productId)
+          )
         )
-      )
-      .returning({
-        id: schema.product.id,
-      });
+        .returning({
+          id: schema.product.id,
+        });
+
+      return deletedProduct ?? null;
+    });
 
     if (!product) {
       return NextResponse.json(

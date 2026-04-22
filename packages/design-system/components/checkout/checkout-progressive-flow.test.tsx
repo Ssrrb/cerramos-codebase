@@ -84,9 +84,7 @@ const fillDetailsStep = () => {
   fireEvent.change(screen.getByLabelText("Teléfono"), {
     target: { value: "0981123456" },
   });
-  fireEvent.click(
-    screen.getByRole("button", { name: "Continuar a entrega" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Continuar a entrega" }));
 };
 
 describe("CheckoutProgressiveFlow", () => {
@@ -98,7 +96,7 @@ describe("CheckoutProgressiveFlow", () => {
   });
 
   afterAll(() => {
-    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+    (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView = undefined;
   });
 
   afterEach(() => {
@@ -134,9 +132,7 @@ describe("CheckoutProgressiveFlow", () => {
     expect(
       screen.queryByText("Guardar esta dirección en mi cuenta")
     ).toBeNull();
-    expect(
-      screen.queryByText("Usar como dirección predeterminada")
-    ).toBeNull();
+    expect(screen.queryByText("Usar como dirección predeterminada")).toBeNull();
   });
 
   test("clears the saved address id when the auto-filled address is edited before submit", async () => {
@@ -185,5 +181,81 @@ describe("CheckoutProgressiveFlow", () => {
       referenceNote: "Portón negro",
       streetLine1: "Av. Mariscal López 1234",
     });
+  });
+
+  test("skips the fulfillment step and submits from details into payment", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(null);
+
+    render(
+      <CheckoutProgressiveFlow
+        merchant={merchant}
+        onSubmit={onSubmit}
+        orderSummary={orderSummary}
+        paymentRequired={false}
+        product={product}
+        skipFulfillmentStep
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Nombre y apellido"), {
+      target: { value: "Camila Ferreira" },
+    });
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "camila@cerramos.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Teléfono"), {
+      target: { value: "0981123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continuar a pago" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Confirmar pedido" })
+      ).toBeDefined();
+    });
+
+    expect(screen.queryByText("Cómo querés recibir este pedido")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar pedido" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
+      email: "camila@cerramos.com",
+      mode: "pickup",
+      recipientName: "Camila Ferreira",
+    });
+  });
+
+  test("renders subscription copy when the subscription variant is enabled", async () => {
+    render(
+      <CheckoutProgressiveFlow
+        copyVariant="subscription"
+        merchant={merchant}
+        orderSummary={orderSummary}
+        paymentRequired
+        product={product}
+      />
+    );
+
+    fillDetailsStep();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Continuar a pago" })
+      ).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Continuar a pago" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Vas a continuar al pago seguro de la suscripción")
+      ).toBeDefined();
+    });
+
+    expect(screen.getByText("Finalizá la suscripción")).toBeDefined();
   });
 });

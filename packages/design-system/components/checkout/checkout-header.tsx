@@ -30,7 +30,7 @@ function CheckoutHeader({
           </div>
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium text-base text-foreground">
-              Cerramos
+              Cheki
             </span>
             <span className="text-muted-foreground text-xs">
               Compra simple y sin distracciones

@@ -25,13 +25,13 @@ import {
   CheckoutOrderSummaryPanel,
 } from "./checkout-order-summary-panel";
 import {
+  checkoutParaguayCountryOption,
+  checkoutParaguayLocationData,
+} from "./checkout-paraguay-locations";
+import {
   CheckoutPaymentSection,
   type CheckoutPaymentStage,
 } from "./checkout-payment-section";
-import {
-  checkoutParaguayLocationData,
-  checkoutParaguayCountryOption,
-} from "./checkout-paraguay-locations";
 import {
   CheckoutVerticalStepper,
   type CheckoutVerticalStepperStep,
@@ -46,6 +46,26 @@ import type {
   CheckoutSavedAddress,
   CheckoutStepId,
 } from "./types";
+
+type CheckoutCopyVariant = "order" | "subscription";
+
+interface CheckoutCopyConfig {
+  confirmationEyebrow: string;
+  confirmationReferenceLabel: string;
+  confirmationTitle: string;
+  continueToFulfillmentLabel: string;
+  continueToPaymentLabel: string;
+  createAnotherLabel: string;
+  createdReferenceLabel: string;
+  createdStateLabel: string;
+  paymentIntroLabel: string;
+  paymentPanelLabel: string;
+  paymentPendingLabel: string;
+  paymentProcessorPlaceholderDescription: string;
+  paymentProcessorPlaceholderTitle: string;
+  paymentReadyDescription: string;
+  paymentStepTitle: string;
+}
 
 const deliveryFieldNames: CheckoutDeliveryFieldNames<CheckoutDeliveryValues> = {
   recipientName: "recipientName",
@@ -149,18 +169,67 @@ const getDeliverySummary = (
 const createDemoOrderReference = () =>
   `ord_${Math.random().toString(36).slice(2, 10)}`;
 
+const checkoutCopyByVariant: Record<CheckoutCopyVariant, CheckoutCopyConfig> = {
+  order: {
+    confirmationEyebrow: "Pedido confirmado",
+    confirmationReferenceLabel: "Referencia del pedido",
+    confirmationTitle: "Checkout finalizado",
+    continueToFulfillmentLabel: "Continuar a entrega",
+    continueToPaymentLabel: "Continuar a pago",
+    createAnotherLabel: "Crear otro pedido",
+    createdReferenceLabel: "Pedido creado",
+    createdStateLabel: "Pedido creado",
+    paymentIntroLabel: "Vas a continuar al pago seguro",
+    paymentPanelLabel: "checkout",
+    paymentPendingLabel: "Falta completar el pago",
+    paymentProcessorPlaceholderDescription:
+      "Se carga dentro del checkout cuando el pedido está listo.",
+    paymentProcessorPlaceholderTitle: "Formulario de pago",
+    paymentReadyDescription: "Ingresá tu tarjeta en el formulario seguro.",
+    paymentStepTitle: "Pago",
+  },
+  subscription: {
+    confirmationEyebrow: "Suscripción confirmada",
+    confirmationReferenceLabel: "Referencia de la suscripción",
+    confirmationTitle: "Suscripción finalizada",
+    continueToFulfillmentLabel: "Continuar a coordinación",
+    continueToPaymentLabel: "Continuar a pago",
+    createAnotherLabel: "Crear otra suscripción",
+    createdReferenceLabel: "Suscripción creada",
+    createdStateLabel: "Suscripción creada",
+    paymentIntroLabel: "Vas a continuar al pago seguro de la suscripción",
+    paymentPanelLabel: "suscripción",
+    paymentPendingLabel: "Falta completar el pago inicial",
+    paymentProcessorPlaceholderDescription:
+      "Se carga dentro del checkout cuando la suscripción está lista.",
+    paymentProcessorPlaceholderTitle: "Formulario de pago recurrente",
+    paymentReadyDescription:
+      "Ingresá tu tarjeta para activar la suscripción en el formulario seguro.",
+    paymentStepTitle: "Pago",
+  },
+};
+
 const getConfirmationMessage = (
   paymentRequired: boolean,
-  merchantName: string
-) =>
-  paymentRequired
-    ? `Registramos tu pedido y simulamos el pago como procesado. ${merchantName} seguirá la confirmación comercial por separado.`
+  merchantName: string,
+  copyVariant: CheckoutCopyVariant
+) => {
+  if (paymentRequired) {
+    return copyVariant === "subscription"
+      ? `Registramos tu suscripción y simulamos el pago inicial como procesado. ${merchantName} seguirá la confirmación comercial por separado.`
+      : `Registramos tu pedido y simulamos el pago como procesado. ${merchantName} seguirá la confirmación comercial por separado.`;
+  }
+
+  return copyVariant === "subscription"
+    ? `${merchantName} usará tus datos para coordinar la activación de la suscripción.`
     : `${merchantName} usará tus datos para coordinar la entrega o el retiro.`;
+};
 
 export interface CheckoutProgressiveFlowProps {
   allowSavedAddresses?: boolean;
   className?: string;
   confirmationMessage?: string;
+  copyVariant?: CheckoutCopyVariant;
   defaultValues?: Partial<CheckoutDeliveryValues>;
   deliveryEnabled?: boolean;
   isOrderConfirmed?: boolean;
@@ -182,6 +251,7 @@ export interface CheckoutProgressiveFlowProps {
   savedAddresses?: CheckoutSavedAddress[];
   secureLabel?: string;
   showHeader?: boolean;
+  skipFulfillmentStep?: boolean;
   submitLabel?: string;
   user?: {
     name: string;
@@ -194,6 +264,7 @@ function CheckoutProgressiveFlow({
   allowSavedAddresses = false,
   className,
   confirmationMessage,
+  copyVariant = "order",
   deliveryEnabled = true,
   defaultValues,
   isOrderConfirmed = false,
@@ -213,21 +284,27 @@ function CheckoutProgressiveFlow({
   savedAddresses = [],
   secureLabel,
   showHeader = true,
+  skipFulfillmentStep = false,
   submitLabel = "Confirmar pedido",
   user,
 }: CheckoutProgressiveFlowProps) {
+  const copy = checkoutCopyByVariant[copyVariant];
   const defaultCountryId =
     defaultValues?.countryId ??
     locationData.countries[0]?.value ??
     checkoutParaguayCountryOption.value;
   const fallbackMode =
-    !deliveryEnabled && pickupEnabled ? "pickup" : "delivery";
+    (!deliveryEnabled && pickupEnabled) || skipFulfillmentStep
+      ? "pickup"
+      : "delivery";
   const form = useForm<CheckoutDeliveryValues>({
     defaultValues: {
       ...defaultDeliveryValues,
       ...defaultValues,
       countryId: defaultCountryId,
-      mode: defaultValues?.mode ?? fallbackMode,
+      mode: skipFulfillmentStep
+        ? "pickup"
+        : (defaultValues?.mode ?? fallbackMode),
     },
     mode: "onTouched",
   });
@@ -258,7 +335,10 @@ function CheckoutProgressiveFlow({
 
   const deliveryMode = (formValues?.mode ?? "delivery") as CheckoutDeliveryMode;
   const preferredSavedAddress = useMemo(
-    () => savedAddresses.find((address) => address.isDefault) ?? savedAddresses[0] ?? null,
+    () =>
+      savedAddresses.find((address) => address.isDefault) ??
+      savedAddresses[0] ??
+      null,
     [savedAddresses]
   );
   const selectedSavedAddress = useMemo(
@@ -285,37 +365,59 @@ function CheckoutProgressiveFlow({
   );
   const paymentSummaryLines = useMemo(() => {
     if (isConfirmed) {
-      return ["Pago simulado como procesado", "Pedido confirmado"];
+      return ["Pago simulado como procesado", copy.confirmationEyebrow];
     }
 
     if (lifecycleState === "processing_payment") {
-      return ["Procesando pago simulado", "Estamos confirmando tu pedido"];
+      return [
+        "Procesando pago simulado",
+        `Estamos confirmando ${copyVariant === "subscription" ? "tu suscripción" : "tu pedido"}`,
+      ];
     }
 
     if (resolvedOrderReference) {
-      return ["Pedido creado", "Falta completar el pago"];
+      return [copy.createdStateLabel, copy.paymentPendingLabel];
     }
 
     if (!paymentRequired) {
-      return ["Este pedido se coordina sin pago online"];
+      return [
+        copyVariant === "subscription"
+          ? "Esta suscripción se coordina sin pago online"
+          : "Este pedido se coordina sin pago online",
+      ];
     }
 
     if (paymentStage === "ready") {
-      return ["Pedido creado, completá el pago"];
+      return [`${copy.createdStateLabel}, completá el pago`];
     }
 
     if (paymentStage === "initializing") {
-      return ["Pedido creado, preparando pago seguro"];
+      return [`${copy.createdStateLabel}, preparando pago seguro`];
     }
 
-    return ["Vas a continuar al pago seguro"];
+    return [copy.paymentIntroLabel];
   }, [
+    copy.confirmationEyebrow,
+    copy.createdStateLabel,
+    copy.paymentIntroLabel,
+    copy.paymentPendingLabel,
+    copyVariant,
     isConfirmed,
     lifecycleState,
     paymentRequired,
     paymentStage,
     resolvedOrderReference,
   ]);
+
+  useEffect(() => {
+    if (!skipFulfillmentStep) {
+      return;
+    }
+
+    if (deliveryMode !== "pickup") {
+      form.setValue("mode", "pickup");
+    }
+  }, [deliveryMode, form, skipFulfillmentStep]);
 
   useEffect(() => {
     if (deliveryEnabled) {
@@ -429,8 +531,10 @@ function CheckoutProgressiveFlow({
       formValues.stateId === selectedSavedAddress.stateId &&
       formValues.cityId === selectedSavedAddress.cityId &&
       formValues.streetLine1 === selectedSavedAddress.streetLine1 &&
-      (formValues.streetLine2 ?? "") === (selectedSavedAddress.streetLine2 ?? "") &&
-      (formValues.postalCode ?? "") === (selectedSavedAddress.postalCode ?? "") &&
+      (formValues.streetLine2 ?? "") ===
+        (selectedSavedAddress.streetLine2 ?? "") &&
+      (formValues.postalCode ?? "") ===
+        (selectedSavedAddress.postalCode ?? "") &&
       (formValues.referenceNote ?? "") ===
         (selectedSavedAddress.referenceNote ?? "");
 
@@ -486,8 +590,12 @@ function CheckoutProgressiveFlow({
       return;
     }
 
-    setCompletedSteps((current) => ({ ...current, details: true }));
-    setActiveStep("delivery");
+    setCompletedSteps((current) =>
+      skipFulfillmentStep
+        ? { ...current, details: true, delivery: true }
+        : { ...current, details: true }
+    );
+    setActiveStep(skipFulfillmentStep ? "payment" : "delivery");
   };
 
   const handleContinueDelivery = async () => {
@@ -559,149 +667,168 @@ function CheckoutProgressiveFlow({
     });
   };
 
-  const steps: CheckoutVerticalStepperStep[] = [
-    {
-      id: "details",
-      title: "Mis datos",
-      isCompleted: !!completedSteps.details,
-      isVisible: true,
-      summaryLines: getDetailsSummary(form.getValues()),
-      content: (
-        <div className="space-y-4">
-          <CheckoutDetailsStepSection
-            control={form.control}
+  const detailStep: CheckoutVerticalStepperStep = {
+    id: "details",
+    title: "Mis datos",
+    isCompleted: !!completedSteps.details,
+    isVisible: true,
+    summaryLines: getDetailsSummary(form.getValues()),
+    content: (
+      <div className="space-y-4">
+        <CheckoutDetailsStepSection
+          control={form.control}
+          disabled={isLocked}
+          names={deliveryFieldNames}
+        />
+        <div className="flex justify-end">
+          <Button
+            className="min-h-11 w-full sm:w-auto"
             disabled={isLocked}
-            names={deliveryFieldNames}
-          />
-          <div className="flex justify-end">
-            <Button
-              className="min-h-11 w-full sm:w-auto"
-              disabled={isLocked}
-              onClick={handleContinueDetails}
-              type="button"
-            >
-              Continuar a entrega
-            </Button>
-          </div>
+            onClick={handleContinueDetails}
+            type="button"
+          >
+            {skipFulfillmentStep
+              ? copy.continueToPaymentLabel
+              : copy.continueToFulfillmentLabel}
+          </Button>
         </div>
-      ),
-    },
-    {
-      id: "delivery",
-      title: "Entrega",
-      isCompleted: !!completedSteps.delivery,
-      isVisible: !!completedSteps.details || activeStep === "delivery",
-      summaryLines: getDeliverySummary(form.getValues(), locationData),
-      content: (
-        <div className="space-y-4">
-          <CheckoutDeliveryStepSection
-            allowSavedAddresses={allowSavedAddresses}
-            control={form.control}
-            deliveryEnabled={deliveryEnabled}
+      </div>
+    ),
+  };
+
+  const deliveryStep: CheckoutVerticalStepperStep = {
+    id: "delivery",
+    title: "Entrega",
+    isCompleted: !!completedSteps.delivery,
+    isVisible: !!completedSteps.details || activeStep === "delivery",
+    summaryLines: getDeliverySummary(form.getValues(), locationData),
+    content: (
+      <div className="space-y-4">
+        <CheckoutDeliveryStepSection
+          allowSavedAddresses={allowSavedAddresses}
+          control={form.control}
+          deliveryEnabled={deliveryEnabled}
+          disabled={isLocked}
+          locationData={locationData}
+          names={deliveryFieldNames}
+          pickupEnabled={pickupEnabled}
+          savedAddresses={savedAddresses}
+        />
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            className="min-h-11 w-full sm:w-auto"
             disabled={isLocked}
-            locationData={locationData}
-            names={deliveryFieldNames}
-            pickupEnabled={pickupEnabled}
-            savedAddresses={savedAddresses}
-          />
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              className="min-h-11 w-full sm:w-auto"
-              disabled={isLocked}
-              onClick={() => setActiveStep("details")}
-              type="button"
-              variant="ghost"
-            >
-              <ArrowLeft className="size-4" />
-              Volver
-            </Button>
-            <Button
-              className="min-h-11 w-full sm:w-auto"
-              disabled={isLocked}
-              onClick={handleContinueDelivery}
-              type="button"
-            >
-              Continuar a pago
-            </Button>
-          </div>
+            onClick={() => setActiveStep("details")}
+            type="button"
+            variant="ghost"
+          >
+            <ArrowLeft className="size-4" />
+            Volver
+          </Button>
+          <Button
+            className="min-h-11 w-full sm:w-auto"
+            disabled={isLocked}
+            onClick={handleContinueDelivery}
+            type="button"
+          >
+            {copy.continueToPaymentLabel}
+          </Button>
         </div>
-      ),
-    },
-    {
-      id: "payment",
-      title: "Pago",
-      isCompleted: isConfirmed,
-      isVisible: !!completedSteps.delivery || activeStep === "payment",
-      summaryLines: paymentSummaryLines,
-      content: (
-        <CheckoutPaymentSection
-          actionSlot={
-            canSubmitCheckout ? (
-              <div className="space-y-3">
-                {submitError ? (
-                  <p className="text-destructive text-sm">{submitError}</p>
-                ) : null}
-                {paymentError ? (
-                  <p className="text-destructive text-sm">{paymentError}</p>
-                ) : null}
+      </div>
+    ),
+  };
+
+  const paymentStep: CheckoutVerticalStepperStep = {
+    id: "payment",
+    title: copy.paymentStepTitle,
+    isCompleted: isConfirmed,
+    isVisible:
+      skipFulfillmentStep ||
+      !!completedSteps.delivery ||
+      activeStep === "payment",
+    summaryLines: paymentSummaryLines,
+    content: (
+      <CheckoutPaymentSection
+        actionSlot={
+          canSubmitCheckout ? (
+            <div className="space-y-3">
+              {submitError ? (
+                <p className="text-destructive text-sm">{submitError}</p>
+              ) : null}
+              {paymentError ? (
+                <p className="text-destructive text-sm">{paymentError}</p>
+              ) : null}
+              <Button
+                className="min-h-11 w-full"
+                disabled={
+                  isLocked ||
+                  isOutOfStock ||
+                  (paymentRequired && Boolean(resolvedOrderReference))
+                }
+                onClick={handleSubmitCheckout}
+                type="button"
+              >
+                {isSubmitting ? (
+                  <>
+                    <LoaderCircle className="size-4 animate-spin" />
+                    Creando pedido
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+              {paymentRequired && resolvedOrderReference ? (
                 <Button
                   className="min-h-11 w-full"
-                  disabled={
-                    isLocked ||
-                    isOutOfStock ||
-                    (paymentRequired && Boolean(resolvedOrderReference))
-                  }
-                  onClick={handleSubmitCheckout}
+                  disabled={isLocked || paymentStage !== "ready"}
+                  onClick={handleConfirmPayment}
                   type="button"
+                  variant="outline"
                 >
-                  {isSubmitting ? (
+                  {isPaymentProcessing ? (
                     <>
                       <LoaderCircle className="size-4 animate-spin" />
-                      Creando pedido
+                      Procesando pago
                     </>
                   ) : (
-                    submitLabel
+                    <>
+                      <CreditCardIcon className="size-4" />
+                      {paymentActionLabel}
+                    </>
                   )}
                 </Button>
-                {paymentRequired && resolvedOrderReference ? (
-                  <Button
-                    className="min-h-11 w-full"
-                    disabled={isLocked || paymentStage !== "ready"}
-                    onClick={handleConfirmPayment}
-                    type="button"
-                    variant="outline"
-                  >
-                    {isPaymentProcessing ? (
-                      <>
-                        <LoaderCircle className="size-4 animate-spin" />
-                        Procesando pago
-                      </>
-                    ) : (
-                      <>
-                        <CreditCardIcon className="size-4" />
-                        {paymentActionLabel}
-                      </>
-                    )}
-                  </Button>
-                ) : null}
-                {isOutOfStock ? (
-                  <p className="text-muted-foreground text-sm">
-                    Este producto se quedó sin stock y no puede continuar al
-                    checkout.
-                  </p>
-                ) : null}
-              </div>
-            ) : null
-          }
-          orderReference={resolvedOrderReference}
-          paymentRequired={paymentRequired}
-          paymentStage={paymentStage}
-          processorSlot={processorSlot}
-          trustState={merchant.trustState}
-        />
-      ),
-    },
-  ];
+              ) : null}
+              {isOutOfStock ? (
+                <p className="text-muted-foreground text-sm">
+                  Este producto se quedó sin stock y no puede continuar al
+                  checkout.
+                </p>
+              ) : null}
+            </div>
+          ) : null
+        }
+        checkoutLabel={copy.paymentPanelLabel}
+        completedLabel={
+          copyVariant === "subscription" ? "suscripción" : "pedido"
+        }
+        orderReference={resolvedOrderReference}
+        paymentReadyDescription={copy.paymentReadyDescription}
+        paymentRequired={paymentRequired}
+        paymentStage={paymentStage}
+        processorPlaceholderDescription={
+          copy.paymentProcessorPlaceholderDescription
+        }
+        processorPlaceholderTitle={copy.paymentProcessorPlaceholderTitle}
+        processorSlot={processorSlot}
+        referenceLabel={copy.createdReferenceLabel}
+        trustState={merchant.trustState}
+      />
+    ),
+  };
+
+  const steps: CheckoutVerticalStepperStep[] = skipFulfillmentStep
+    ? [detailStep, paymentStep]
+    : [detailStep, deliveryStep, paymentStep];
 
   const handleStepSelect = (stepId: CheckoutStepId) => {
     if (isLocked) {
@@ -716,8 +843,24 @@ function CheckoutProgressiveFlow({
     }
 
     if (stepId === "delivery") {
+      if (skipFulfillmentStep) {
+        setCompletedSteps((current) => ({
+          details: current.details ? true : undefined,
+          delivery: true,
+        }));
+        return;
+      }
+
       setCompletedSteps((current) => ({
         details: current.details ? true : undefined,
+      }));
+      return;
+    }
+
+    if (stepId === "payment") {
+      setCompletedSteps((current) => ({
+        details: current.details ? true : undefined,
+        delivery: skipFulfillmentStep || current.delivery ? true : undefined,
       }));
     }
   };
@@ -750,10 +893,10 @@ function CheckoutProgressiveFlow({
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
-                        Pedido confirmado
+                        {copy.confirmationEyebrow}
                       </p>
                       <CardTitle className="text-2xl tracking-[-0.03em]">
-                        Checkout finalizado
+                        {copy.confirmationTitle}
                       </CardTitle>
                     </div>
                   </CardHeader>
@@ -765,14 +908,15 @@ function CheckoutProgressiveFlow({
                         {confirmationMessage ??
                           getConfirmationMessage(
                             paymentRequired,
-                            merchant.name
+                            merchant.name,
+                            copyVariant
                           )}
                       </AlertDescription>
                     </Alert>
                     {resolvedOrderReference ? (
                       <div className="rounded-[1.25rem] border border-border/70 bg-muted/20 px-4 py-3">
                         <p className="font-medium text-foreground text-sm">
-                          Referencia del pedido
+                          {copy.confirmationReferenceLabel}
                         </p>
                         <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
                           {resolvedOrderReference}
@@ -788,7 +932,7 @@ function CheckoutProgressiveFlow({
                         type="button"
                         variant="outline"
                       >
-                        Crear otro pedido
+                        {copy.createAnotherLabel}
                       </Button>
                     ) : null}
                   </CardContent>

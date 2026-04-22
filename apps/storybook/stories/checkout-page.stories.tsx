@@ -48,6 +48,30 @@ const product: CheckoutProductSummary = {
   unitPrice: 145_000,
 };
 
+const subscriptionProduct: CheckoutProductSummary = {
+  availableStock: 999,
+  name: "Plan Growth mensual",
+  description:
+    "Suscripción mensual con soporte prioritario, panel operativo y recordatorios automáticos para cerrar ventas sin seguimiento manual.",
+  imageUrl:
+    "https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=600&q=80",
+  priceLabel: "Gs. 89.000 / mes",
+  quantity: 1,
+  unitPrice: 89_000,
+};
+
+const serviceProduct: CheckoutProductSummary = {
+  availableStock: 999,
+  name: "Asesoría express de catálogo",
+  description:
+    "Sesión remota de 45 minutos para ordenar catálogo, precios y link de cobro sin coordinar entrega física.",
+  imageUrl:
+    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+  priceLabel: "Gs. 220.000",
+  quantity: 1,
+  unitPrice: 220_000,
+};
+
 const defaultDeliveryValues: CheckoutDeliveryValues = {
   recipientName: "Camila Ferreira",
   email: "camila@cerramos.com",
@@ -79,6 +103,46 @@ const orderSummary: CheckoutOrderSummary = {
     "El pago queda dentro de Cerramos y la coordinación comercial sigue su propio estado operativo.",
 };
 
+const subscriptionOrderSummary: CheckoutOrderSummary = {
+  title: "Tu suscripción",
+  badgeLabel: "Cobro recurrente",
+  subtotalLabel: "Gs. 89.000 / mes",
+  shippingLabel: "Sin entrega",
+  totalLabel: "Gs. 89.000 / mes",
+  rows: [
+    {
+      label: "Periodicidad",
+      value: "Mensual",
+    },
+    {
+      label: "Cancelación",
+      value: "Cuando quieras",
+    },
+  ],
+  helperText:
+    "El primer cobro se confirma en este checkout y las renovaciones siguen el ciclo de la suscripción.",
+};
+
+const serviceOrderSummary: CheckoutOrderSummary = {
+  title: "Tu reserva",
+  badgeLabel: "Coordinación directa",
+  subtotalLabel: "Gs. 220.000",
+  shippingLabel: "No aplica",
+  totalLabel: "Gs. 220.000",
+  rows: [
+    {
+      label: "Modalidad",
+      value: "Videollamada",
+    },
+    {
+      label: "Duración",
+      value: "45 min",
+    },
+  ],
+  helperText:
+    "Usaremos tus datos para coordinar horario y acceso a la sesión, sin pedir datos de entrega.",
+};
+
 const signedInUser = {
   name: "Camila Ferreira",
   avatarUrl: "https://github.com/shadcn.png",
@@ -108,13 +172,27 @@ const wait = (ms: number) =>
 
 function CheckoutPageStory({
   defaultValues = defaultDeliveryValues,
+  copyVariant = "order",
+  confirmationMessage = "Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial sigue por separado.",
+  orderSummary: storyOrderSummary = orderSummary,
   paymentRequired = true,
+  paymentActionLabel = "Simular pago aprobado",
+  product: storyProduct = product,
   savedAddresses = [],
+  skipFulfillmentStep = false,
+  submitLabel,
   user = null,
 }: {
   defaultValues?: Partial<CheckoutDeliveryValues>;
+  copyVariant?: "order" | "subscription";
+  confirmationMessage?: string;
+  orderSummary?: CheckoutOrderSummary;
   paymentRequired?: boolean;
+  paymentActionLabel?: string;
+  product?: CheckoutProductSummary;
   savedAddresses?: CheckoutSavedAddress[];
+  skipFulfillmentStep?: boolean;
+  submitLabel?: string;
   user?: {
     name: string;
     avatarUrl?: string;
@@ -172,7 +250,8 @@ function CheckoutPageStory({
           )
         }
         allowSavedAddresses={Boolean(user)}
-        confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial sigue por separado."
+        confirmationMessage={confirmationMessage}
+        copyVariant={copyVariant}
         defaultValues={defaultValues}
         footerContent="Powered by Cheki"
         isOrderConfirmed={isOrderConfirmed}
@@ -197,8 +276,8 @@ function CheckoutPageStory({
           return null;
         }}
         orderReference={orderReference}
-        orderSummary={orderSummary}
-        paymentActionLabel="Simular pago aprobado"
+        orderSummary={storyOrderSummary}
+        paymentActionLabel={paymentActionLabel}
         paymentRequired={paymentRequired}
         paymentStage={paymentStage}
         processorSlot={
@@ -210,9 +289,12 @@ function CheckoutPageStory({
             />
           ) : undefined
         }
-        product={product}
+        product={storyProduct}
         savedAddresses={savedAddresses}
-        submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
+        skipFulfillmentStep={skipFulfillmentStep}
+        submitLabel={
+          submitLabel ?? (paymentRequired ? "Crear pedido" : "Confirmar pedido")
+        }
       />
       <AuthModal
         isOpen={isAuthModalOpen}
@@ -259,4 +341,42 @@ export const MobileGuestConversion: Story = {
     },
   },
   render: () => <CheckoutPageStory />,
+};
+
+export const SubscriptionPaymentCheckout: Story = {
+  args: {},
+  render: () => (
+    <CheckoutPageStory
+      confirmationMessage="Registramos tu suscripción y el pago inicial se completa dentro de Cerramos. Las renovaciones seguirán el ciclo configurado."
+      copyVariant="subscription"
+      defaultValues={{
+        ...defaultDeliveryValues,
+        mode: "pickup",
+      }}
+      orderSummary={subscriptionOrderSummary}
+      paymentActionLabel="Simular activación"
+      paymentRequired
+      product={subscriptionProduct}
+      submitLabel="Crear suscripción"
+    />
+  ),
+};
+
+export const ServiceCheckoutNoDelivery: Story = {
+  args: {},
+  render: () => (
+    <CheckoutPageStory
+      confirmationMessage="Registramos tu reserva y el pago queda confirmado dentro de Cerramos. El comercio coordinará la sesión por separado."
+      defaultValues={{
+        ...defaultDeliveryValues,
+        mode: "pickup",
+      }}
+      orderSummary={serviceOrderSummary}
+      paymentActionLabel="Simular pago confirmado"
+      paymentRequired
+      product={serviceProduct}
+      skipFulfillmentStep
+      submitLabel="Reservar servicio"
+    />
+  ),
 };

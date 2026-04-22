@@ -218,4 +218,3 @@ export const SignInFormView = ({
     </div>
   );
 };
-//TODO: add google option for users icon to the auth modal

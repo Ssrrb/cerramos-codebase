@@ -29,7 +29,7 @@ export const AuthChrome = ({
           "text-foreground"
         )}
       >
-        cerramos
+        cheki
       </span>
     </a>
     <div className="flex items-center gap-2">

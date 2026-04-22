@@ -26,17 +26,29 @@ type CheckoutPaymentStage = "idle" | "initializing" | "ready";
 
 interface CheckoutPaymentSectionProps {
   actionSlot?: ReactNode;
+  checkoutLabel?: string;
   className?: string;
+  completedLabel?: string;
   orderReference?: string | null;
+  paymentReadyDescription?: string;
   paymentRequired: boolean;
   paymentStage?: CheckoutPaymentStage;
+  processorPlaceholderDescription?: string;
+  processorPlaceholderTitle?: string;
   processorSlot?: ReactNode;
+  referenceLabel?: string;
   trustState: CheckoutTrustState;
 }
 
 function CheckoutPaymentSection({
   actionSlot,
   className,
+  checkoutLabel = "checkout",
+  completedLabel = "pedido",
+  paymentReadyDescription = "Ingresá tu tarjeta en el formulario seguro.",
+  processorPlaceholderDescription = "Se carga dentro del checkout cuando el pedido está listo.",
+  processorPlaceholderTitle = "Formulario de pago",
+  referenceLabel = "Pedido creado",
   orderReference,
   paymentRequired,
   paymentStage = "idle",
@@ -48,7 +60,7 @@ function CheckoutPaymentSection({
   const isProcessorReady = paymentStage === "ready";
   let paymentStateMeta = {
     title: "Pago seguro",
-    description: "Vas a continuar al pago después de crear el pedido.",
+    description: `Vas a continuar al pago después de crear ${completedLabel === "suscripción" ? "la" : "el"} ${completedLabel}.`,
     icon: CreditCardIcon,
     panelClassName:
       "border border-dashed border-border/70 bg-muted/20 px-5 py-5",
@@ -67,7 +79,7 @@ function CheckoutPaymentSection({
   if (isProcessorReady) {
     paymentStateMeta = {
       title: "Completá el pago",
-      description: "Ingresá tu tarjeta en el formulario seguro.",
+      description: paymentReadyDescription,
       icon: LockKeyholeIcon,
       panelClassName:
         "border border-border/70 bg-[color-mix(in_oklab,var(--color-background)_92%,var(--color-muted)_8%)] p-4",
@@ -101,10 +113,10 @@ function CheckoutPaymentSection({
           ) : (
             <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3">
               <p className="font-medium text-foreground text-sm">
-                Formulario de pago
+                {processorPlaceholderTitle}
               </p>
               <p className="mt-1 text-muted-foreground text-sm">
-                Se carga dentro del checkout cuando el pedido está listo.
+                {processorPlaceholderDescription}
               </p>
             </div>
           )}
@@ -157,12 +169,14 @@ function CheckoutPaymentSection({
       )}
     >
       <CardHeader className="gap-1.5 px-5 pt-5 pb-0 sm:px-6 sm:pt-6">
-        <CardTitle className="text-base">Finalizá el checkout</CardTitle>
+        <CardTitle className="text-base">{`Finalizá ${checkoutLabel === "checkout" ? "el checkout" : `la ${checkoutLabel}`}`}</CardTitle>
       </CardHeader>
       <CardContent className="px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">
         {orderReference ? (
           <div className="mb-4 rounded-[1.25rem] border border-border/70 bg-muted/20 px-4 py-3.5">
-            <p className="font-medium text-foreground text-sm">Pedido creado</p>
+            <p className="font-medium text-foreground text-sm">
+              {referenceLabel}
+            </p>
             <p className="mt-1 break-all font-mono text-muted-foreground text-sm">
               {orderReference}
             </p>

@@ -278,14 +278,17 @@ describe("product link by id route", () => {
     const response = await PATCH(
       new Request("http://localhost/api/product-links/link_1", {
         body: JSON.stringify({
+          billingMode: "one_time",
           deliveryEnabled: false,
           description: "Oferta ajustada",
           expiresAt: "",
+          fulfillmentMode: "pickup",
           paymentRequired: true,
           pickupEnabled: true,
           productId: "product_1",
           slug: "mate-vip",
           status: "active",
+          subscriptionCadence: "monthly",
           title: "Mate VIP",
           unitPrice: 180_000,
         }),
@@ -323,14 +326,17 @@ describe("product link by id route", () => {
     const response = await PATCH(
       new Request("http://localhost/api/product-links/link_1", {
         body: JSON.stringify({
+          billingMode: "one_time",
           deliveryEnabled: false,
           description: "Oferta ajustada",
           expiresAt: "",
+          fulfillmentMode: "pickup",
           paymentRequired: true,
           pickupEnabled: true,
           productId: "product_1",
           slug: "mate-vip",
           status: "active",
+          subscriptionCadence: "monthly",
           title: "Mate VIP",
           unitPrice: 180_000,
         }),
@@ -350,14 +356,17 @@ describe("product link by id route", () => {
       success: true,
     });
     expect(updateSetMock).toHaveBeenCalledWith({
+      billingMode: "one_time",
       currency: "PYG",
       deliveryEnabled: false,
       description: "Oferta ajustada",
       expiresAt: null,
+      fulfillmentMode: "pickup",
       paymentRequired: true,
       pickupEnabled: true,
       slug: "mate-vip",
       status: "active",
+      subscriptionCadence: null,
       title: "Mate VIP",
       unitPrice: 180_000,
     });

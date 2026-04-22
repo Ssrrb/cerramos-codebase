@@ -125,23 +125,25 @@ export const checkoutOrderPayloadSchema = z.union([
 export type CheckoutOrderPayload = z.infer<typeof checkoutOrderPayloadSchema>;
 
 export interface ProductLinkCheckoutRecord {
+  billingMode: "one_time" | "subscription";
   commerceId: string;
   commerceLogoImageUrl: string | null;
   commerceName: string;
   commerceSlug: string;
   currency: string;
   defaultOrderExpiryHours: number;
-  deliveryEnabled: boolean;
   description: string | null;
   expiresAt: Date | null;
+  fulfillmentMode: "delivery" | "delivery_or_pickup" | "none" | "pickup";
   imageReference: string | null;
   imageUrl: string | null;
   paymentRequired: boolean;
-  pickupEnabled: boolean;
   productId: string;
+  productKind: "product" | "service";
   productLinkId: string;
   slug: string;
   stock: number;
+  subscriptionCadence: "monthly" | null;
   title: string;
   trustState:
     | "pending_review"
@@ -237,6 +239,43 @@ interface SavedCustomerAddressRecord {
   streetLine2: string | null;
 }
 
+const fulfillmentModeAvailability = (
+  fulfillmentMode: ProductLinkCheckoutRecord["fulfillmentMode"]
+) => ({
+  delivery:
+    fulfillmentMode === "delivery" || fulfillmentMode === "delivery_or_pickup",
+  pickup:
+    fulfillmentMode === "pickup" || fulfillmentMode === "delivery_or_pickup",
+});
+
+interface CheckoutViewModel {
+  copyVariant: "order" | "subscription";
+  merchant: {
+    avatarUrl: string | null;
+    name: string;
+    trustState: ProductLinkCheckoutRecord["trustState"];
+  };
+  orderSummary: {
+    badgeLabel: string;
+    helperText: string;
+    rows: Array<{ label: string; value: string }>;
+    shippingLabel: string;
+    subtotalLabel: string;
+    title: string;
+    totalLabel: string;
+  };
+  product: {
+    availableStock: number;
+    description: string;
+    imageUrl: string;
+    name: string;
+    priceLabel: string;
+    quantity: number;
+    unitPrice: number;
+  };
+  skipFulfillmentStep: boolean;
+}
+
 const buildPublicProductImagePath = (objectKey: string) =>
   `/api/product-link-images?objectKey=${encodeURIComponent(objectKey)}`;
 
@@ -291,24 +330,26 @@ export const getPublicProductLinkCheckout = cache(
   ): Promise<ProductLinkCheckoutRecord | null> => {
     let record:
       | {
+          billingMode: "one_time" | "subscription";
           commerceId: string;
           commerceLogoImageUrl: string | null;
           commerceName: string;
           commerceSlug: string;
           currency: string;
           defaultOrderExpiryHours: number;
-          deliveryEnabled: boolean;
           description: string | null;
           expiresAt: Date | null;
+          fulfillmentMode: "delivery" | "delivery_or_pickup" | "none" | "pickup";
           imageObjectKey: string | null;
           paymentRequired: boolean;
-          pickupEnabled: boolean;
           productId: string;
+          productKind: "product" | "service";
           productLinkId: string;
           productLinkStatus: "active" | "draft" | "expired" | "inactive";
           productStatus: "active" | "draft" | "inactive";
           slug: string;
           stock: number;
+          subscriptionCadence: "monthly" | null;
           title: string;
           trustState:
             | "limited"
@@ -323,24 +364,26 @@ export const getPublicProductLinkCheckout = cache(
     try {
       [record] = await database
         .select({
+          billingMode: schema.productLink.billingMode,
           commerceId: schema.commerce.id,
           commerceLogoImageUrl: schema.commerce.logoImageUrl,
           commerceName: schema.commerce.name,
           commerceSlug: schema.commerce.slug,
           currency: schema.productLink.currency,
           defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
-          deliveryEnabled: schema.productLink.deliveryEnabled,
           description: schema.productLink.description,
           expiresAt: schema.productLink.expiresAt,
+          fulfillmentMode: schema.productLink.fulfillmentMode,
           imageObjectKey: schema.productImage.objectKey,
           paymentRequired: schema.productLink.paymentRequired,
-          pickupEnabled: schema.productLink.pickupEnabled,
           productId: schema.product.id,
+          productKind: schema.product.kind,
           productLinkId: schema.productLink.id,
           productStatus: schema.product.status,
           productLinkStatus: schema.productLink.status,
           slug: schema.productLink.slug,
           stock: schema.product.stock,
+          subscriptionCadence: schema.productLink.subscriptionCadence,
           title: schema.productLink.title,
           trustState: schema.commerce.trustState,
           unitPrice: schema.productLink.unitPrice,
@@ -403,17 +446,19 @@ export const getPublicProductLinkCheckout = cache(
       commerceSlug: record.commerceSlug,
       currency: record.currency,
       defaultOrderExpiryHours: record.defaultOrderExpiryHours,
-      deliveryEnabled: record.deliveryEnabled,
+      billingMode: record.billingMode,
       description: record.description,
       expiresAt: record.expiresAt,
+      fulfillmentMode: record.fulfillmentMode,
       imageReference: productImage.imageReference,
       imageUrl: productImage.imageUrl,
       paymentRequired: record.paymentRequired,
-      pickupEnabled: record.pickupEnabled,
       productId: record.productId,
+      productKind: record.productKind,
       productLinkId: record.productLinkId,
       slug: record.slug,
       stock: record.stock,
+      subscriptionCadence: record.subscriptionCadence,
       title: record.title,
       trustState: record.trustState,
       unitPrice: record.unitPrice,
@@ -421,7 +466,10 @@ export const getPublicProductLinkCheckout = cache(
   }
 );
 
-export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
+export const createCheckoutViewModel = (
+  record: ProductLinkCheckoutRecord
+): CheckoutViewModel => ({
+  copyVariant: record.billingMode === "subscription" ? "subscription" : "order",
   merchant: {
     avatarUrl: record.commerceLogoImageUrl,
     name: record.commerceName,
@@ -430,34 +478,53 @@ export const createCheckoutViewModel = (record: ProductLinkCheckoutRecord) => ({
   orderSummary: {
     badgeLabel: "",
     helperText:
-      "El pedido se crea con snapshot inmutable y el servidor vuelve a validar precio, disponibilidad y vigencia.",
+      record.billingMode === "subscription"
+        ? "La suscripción se crea con snapshot inmutable y el servidor vuelve a validar precio, vigencia y estado de pago."
+        : "El pedido se crea con snapshot inmutable y el servidor vuelve a validar precio, disponibilidad y vigencia.",
     rows: [
       {
-        label: "Modalidades",
-        value: [
-          record.deliveryEnabled ? "delivery" : null,
-          record.pickupEnabled ? "retiro" : null,
-        ]
-          .filter(Boolean)
-          .join(" + "),
+        label: "Oferta",
+        value:
+          record.productKind === "service"
+            ? "Servicio"
+            : "Producto físico",
+      },
+      {
+        label: "Cobro",
+        value:
+          record.billingMode === "subscription"
+            ? "Suscripción mensual"
+            : "Pago único",
       },
     ],
-    shippingLabel: "A coordinar",
+    shippingLabel:
+      record.fulfillmentMode === "none"
+        ? "No aplica"
+        : record.fulfillmentMode === "delivery"
+          ? "Delivery"
+          : record.fulfillmentMode === "pickup"
+            ? "Retiro"
+            : "A coordinar",
     subtotalLabel: formatPriceLabel(record.unitPrice),
-    title: "Tu pedido",
+    title:
+      record.billingMode === "subscription" ? "Tu suscripción" : "Tu pedido",
     totalLabel: formatPriceLabel(record.unitPrice),
   },
   product: {
-    availableStock: record.stock,
+    availableStock: record.productKind === "service" ? 1 : record.stock,
     description:
       record.description ??
       "Oferta publicada desde Cerramos para cerrar el pedido sin salir de la misma URL.",
     imageUrl: record.imageUrl ?? "",
     name: record.title,
-    priceLabel: formatPriceLabel(record.unitPrice),
+    priceLabel:
+      record.billingMode === "subscription"
+        ? `${formatPriceLabel(record.unitPrice)} / mes`
+        : formatPriceLabel(record.unitPrice),
     quantity: 1,
     unitPrice: record.unitPrice,
   },
+  skipFulfillmentStep: record.fulfillmentMode === "none",
 });
 
 export const getPublicProductImageObjectKey = (
@@ -776,6 +843,48 @@ const persistCustomerAddressForCheckout = async (
   return savedAddress;
 };
 
+const getOrCreatePaymentCustomer = async (
+  tx: Parameters<Parameters<typeof database.transaction>[0]>[0],
+  record: ProductLinkCheckoutRecord,
+  customerId: string
+) => {
+  const [existingPaymentCustomer] = await tx
+    .select({
+      externalCustomerId: schema.paymentCustomer.externalCustomerId,
+      id: schema.paymentCustomer.id,
+    })
+    .from(schema.paymentCustomer)
+    .where(
+      and(
+        eq(schema.paymentCustomer.commerceId, record.commerceId),
+        eq(schema.paymentCustomer.customerId, customerId),
+        eq(schema.paymentCustomer.provider, "pagopar_upay")
+      )
+    );
+
+  if (existingPaymentCustomer) {
+    return existingPaymentCustomer;
+  }
+
+  const [paymentCustomer] = await tx
+    .insert(schema.paymentCustomer)
+    .values({
+      commerceId: record.commerceId,
+      customerId,
+      externalCustomerId: `pending_${record.commerceId}_${customerId}`,
+      provider: "pagopar_upay",
+      providerMetadata: {
+        source: "checkout_subscription_bootstrap",
+      },
+    })
+    .returning({
+      externalCustomerId: schema.paymentCustomer.externalCustomerId,
+      id: schema.paymentCustomer.id,
+    });
+
+  return paymentCustomer;
+};
+
 export const createOrderFromProductLink = async (
   commerceSlug: string,
   productLinkSlug: string,
@@ -791,11 +900,15 @@ export const createOrderFromProductLink = async (
     return null;
   }
 
-  if (payload.mode === "delivery" && !record.deliveryEnabled) {
+  const fulfillmentAvailability = fulfillmentModeAvailability(
+    record.fulfillmentMode
+  );
+
+  if (payload.mode === "delivery" && !fulfillmentAvailability.delivery) {
     throw new ProductLinkCheckoutError("Este link no permite delivery.");
   }
 
-  if (payload.mode === "pickup" && !record.pickupEnabled) {
+  if (payload.mode === "pickup" && !fulfillmentAvailability.pickup) {
     throw new ProductLinkCheckoutError("Este link no permite retiro.");
   }
 
@@ -812,50 +925,52 @@ export const createOrderFromProductLink = async (
 
   try {
     return await database.transaction(async (tx) => {
-      const [productSnapshot] = await tx
-        .select({
-          stock: schema.product.stock,
-        })
-        .from(schema.product)
-        .where(eq(schema.product.id, record.productId));
-
-      if (!productSnapshot || productSnapshot.stock <= 0) {
-        throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
-      }
-
-      if (payload.quantity > productSnapshot.stock) {
-        throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
-      }
-
-      const [reservedProduct] = await tx
-        .update(schema.product)
-        .set({
-          stock: sql`${schema.product.stock} - ${payload.quantity}`,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.product.id, record.productId),
-            gte(schema.product.stock, payload.quantity)
-          )
-        )
-        .returning({
-          stock: schema.product.stock,
-        });
-
-      if (!reservedProduct) {
-        const [currentProduct] = await tx
+      if (record.productKind === "product") {
+        const [productSnapshot] = await tx
           .select({
             stock: schema.product.stock,
           })
           .from(schema.product)
           .where(eq(schema.product.id, record.productId));
 
-        throw new ProductLinkCheckoutError(
-          currentProduct && currentProduct.stock > 0
-            ? EXCEEDS_STOCK_ERROR
-            : OUT_OF_STOCK_ERROR
-        );
+        if (!productSnapshot || productSnapshot.stock <= 0) {
+          throw new ProductLinkCheckoutError(OUT_OF_STOCK_ERROR);
+        }
+
+        if (payload.quantity > productSnapshot.stock) {
+          throw new ProductLinkCheckoutError(EXCEEDS_STOCK_ERROR);
+        }
+
+        const [reservedProduct] = await tx
+          .update(schema.product)
+          .set({
+            stock: sql`${schema.product.stock} - ${payload.quantity}`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.product.id, record.productId),
+              gte(schema.product.stock, payload.quantity)
+            )
+          )
+          .returning({
+            stock: schema.product.stock,
+          });
+
+        if (!reservedProduct) {
+          const [currentProduct] = await tx
+            .select({
+              stock: schema.product.stock,
+            })
+            .from(schema.product)
+            .where(eq(schema.product.id, record.productId));
+
+          throw new ProductLinkCheckoutError(
+            currentProduct && currentProduct.stock > 0
+              ? EXCEEDS_STOCK_ERROR
+              : OUT_OF_STOCK_ERROR
+          );
+        }
       }
 
       const customerProfile = await resolveOrderCustomerProfile(
@@ -863,9 +978,11 @@ export const createOrderFromProductLink = async (
         payload,
         authenticatedBuyer
       );
+      const effectiveDeliveryMode =
+        record.fulfillmentMode === "none" ? "none" : payload.mode;
       const requestedCustomerAddressId = payload.customerAddressId?.trim();
       const selectedCustomerAddress =
-        payload.mode === "delivery" && requestedCustomerAddressId
+        effectiveDeliveryMode === "delivery" && requestedCustomerAddressId
           ? authenticatedBuyer
             ? await resolveSelectedCustomerAddress(
                 tx,
@@ -890,12 +1007,23 @@ export const createOrderFromProductLink = async (
             streetLine1: selectedCustomerAddress.streetLine1,
             streetLine2: selectedCustomerAddress.streetLine2,
           }
-        : await resolveDeliveryAddress(tx, payload);
+        : effectiveDeliveryMode === "delivery"
+          ? await resolveDeliveryAddress(tx, payload)
+          : {
+              cityId: null,
+              customerAddressId: null,
+              countryId: null,
+              postalCode: null,
+              referenceNote: null,
+              stateId: null,
+              streetLine1: null,
+              streetLine2: null,
+            };
 
       let savedCustomerAddress = selectedCustomerAddress;
 
       if (
-        payload.mode === "delivery" &&
+        effectiveDeliveryMode === "delivery" &&
         (payload.saveAddress || payload.saveAsDefault)
       ) {
         if (!authenticatedBuyer) {
@@ -944,7 +1072,7 @@ export const createOrderFromProductLink = async (
             savedCustomerAddress?.id ?? deliveryAddress.customerAddressId,
           customerId: customerProfile.id,
           email: payload.email,
-          mode: payload.mode,
+          mode: effectiveDeliveryMode,
           notes: payload.notes || null,
           postalCode: deliveryAddress.postalCode,
           phone: payload.phone,
@@ -964,13 +1092,16 @@ export const createOrderFromProductLink = async (
       const [order] = await tx
         .insert(schema.order)
         .values({
+          billingMode: record.billingMode,
           commerceId: record.commerceId,
           customerId: customerProfile.id,
           currency: record.currency,
           deliveryInfoId: deliveryInfo.id,
           expiresAt,
+          fulfillmentMode: record.fulfillmentMode,
           orderStatus,
           paymentStatus,
+          productKind: record.productKind,
           productLinkId: record.productLinkId,
           quantity: payload.quantity,
           subtotal: totalAmount,
@@ -1001,8 +1132,22 @@ export const createOrderFromProductLink = async (
       });
 
       let paymentIntentId: string | null = null;
+      let paymentCustomer:
+        | {
+            externalCustomerId: string;
+            id: string;
+          }
+        | null = null;
 
       if (record.paymentRequired) {
+        if (record.billingMode === "subscription") {
+          paymentCustomer = await getOrCreatePaymentCustomer(
+            tx,
+            record,
+            customerProfile.id
+          );
+        }
+
         const [paymentIntent] = await tx
           .insert(schema.paymentIntent)
           .values({
@@ -1023,6 +1168,26 @@ export const createOrderFromProductLink = async (
           });
 
         paymentIntentId = paymentIntent.id;
+      }
+
+      if (record.billingMode === "subscription") {
+        await tx.insert(schema.subscriptionAgreement).values({
+          amount: totalAmount,
+          cadence: record.subscriptionCadence ?? "monthly",
+          commerceId: record.commerceId,
+          currency: record.currency,
+          customerId: customerProfile.id,
+          externalCustomerId: paymentCustomer?.externalCustomerId ?? null,
+          orderId: order.id,
+          paymentCustomerId: paymentCustomer?.id ?? null,
+          productLinkId: record.productLinkId,
+          provider: "pagopar_upay",
+          providerMetadata: {
+            commerceSlug: record.commerceSlug,
+            productLinkSlug: record.slug,
+          },
+          status: "pending_activation",
+        });
       }
 
       return {
@@ -1046,6 +1211,7 @@ export const releaseReservedStockForOrder = async (
       .select({
         orderId: schema.order.id,
         orderStatus: schema.order.orderStatus,
+        productKind: schema.order.productKind,
         quantity: schema.order.quantity,
         productId: schema.orderItem.productId,
       })
@@ -1082,13 +1248,15 @@ export const releaseReservedStockForOrder = async (
       })
       .where(eq(schema.order.id, orderId));
 
-    await tx
-      .update(schema.product)
-      .set({
-        stock: sql`${schema.product.stock} + ${existingOrder.quantity}`,
-        updatedAt: now,
-      })
-      .where(eq(schema.product.id, existingOrder.productId));
+    if (existingOrder.productKind === "product") {
+      await tx
+          .update(schema.product)
+          .set({
+            stock: sql`${schema.product.stock} + ${existingOrder.quantity}`,
+            updatedAt: now,
+          })
+          .where(eq(schema.product.id, existingOrder.productId));
+    }
 
     await tx.insert(schema.orderStatusHistory).values({
       changedByType: "system",

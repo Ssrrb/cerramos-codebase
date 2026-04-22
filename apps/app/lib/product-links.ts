@@ -7,33 +7,46 @@ export const productLinkStatusValues = [
   "inactive",
   "expired",
 ] as const;
+export const billingModeValues = ["one_time", "subscription"] as const;
+export const fulfillmentModeValues = [
+  "none",
+  "delivery",
+  "pickup",
+  "delivery_or_pickup",
+] as const;
+export const subscriptionCadenceValues = ["monthly"] as const;
 
 export type ProductLinkStatus = (typeof productLinkStatusValues)[number];
+export type BillingMode = (typeof billingModeValues)[number];
+export type FulfillmentMode = (typeof fulfillmentModeValues)[number];
+export type SubscriptionCadence = (typeof subscriptionCadenceValues)[number];
 
 export interface ProductLinkTableRow {
+  billingMode: BillingMode;
   currency: string;
-  deliveryEnabled: boolean;
   description: string | null;
   expiresAt: string | null;
+  fulfillmentMode: FulfillmentMode;
   id: string;
   imageUrl: string | null;
   paymentRequired: boolean;
-  pickupEnabled: boolean;
   publicPath: string;
   slug: string;
   status: ProductLinkStatus;
+  subscriptionCadence: SubscriptionCadence | null;
   title: string;
   unitPrice: number;
 }
 
 export interface ProductLinkFormValues {
-  deliveryEnabled: boolean;
+  billingMode: BillingMode;
   description: string;
   expiresAt: string;
+  fulfillmentMode: FulfillmentMode;
   paymentRequired: boolean;
-  pickupEnabled: boolean;
   slug: string;
   status: ProductLinkStatus;
+  subscriptionCadence: SubscriptionCadence;
   title: string;
   unitPrice: number;
 }
@@ -65,13 +78,13 @@ export const normalizeProductLinkSlug = (value: string) =>
     .replaceAll(/^-+|-+$/g, "");
 
 const productLinkFormSchemaShape = {
-  deliveryEnabled: z.boolean(),
+  billingMode: z.enum(billingModeValues).default("one_time"),
   description: z.string().trim().max(400, {
     message: "La descripcion debe tener 400 caracteres o menos.",
   }),
   expiresAt: z.string().trim().max(40),
+  fulfillmentMode: z.enum(fulfillmentModeValues).default("delivery_or_pickup"),
   paymentRequired: z.boolean(),
-  pickupEnabled: z.boolean(),
   slug: z
     .string()
     .trim()
@@ -86,6 +99,7 @@ const productLinkFormSchemaShape = {
   status: z.enum(productLinkStatusValues, {
     error: "Selecciona un estado valido.",
   }),
+  subscriptionCadence: z.enum(subscriptionCadenceValues).default("monthly"),
   title: z
     .string()
     .trim()
@@ -107,14 +121,6 @@ const refineProductLinkSchema = <
   schemaToRefine: TSchema
 ) =>
   schemaToRefine.superRefine((value, context) => {
-    if (!(value.pickupEnabled || value.deliveryEnabled)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Activa delivery o retiro para publicar el link.",
-        path: ["deliveryEnabled"],
-      });
-    }
-
     const expiresAt =
       typeof value.expiresAt === "string" ? value.expiresAt : "";
 
@@ -128,6 +134,14 @@ const refineProductLinkSchema = <
           path: ["expiresAt"],
         });
       }
+    }
+
+    if (value.billingMode === "subscription" && !value.paymentRequired) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Las suscripciones requieren pago online obligatorio.",
+        path: ["paymentRequired"],
+      });
     }
   });
 
@@ -169,13 +183,14 @@ export const parseProductLinkExpiresAt = (value: string | null | undefined) => {
 export const defaultProductLinkFormValues = (
   product: ProductTableRow
 ): ProductLinkFormValues => ({
-  deliveryEnabled: true,
+  billingMode: "one_time",
   description: product.description,
   expiresAt: "",
+  fulfillmentMode: product.kind === "service" ? "none" : "delivery_or_pickup",
   paymentRequired: false,
-  pickupEnabled: true,
   slug: normalizeProductLinkSlug(product.name),
   status: "draft",
+  subscriptionCadence: "monthly",
   title: product.name,
   unitPrice: product.unitPrice,
 });
@@ -189,13 +204,14 @@ export const toProductLinkFormValues = (
   }
 
   return {
-    deliveryEnabled: productLink.deliveryEnabled,
+    billingMode: productLink.billingMode,
     description: productLink.description ?? "",
     expiresAt: productLink.expiresAt ? productLink.expiresAt.slice(0, 16) : "",
+    fulfillmentMode: productLink.fulfillmentMode,
     paymentRequired: productLink.paymentRequired,
-    pickupEnabled: productLink.pickupEnabled,
     slug: productLink.slug,
     status: productLink.status,
+    subscriptionCadence: productLink.subscriptionCadence ?? "monthly",
     title: productLink.title,
     unitPrice: productLink.unitPrice,
   };
@@ -222,5 +238,23 @@ export const formatProductLinkStatusLabel = (status: ProductLinkStatus) => {
       return "Inactivo";
     default:
       return "Borrador";
+  }
+};
+
+export const formatBillingModeLabel = (value: BillingMode) =>
+  value === "subscription" ? "Suscripción" : "Pago único";
+
+export const formatFulfillmentModeLabel = (value: FulfillmentMode) => {
+  switch (value) {
+    case "delivery":
+      return "Solo delivery";
+    case "pickup":
+      return "Solo retiro";
+    case "none":
+      return "Sin entrega";
+    case "delivery_or_pickup":
+      return "Delivery o retiro";
+    default:
+      return "Delivery o retiro";
   }
 };

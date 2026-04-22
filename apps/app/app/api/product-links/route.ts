@@ -151,16 +151,26 @@ export const POST = async (request: Request) => {
     const [productLink] = await database
       .insert(schema.productLink)
       .values({
+        billingMode: result.data.billingMode,
         commerceId,
         currency: "PYG",
-        deliveryEnabled: result.data.deliveryEnabled,
         description: result.data.description || null,
         expiresAt,
+        fulfillmentMode: result.data.fulfillmentMode,
         paymentRequired: result.data.paymentRequired,
-        pickupEnabled: result.data.pickupEnabled,
+        deliveryEnabled:
+          result.data.fulfillmentMode === "delivery" ||
+          result.data.fulfillmentMode === "delivery_or_pickup",
+        pickupEnabled:
+          result.data.fulfillmentMode === "pickup" ||
+          result.data.fulfillmentMode === "delivery_or_pickup",
         productId: result.data.productId,
         slug: result.data.slug,
         status: result.data.status,
+        subscriptionCadence:
+          result.data.billingMode === "subscription"
+            ? result.data.subscriptionCadence
+            : null,
         title: result.data.title,
         unitPrice: result.data.unitPrice,
       })

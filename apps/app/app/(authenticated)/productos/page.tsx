@@ -46,6 +46,7 @@ const ProductsPage = async () => {
       id: schema.product.id,
       image: schema.productImage.objectKey,
       imageObjectKey: schema.productImage.objectKey,
+      kind: schema.product.kind,
       name: schema.product.name,
       status: schema.product.status,
       stock: schema.product.stock,
@@ -60,16 +61,17 @@ const ProductsPage = async () => {
     .orderBy(desc(schema.product.createdAt));
   let productLinksNotice: string | null = null;
   let productLinks: Array<{
-    deliveryEnabled: boolean;
+    billingMode: "one_time" | "subscription";
     description: string | null;
     expiresAt: Date | null;
+    fulfillmentMode: "delivery" | "delivery_or_pickup" | "none" | "pickup";
     id: string;
     imageUrl: string | null;
     paymentRequired: boolean;
-    pickupEnabled: boolean;
     productId: string;
     slug: string;
     status: "active" | "draft" | "expired" | "inactive";
+    subscriptionCadence: "monthly" | null;
     title: string;
     unitPrice: number;
   }> = [];
@@ -77,16 +79,17 @@ const ProductsPage = async () => {
   try {
     productLinks = await database
       .select({
-        deliveryEnabled: schema.productLink.deliveryEnabled,
+        billingMode: schema.productLink.billingMode,
         description: schema.productLink.description,
         expiresAt: schema.productLink.expiresAt,
+        fulfillmentMode: schema.productLink.fulfillmentMode,
         id: schema.productLink.id,
         imageUrl: schema.productImage.objectKey,
         paymentRequired: schema.productLink.paymentRequired,
-        pickupEnabled: schema.productLink.pickupEnabled,
         productId: schema.productLink.productId,
         slug: schema.productLink.slug,
         status: schema.productLink.status,
+        subscriptionCadence: schema.productLink.subscriptionCadence,
         title: schema.productLink.title,
         unitPrice: schema.productLink.unitPrice,
       })
@@ -115,20 +118,21 @@ const ProductsPage = async () => {
         async (productLink): Promise<[string, ProductLinkTableRow]> => [
           productLink.productId,
           {
+            billingMode: productLink.billingMode,
             currency: "PYG",
-            deliveryEnabled: productLink.deliveryEnabled,
             description: productLink.description,
             expiresAt: productLink.expiresAt?.toISOString() ?? null,
+            fulfillmentMode: productLink.fulfillmentMode,
             id: productLink.id,
             imageUrl: await resolveProductImage(productLink.imageUrl ?? ""),
             paymentRequired: productLink.paymentRequired,
-            pickupEnabled: productLink.pickupEnabled,
             publicPath: buildProductLinkPublicPath(
               context.commerce.slug,
               productLink.slug
             ),
             slug: productLink.slug,
             status: productLink.status,
+            subscriptionCadence: productLink.subscriptionCadence,
             title: productLink.title,
             unitPrice: productLink.unitPrice,
           },

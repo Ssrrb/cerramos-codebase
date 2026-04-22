@@ -75,17 +75,18 @@ const ProductLinkCheckoutPage = async ({
   return (
     <ProductLinkCheckoutClient
       commerceSlug={commerceSlug}
-      deliveryEnabled={checkout.deliveryEnabled}
       googleEnabled={isGoogleAuthEnabled()}
       initialLocationData={locationData}
       initialAuthUser={initialAuthUser}
       initialSavedAddresses={savedAddresses}
       merchant={viewModel.merchant}
+      copyVariant={viewModel.copyVariant}
       orderSummary={viewModel.orderSummary}
       paymentRequired={checkout.paymentRequired}
-      pickupEnabled={checkout.pickupEnabled}
       product={viewModel.product}
       productLinkSlug={productLinkSlug}
+      skipFulfillmentStep={viewModel.skipFulfillmentStep}
+      fulfillmentMode={checkout.fulfillmentMode}
     />
   );
 };

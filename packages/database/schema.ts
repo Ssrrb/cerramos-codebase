@@ -44,7 +44,29 @@ export const productStatusEnum = pgEnum("ProductStatus", [
   "inactive",
 ]);
 
-export const deliveryModeEnum = pgEnum("DeliveryMode", ["delivery", "pickup"]);
+export const productKindEnum = pgEnum("ProductKind", ["product", "service"]);
+
+export const deliveryModeEnum = pgEnum("DeliveryMode", [
+  "none",
+  "delivery",
+  "pickup",
+]);
+
+export const billingModeEnum = pgEnum("BillingMode", [
+  "one_time",
+  "subscription",
+]);
+
+export const fulfillmentModeEnum = pgEnum("FulfillmentMode", [
+  "none",
+  "delivery",
+  "pickup",
+  "delivery_or_pickup",
+]);
+
+export const subscriptionCadenceEnum = pgEnum("SubscriptionCadence", [
+  "monthly",
+]);
 
 export const orderStatusEnum = pgEnum("OrderStatus", [
   "new",
@@ -283,6 +305,7 @@ export const product = pgTable(
     commerceId: text("commerceId")
       .notNull()
       .references(() => commerce.id, { onDelete: "cascade" }),
+    kind: productKindEnum("kind").notNull().default("product"),
     name: text("name").notNull(),
     description: text("description").notNull(),
     category: text("category").notNull(),
@@ -337,6 +360,11 @@ export const productLink = pgTable(
     description: text("description"),
     currency: text("currency").notNull().default("PYG"),
     unitPrice: integer("unitPrice").notNull(),
+    billingMode: billingModeEnum("billingMode").notNull().default("one_time"),
+    fulfillmentMode: fulfillmentModeEnum("fulfillmentMode")
+      .notNull()
+      .default("delivery_or_pickup"),
+    subscriptionCadence: subscriptionCadenceEnum("subscriptionCadence"),
     status: productLinkStatusEnum("status").notNull().default("draft"),
     paymentRequired: boolean("paymentRequired").notNull().default(false),
     pickupEnabled: boolean("pickupEnabled").notNull().default(true),
@@ -574,6 +602,11 @@ export const order = pgTable(
     deliveryInfoId: text("deliveryInfoId")
       .notNull()
       .references(() => deliveryInfo.id, { onDelete: "restrict" }),
+    productKind: productKindEnum("productKind").notNull().default("product"),
+    billingMode: billingModeEnum("billingMode").notNull().default("one_time"),
+    fulfillmentMode: fulfillmentModeEnum("fulfillmentMode")
+      .notNull()
+      .default("delivery_or_pickup"),
     orderStatus: orderStatusEnum("orderStatus").notNull().default("new"),
     paymentStatus: paymentStatusEnum("paymentStatus")
       .notNull()
@@ -650,6 +683,85 @@ export const paymentIntent = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [index("PaymentIntent_orderId_idx").on(table.orderId)]
+);
+
+export const paymentCustomer = pgTable(
+  "PaymentCustomer",
+  {
+    id: cuidPrimaryKey(),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "cascade" }),
+    customerId: text("customerId")
+      .notNull()
+      .references(() => customerProfile.id, { onDelete: "cascade" }),
+    provider: paymentProviderNameEnum("provider")
+      .notNull()
+      .default("pagopar_upay"),
+    externalCustomerId: text("externalCustomerId").notNull(),
+    providerMetadata:
+      jsonb("providerMetadata").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("PaymentCustomer_commerceId_idx").on(table.commerceId),
+    index("PaymentCustomer_customerId_idx").on(table.customerId),
+    uniqueIndex("PaymentCustomer_commerceId_customerId_provider_key").on(
+      table.commerceId,
+      table.customerId,
+      table.provider
+    ),
+    uniqueIndex("PaymentCustomer_provider_externalCustomerId_key").on(
+      table.provider,
+      table.externalCustomerId
+    ),
+  ]
+);
+
+export const subscriptionAgreement = pgTable(
+  "SubscriptionAgreement",
+  {
+    id: cuidPrimaryKey(),
+    commerceId: text("commerceId")
+      .notNull()
+      .references(() => commerce.id, { onDelete: "restrict" }),
+    customerId: text("customerId")
+      .notNull()
+      .references(() => customerProfile.id, { onDelete: "restrict" }),
+    productLinkId: text("productLinkId")
+      .notNull()
+      .references(() => productLink.id, { onDelete: "restrict" }),
+    orderId: text("orderId")
+      .notNull()
+      .references(() => order.id, { onDelete: "restrict" }),
+    paymentCustomerId: text("paymentCustomerId").references(
+      () => paymentCustomer.id,
+      { onDelete: "set null" }
+    ),
+    provider: paymentProviderNameEnum("provider")
+      .notNull()
+      .default("pagopar_upay"),
+    cadence: subscriptionCadenceEnum("cadence").notNull().default("monthly"),
+    amount: integer("amount").notNull(),
+    currency: text("currency").notNull().default("PYG"),
+    status: text("status").notNull().default("pending_activation"),
+    externalAgreementId: text("externalAgreementId"),
+    externalCustomerId: text("externalCustomerId"),
+    activatedAt: timestamp("activatedAt", { mode: "date", precision: 3 }),
+    cancelledAt: timestamp("cancelledAt", { mode: "date", precision: 3 }),
+    providerMetadata:
+      jsonb("providerMetadata").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("SubscriptionAgreement_commerceId_idx").on(table.commerceId),
+    index("SubscriptionAgreement_customerId_idx").on(table.customerId),
+    index("SubscriptionAgreement_orderId_idx").on(table.orderId),
+    index("SubscriptionAgreement_productLinkId_idx").on(table.productLinkId),
+    uniqueIndex("SubscriptionAgreement_orderId_key").on(table.orderId),
+  ]
 );
 
 export const paymentEvent = pgTable(

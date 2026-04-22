@@ -5,8 +5,10 @@ export const normalizeProductImageObjectKey =
   normalizeProductImageObjectKeyImpl;
 
 export const productStatusValues = ["active", "inactive", "draft"] as const;
+export const productKindValues = ["product", "service"] as const;
 
 export type ProductStatus = (typeof productStatusValues)[number];
+export type ProductKind = (typeof productKindValues)[number];
 
 export const productCategorySuggestions = [
   "Electrodomesticos",
@@ -54,6 +56,7 @@ export const addProductFormSchema = z.object({
     .min(1, { message: "Selecciona o crea una categoria." })
     .max(50, { message: "La categoria debe tener 50 caracteres o menos." }),
   deliveryIncluded: z.boolean().default(false),
+  kind: z.enum(productKindValues).default("product"),
   description: z
     .string()
     .trim()
@@ -91,6 +94,7 @@ export const productPayloadSchema = z.object({
     .min(1, { message: "Selecciona o crea una categoria." })
     .max(50, { message: "La categoria debe tener 50 caracteres o menos." }),
   deliveryIncluded: z.boolean().default(false),
+  kind: z.enum(productKindValues).default("product"),
   description: z
     .string()
     .trim()
@@ -138,6 +142,7 @@ export interface ProductTableRow {
   id: string;
   image: string;
   imageObjectKey: string;
+  kind?: ProductKind;
   name: string;
   status: ProductStatus;
   stock: number;
@@ -153,6 +158,7 @@ export const defaultAddProductFormValues: AddProductFormValues = {
     objectKey: "",
     src: "",
   },
+  kind: "product",
   name: "",
   status: "draft",
   stock: 0,
@@ -170,11 +176,15 @@ export const toProductPayload = (
     values.image.objectKey,
     bucketName
   ),
+  kind: values.kind,
   name: values.name,
   status: values.status,
   stock: values.stock,
   unitPrice: values.unitPrice,
 });
+
+export const formatProductKindLabel = (kind: ProductKind) =>
+  kind === "service" ? "Servicio" : "Producto";
 
 export const formatProductStatusLabel = (status: ProductStatus) => {
   switch (status) {

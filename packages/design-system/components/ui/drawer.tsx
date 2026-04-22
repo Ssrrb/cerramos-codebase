@@ -59,11 +59,8 @@ function DrawerOverlay({
 function DrawerContent({
   className,
   children,
-  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
-  const contentRef = React.useRef<HTMLDivElement>(null)
-
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -77,14 +74,6 @@ function DrawerContent({
           "data-[vaul-drawer-direction=left]:inset-y-0 data-[vaul-drawer-direction=left]:left-0 data-[vaul-drawer-direction=left]:w-3/4 data-[vaul-drawer-direction=left]:border-r data-[vaul-drawer-direction=left]:sm:max-w-sm",
           className
         )}
-        onOpenAutoFocus={(event) => {
-          const target = event.currentTarget as HTMLElement | null;
-          setTimeout(() => {
-            target?.focus();
-          }, 0);
-          props.onOpenAutoFocus?.(event);
-        }}
-        tabIndex={-1}
         {...props}
       >
         <div className="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />

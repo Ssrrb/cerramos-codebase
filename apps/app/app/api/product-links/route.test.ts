@@ -353,14 +353,17 @@ describe("product links route", () => {
     const response = await POST(
       new Request("http://localhost/api/product-links", {
         body: JSON.stringify({
+          billingMode: "one_time",
           deliveryEnabled: true,
           description: "Oferta publica",
           expiresAt: "",
+          fulfillmentMode: "delivery_or_pickup",
           paymentRequired: true,
           pickupEnabled: true,
           productId: "product_1",
           slug: "Mate Premium",
           status: "draft",
+          subscriptionCadence: "monthly",
           title: "Mate premium",
           unitPrice: 145_000,
         }),
@@ -375,16 +378,19 @@ describe("product links route", () => {
       success: true,
     });
     expect(insertValuesMock).toHaveBeenCalledWith({
+      billingMode: "one_time",
       commerceId: "commerce_1",
       currency: "PYG",
       deliveryEnabled: true,
       description: "Oferta publica",
       expiresAt: null,
+      fulfillmentMode: "delivery_or_pickup",
       paymentRequired: true,
       pickupEnabled: true,
       productId: "product_1",
       slug: "mate-premium",
       status: "draft",
+      subscriptionCadence: null,
       title: "Mate premium",
       unitPrice: 145_000,
     });

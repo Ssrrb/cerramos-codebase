@@ -16,10 +16,12 @@ import {
   type AddProductFormValues,
   addProductFormSchema,
   defaultAddProductFormValues,
+  formatProductKindLabel,
   normalizeProductImageObjectKey,
   type ProductPayload,
   type ProductTableRow,
   productCategorySuggestions,
+  productKindValues,
   productStatusValues,
   toProductPayload,
 } from "@/lib/products";
@@ -71,6 +73,11 @@ const categoryOptions = productCategorySuggestions.map((category) => ({
   value: category,
 }));
 
+const kindOptions = productKindValues.map((kind) => ({
+  label: formatProductKindLabel(kind),
+  value: kind,
+}));
+
 const getStatusLabel = (status: (typeof productStatusValues)[number]) => {
   switch (status) {
     case "active":
@@ -106,6 +113,7 @@ const toInitialFormValues = (
       objectKey: product.imageObjectKey,
       src: product.image,
     },
+    kind: product.kind ?? "product",
     name: product.name,
     status: product.status,
     stock: product.stock,
@@ -236,6 +244,8 @@ export const AddProductForm = ({
           disabled={isPending}
           imageName="image"
           imageUploadUrl="/api/products/image-upload"
+          kindName="kind"
+          kindOptions={kindOptions}
           nameName="name"
           priceName="unitPrice"
           statusName="status"

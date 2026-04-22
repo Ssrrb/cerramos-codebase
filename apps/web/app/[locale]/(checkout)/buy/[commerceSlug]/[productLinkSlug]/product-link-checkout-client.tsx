@@ -25,7 +25,9 @@ import {
 
 interface ProductLinkCheckoutClientProps {
   commerceSlug: string;
-  deliveryEnabled: boolean;
+  copyVariant?: "order" | "subscription";
+  deliveryEnabled?: boolean;
+  fulfillmentMode?: "delivery" | "delivery_or_pickup" | "none" | "pickup";
   googleEnabled?: boolean;
   initialAuthUser?: CheckoutAuthUser | null;
   initialLocationData: CheckoutLocationData;
@@ -33,9 +35,10 @@ interface ProductLinkCheckoutClientProps {
   merchant: CheckoutMerchantSummary;
   orderSummary: CheckoutOrderSummary;
   paymentRequired: boolean;
-  pickupEnabled: boolean;
+  pickupEnabled?: boolean;
   product: CheckoutProductSummary;
   productLinkSlug: string;
+  skipFulfillmentStep?: boolean;
 }
 
 interface CreateOrderResponse {
@@ -53,7 +56,9 @@ const wait = (ms: number) =>
 
 export const ProductLinkCheckoutClient = ({
   commerceSlug,
-  deliveryEnabled,
+  copyVariant = "order",
+  deliveryEnabled: deliveryEnabledProp,
+  fulfillmentMode,
   googleEnabled = false,
   initialLocationData,
   initialAuthUser = null,
@@ -61,9 +66,10 @@ export const ProductLinkCheckoutClient = ({
   merchant,
   orderSummary,
   paymentRequired,
-  pickupEnabled,
+  pickupEnabled: pickupEnabledProp,
   product,
   productLinkSlug,
+  skipFulfillmentStep = false,
 }: ProductLinkCheckoutClientProps) => {
   const [isOrderConfirmed, setIsOrderConfirmed] = useState(false);
   const [orderReference, setOrderReference] = useState<string | null>(null);
@@ -105,6 +111,28 @@ export const ProductLinkCheckoutClient = ({
     );
   }, [orderReference, paymentRequired, upayFormId]);
 
+  const resolvedFulfillmentMode =
+    fulfillmentMode ??
+    (deliveryEnabledProp && pickupEnabledProp
+      ? "delivery_or_pickup"
+      : deliveryEnabledProp
+        ? "delivery"
+        : pickupEnabledProp
+          ? "pickup"
+          : "none");
+  const deliveryEnabled =
+    resolvedFulfillmentMode === "delivery" ||
+    resolvedFulfillmentMode === "delivery_or_pickup";
+  const pickupEnabled =
+    resolvedFulfillmentMode === "pickup" ||
+    resolvedFulfillmentMode === "delivery_or_pickup";
+  const confirmationMessage =
+    copyVariant === "subscription"
+      ? "Registramos tu suscripción y el pago inicial se completa dentro de Cerramos. La activación comercial seguirá por separado."
+      : skipFulfillmentStep
+        ? "Registramos tu reserva y el pago se completa dentro de Cerramos. La coordinación comercial seguirá por separado."
+        : "Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado.";
+
   return (
     <CheckoutPage
       accountAction={
@@ -114,7 +142,8 @@ export const ProductLinkCheckoutClient = ({
         />
       }
       allowSavedAddresses={Boolean(initialAuthUser)}
-      confirmationMessage="Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado."
+      confirmationMessage={confirmationMessage}
+      copyVariant={copyVariant}
       defaultValues={{
         email: initialAuthUser?.email ?? "",
         countryId: initialLocationData.countries[0]?.value ?? "",
@@ -205,6 +234,7 @@ export const ProductLinkCheckoutClient = ({
       processorSlot={paymentProcessorSlot}
       product={product}
       savedAddresses={initialSavedAddresses}
+      skipFulfillmentStep={skipFulfillmentStep}
       submitLabel={paymentRequired ? "Crear pedido" : "Confirmar pedido"}
     />
   );

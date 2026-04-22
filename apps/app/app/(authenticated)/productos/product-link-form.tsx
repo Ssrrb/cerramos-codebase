@@ -31,12 +31,17 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import {
   buildProductLinkPublicPath,
+  billingModeValues,
+  formatBillingModeLabel,
+  formatFulfillmentModeLabel,
   formatProductLinkStatusLabel,
+  fulfillmentModeValues,
   type ProductLinkFormValues,
   type ProductLinkTableRow,
   type ProductWithLinkTableRow,
   productLinkFormSchema,
   productLinkStatusValues,
+  subscriptionCadenceValues,
   toProductLinkFormValues,
   toProductLinkPayload,
 } from "@/lib/product-links";
@@ -318,6 +323,37 @@ export const ProductLinkForm = ({
         <div className="grid gap-4 sm:grid-cols-3">
           <FormField
             control={form.control}
+            name="billingMode"
+            render={({ field }) => (
+              <FormItem className="rounded-xl border border-border/70 bg-muted/30 px-4 py-4">
+                <FormLabel>Modalidad de cobro</FormLabel>
+                <Select
+                  disabled={isPending}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona una modalidad" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {billingModeValues.map((billingMode) => (
+                      <SelectItem key={billingMode} value={billingMode}>
+                        {formatBillingModeLabel(billingMode)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Las suscripciones crean un acuerdo recurrente mensual.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="paymentRequired"
             render={({ field }) => (
               <FormItem className="rounded-xl border border-border/70 bg-muted/30 px-4 py-4">
@@ -342,53 +378,71 @@ export const ProductLinkForm = ({
           />
           <FormField
             control={form.control}
-            name="deliveryEnabled"
+            name="fulfillmentMode"
             render={({ field }) => (
               <FormItem className="rounded-xl border border-border/70 bg-muted/30 px-4 py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <FormLabel>Delivery</FormLabel>
-                    <FormDescription>
-                      Permite que el comprador cargue direccion de entrega.
-                    </FormDescription>
-                  </div>
+                <FormLabel>Entrega</FormLabel>
+                <Select
+                  disabled={isPending}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
                   <FormControl>
-                    <Switch
-                      checked={Boolean(field.value)}
-                      disabled={isPending}
-                      onCheckedChange={field.onChange}
-                    />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona una modalidad" />
+                    </SelectTrigger>
                   </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="pickupEnabled"
-            render={({ field }) => (
-              <FormItem className="rounded-xl border border-border/70 bg-muted/30 px-4 py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <FormLabel>Retiro</FormLabel>
-                    <FormDescription>
-                      Permite coordinar retiro sin direccion.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={Boolean(field.value)}
-                      disabled={isPending}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </div>
+                  <SelectContent>
+                    {fulfillmentModeValues.map((fulfillmentMode) => (
+                      <SelectItem
+                        key={fulfillmentMode}
+                        value={fulfillmentMode}
+                      >
+                        {formatFulfillmentModeLabel(fulfillmentMode)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Define si el checkout pide dirección, coordina retiro o no
+                  muestra logística.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="subscriptionCadence"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cadencia de suscripción</FormLabel>
+              <Select
+                disabled={isPending || form.watch("billingMode") !== "subscription"}
+                onValueChange={field.onChange}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecciona una cadencia" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {subscriptionCadenceValues.map((cadence) => (
+                    <SelectItem key={cadence} value={cadence}>
+                      Mensual
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                V1 fija la recurrencia mensual para ofertas por suscripción.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="flex flex-col-reverse gap-3 border-border/70 border-t pt-4 sm:flex-row sm:justify-end">
           <Button
             disabled={isPending}

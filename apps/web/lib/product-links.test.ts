@@ -101,7 +101,7 @@ const {
   })),
   isForeignKeyConstraintErrorMock: vi.fn(() => false),
   isMissingRelationErrorMock: vi.fn(() => false),
-  isUniqueConstraintErrorMock: vi.fn(() => false),
+  isUniqueConstraintErrorMock: vi.fn((..._args: unknown[]) => false),
   leftJoinMock: vi.fn(),
   selectFromMock: vi.fn(),
   selectJoinMock: vi.fn(),
@@ -130,6 +130,7 @@ const commerceTable = {
 const productTable = {
   __name: "product",
   id: "product.id",
+  kind: "product.kind",
   primaryImageId: "product.primaryImageId",
   stock: "product.stock",
   status: "product.status",
@@ -141,17 +142,20 @@ const productImageTable = {
   productId: "productImage.productId",
 };
 const productLinkTable = {
+  billingMode: "productLink.billingMode",
   commerceId: "productLink.commerceId",
   currency: "productLink.currency",
   deliveryEnabled: "productLink.deliveryEnabled",
   description: "productLink.description",
   expiresAt: "productLink.expiresAt",
+  fulfillmentMode: "productLink.fulfillmentMode",
   id: "productLink.id",
   paymentRequired: "productLink.paymentRequired",
   pickupEnabled: "productLink.pickupEnabled",
   productId: "productLink.productId",
   slug: "productLink.slug",
   status: "productLink.status",
+  subscriptionCadence: "productLink.subscriptionCadence",
   title: "productLink.title",
   unitPrice: "productLink.unitPrice",
 };
@@ -201,9 +205,12 @@ const deliveryInfoTable = {
 };
 const orderTable = {
   __name: "order",
+  billingMode: "order.billingMode",
   cancelledAt: "order.cancelledAt",
+  fulfillmentMode: "order.fulfillmentMode",
   id: "order.id",
   orderStatus: "order.orderStatus",
+  productKind: "order.productKind",
   quantity: "order.quantity",
   updatedAt: "order.updatedAt",
 };
@@ -218,6 +225,15 @@ const orderStatusHistoryTable = {
 const paymentIntentTable = {
   __name: "paymentIntent",
   id: "paymentIntent.id",
+};
+const paymentCustomerTable = {
+  __name: "paymentCustomer",
+  externalCustomerId: "paymentCustomer.externalCustomerId",
+  id: "paymentCustomer.id",
+  provider: "paymentCustomer.provider",
+};
+const subscriptionAgreementTable = {
+  __name: "subscriptionAgreement",
 };
 
 vi.mock("@repo/database", () => ({
@@ -243,33 +259,37 @@ vi.mock("@repo/database", () => ({
     order: orderTable,
     orderItem: orderItemTable,
     orderStatusHistory: orderStatusHistoryTable,
+    paymentCustomer: paymentCustomerTable,
     paymentIntent: paymentIntentTable,
     product: productTable,
     productImage: productImageTable,
     productLink: productLinkTable,
     state: stateTable,
+    subscriptionAgreement: subscriptionAgreementTable,
   },
 }));
 
 const baseRecord = {
+  billingMode: "one_time" as const,
   commerceId: "commerce_1",
   commerceLogoImageUrl: "commerces/user_1/logos/logo.png",
   commerceName: "Mate Shop",
   commerceSlug: "mate-shop",
   currency: "USD",
   defaultOrderExpiryHours: 12,
-  deliveryEnabled: true,
   description: "Server description",
   expiresAt: null,
+  fulfillmentMode: "delivery_or_pickup" as const,
   imageObjectKey: "products/commerce_1/images/mate.png",
   paymentRequired: true,
-  pickupEnabled: true,
   productId: "product_1",
+  productKind: "product" as const,
   productLinkId: "link_1",
   productStatus: "active" as const,
   productLinkStatus: "active" as const,
   slug: "mate-premium",
   stock: 5,
+  subscriptionCadence: null,
   title: "Server title",
   trustState: "verified" as const,
   unitPrice: 145_000,
@@ -413,6 +433,28 @@ describe("web product links", () => {
     expect(
       record ? createCheckoutViewModel(record).product.availableStock : 0
     ).toBe(5);
+  });
+
+  test("treats services with zero stock as available in checkout", async () => {
+    selectWhereMock.mockResolvedValueOnce([
+      {
+        ...baseRecord,
+        productKind: "service" as const,
+        stock: 0,
+      },
+    ]);
+
+    const { createCheckoutViewModel, getPublicProductLinkCheckout } =
+      await import("./product-links");
+    const record = await getPublicProductLinkCheckout(
+      "mate-shop",
+      "mate-premium"
+    );
+
+    expect(record?.stock).toBe(0);
+    expect(
+      record ? createCheckoutViewModel(record).product.availableStock : 0
+    ).toBe(1);
   });
 
   test("keeps external commerce logo URLs untouched", async () => {
@@ -1287,7 +1329,7 @@ describe("web product links", () => {
     selectWhereMock.mockResolvedValueOnce([
       {
         ...baseRecord,
-        pickupEnabled: false,
+        fulfillmentMode: "delivery",
       },
     ]);
 
@@ -1416,8 +1458,8 @@ describe("web product links", () => {
   test("maps default address uniqueness failures to checkout domain errors", async () => {
     selectWhereMock.mockResolvedValueOnce([baseRecord]);
     isUniqueConstraintErrorMock.mockImplementation(
-      (_error: unknown, constraintName?: string) =>
-        constraintName === "CustomerAddress_customerId_default_key"
+      (...args: unknown[]) =>
+        args[1] === "CustomerAddress_customerId_default_key"
     );
     databaseTransactionMock.mockRejectedValueOnce({
       cause: {

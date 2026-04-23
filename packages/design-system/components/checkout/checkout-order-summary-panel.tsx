@@ -1,3 +1,4 @@
+import * as React from "react";
 import { MinusIcon, PlusIcon, ReceiptTextIcon } from "lucide-react";
 import { cn } from "../../lib/utils";
 import {
@@ -201,10 +202,24 @@ function CheckoutMobileSummaryBar({
   orderSummary,
   product,
 }: CheckoutMobileSummaryBarProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const drawerContentRef = React.useRef<HTMLDivElement>(null);
   const totalLabel = formatPriceLabel(product.unitPrice * product.quantity);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      const focusId = window.requestAnimationFrame(() => {
+        drawerContentRef.current?.focus();
+      });
+
+      return () => {
+        window.cancelAnimationFrame(focusId);
+      };
+    }
+  }, [isOpen]);
+
   return (
-    <Drawer>
+    <Drawer autoFocus={false} onOpenChange={setIsOpen} open={isOpen}>
       <div
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/90 lg:hidden",
@@ -231,7 +246,10 @@ function CheckoutMobileSummaryBar({
           </DrawerTrigger>
         </div>
       </div>
-      <DrawerContent className="max-h-[85vh] rounded-t-[1.75rem]">
+      <DrawerContent
+        className="max-h-[85vh] rounded-t-[1.75rem]"
+        ref={drawerContentRef}
+      >
         <DrawerHeader className="px-4 pt-4 text-left sm:px-5">
           <DrawerTitle>Resumen del pedido</DrawerTitle>
           <DrawerDescription>

@@ -112,7 +112,7 @@ function ImageUploadControl({
   };
 
   return (
-    <FormItem>
+    <FormItem className="min-w-0">
       <FormLabel>{label}</FormLabel>
       <FormControl>
         <div className="space-y-3">
@@ -230,7 +230,7 @@ function ImageUploadControl({
           />
           <div
             className={cn(
-              "rounded-2xl border border-dashed px-4 py-4 transition-colors",
+              "min-w-0 rounded-2xl border border-dashed px-4 py-4 transition-colors",
               value.src
                 ? "border-border/80 bg-muted/20"
                 : "border-border/70 bg-muted/35"
@@ -246,7 +246,7 @@ function ImageUploadControl({
                   />
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-sm">
                       {value.fileName}
                     </p>
@@ -287,7 +287,7 @@ function ImageUploadControl({
               </div>
             ) : (
               <button
-                className="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-transparent px-4 py-10 text-center transition-colors hover:border-border/70 hover:bg-background"
+                className="flex w-full min-w-0 flex-col items-center justify-center gap-3 rounded-xl border border-transparent px-4 py-8 text-center transition-colors hover:border-border/70 hover:bg-background sm:py-10"
                 disabled={disabled}
                 onClick={openPicker}
                 type="button"

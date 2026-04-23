@@ -15,13 +15,6 @@ import { ProductStatusSelect } from "@repo/design-system/components/product/prod
 import { ProductStockField } from "@repo/design-system/components/product/product-stock-field";
 import type { ProductSelectOption } from "@repo/design-system/components/product/types";
 import { Button } from "@repo/design-system/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@repo/design-system/components/ui/card";
 import { Separator } from "@repo/design-system/components/ui/separator";
 import { cn } from "@repo/design-system/lib/utils";
 import { useEffect, useState } from "react";
@@ -115,8 +108,8 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
 
   return (
     <div className="bg-[linear-gradient(180deg,hsl(var(--muted)/0.32),hsl(var(--background))_28%)]">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_22rem]">
-        <div className="space-y-4">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="space-y-5 xl:space-y-6">
           <ProductSetupStepCard
             activeStep={activeStep}
             completed={completedSteps.kind}
@@ -209,9 +202,9 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
             ]}
             title="3. Cargá los datos del producto"
           >
-            <div className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.9fr)]">
-                <div className="space-y-6">
+            <div className="space-y-8">
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.95fr)] xl:items-start">
+                <div className="min-w-0 space-y-6">
                   <ProductNameField
                     control={control}
                     disabled={disabled}
@@ -223,7 +216,7 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
                     name={descriptionName}
                   />
                 </div>
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6 xl:pl-3">
                   <ProductImageUpload
                     control={control}
                     disabled={disabled}
@@ -235,33 +228,40 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
               <Separator />
               <div
                 className={cn(
-                  "grid gap-6",
-                  isService ? "md:grid-cols-2" : "md:grid-cols-3"
+                  "grid gap-6 lg:gap-x-6 lg:gap-y-6",
+                  isService
+                    ? "md:grid-cols-2"
+                    : "md:grid-cols-2 xl:grid-cols-3"
                 )}
               >
-                <ProductPriceField
-                  control={control}
-                  disabled={disabled}
-                  name={priceName}
-                />
-                <ProductStatusSelect
-                  control={control}
-                  disabled={disabled}
-                  name={statusName}
-                  options={statusOptions}
-                />
-                {isService ? null : (
-                  <ProductStockField
+                <div className="min-w-0">
+                  <ProductPriceField
                     control={control}
                     disabled={disabled}
-                    name={stockName}
+                    name={priceName}
                   />
+                </div>
+                <div className="min-w-0">
+                  <ProductStatusSelect
+                    control={control}
+                    disabled={disabled}
+                    name={statusName}
+                    options={statusOptions}
+                  />
+                </div>
+                {isService ? null : (
+                  <div className="min-w-0">
+                    <ProductStockField
+                      control={control}
+                      disabled={disabled}
+                      name={stockName}
+                    />
+                  </div>
                 )}
               </div>
               <div
                 className={cn(
-                  "grid gap-6",
-                  "md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+                  "grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(19rem,0.95fr)]"
                 )}
               >
                 <ProductCategorySelect
@@ -292,67 +292,6 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
               </div>
             </div>
           </ProductSetupStepCard>
-        </div>
-
-        <div className="space-y-4">
-          <Card className="rounded-[1.5rem] border-border/70 bg-background/95 shadow-xs lg:sticky lg:top-8">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-lg">Resumen del flujo</CardTitle>
-              <CardDescription>
-                Las decisiones principales permanecen visibles mientras se carga
-                el resto del formulario.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="space-y-1">
-                <p className="text-muted-foreground">Tipo</p>
-                <p className="font-medium text-foreground">
-                  {selectedKindLabel}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-muted-foreground">Delivery</p>
-                <p className="font-medium text-foreground">
-                  {deliveryIncludedValue
-                    ? isService
-                      ? "Se muestra en checkout"
-                      : "Incluido"
-                    : isService
-                      ? "Oculto por defecto"
-                      : "No incluido"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-muted-foreground">Stock</p>
-                <p className="font-medium text-foreground">
-                  {isService ? "No aplica" : String(stockValue ?? 0)}
-                </p>
-              </div>
-              <Separator />
-              <div className="space-y-1">
-                <p className="text-muted-foreground">Estado de carga</p>
-                <ul className="space-y-2 text-muted-foreground leading-relaxed">
-                  <li>
-                    {completedSteps.kind
-                      ? "El tipo de oferta ya fue definido."
-                      : "Falta confirmar el tipo de oferta."}
-                  </li>
-                  <li>
-                    {completedSteps.delivery
-                      ? "La política de delivery ya está definida."
-                      : isService
-                        ? "Falta decidir si el servicio muestra logística en checkout."
-                        : "Falta definir cómo impacta el delivery en el precio."}
-                  </li>
-                  <li>
-                    {completedSteps.details
-                      ? "La configuración principal del producto fue revisada."
-                      : "Todavía falta revisar los datos principales del producto."}
-                  </li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

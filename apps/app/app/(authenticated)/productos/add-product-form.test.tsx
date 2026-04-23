@@ -120,7 +120,9 @@ describe("add product form", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Guardar producto y seguir con el link" })
+    );
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenNthCalledWith(
@@ -206,7 +208,9 @@ describe("add product form", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Guardar producto y seguir con el link" })
+    );
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/products", {
@@ -424,7 +428,9 @@ describe("add product form", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Guardar producto y seguir con el link" })
+    );
 
     await waitFor(() =>
       expect(
@@ -523,7 +529,9 @@ describe("add product form", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByRole("button", { name: "Guardar producto" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Guardar producto y seguir con el link" })
+    );
 
     await waitFor(() =>
       expect(

@@ -224,7 +224,7 @@ const AppSidebar = ({ activeCommerce, user }: AppSidebarProps) => {
                 <SidebarMenuButton asChild>
                   <Link href="/users">
                     <ShoppingBasket />
-                    Ver todas las transacciones
+                    Ver todas las ordenes
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

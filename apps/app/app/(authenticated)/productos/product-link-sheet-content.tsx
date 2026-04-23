@@ -31,15 +31,17 @@ export const ProductLinkSheetContent = ({
   return (
     <SheetContent className="sm:max-w-3xl">
       <ScrollArea className="h-screen">
-        <div className="space-y-5 px-1 pb-6">
+        <div className="space-y-6 px-1 pb-6">
           <SheetHeader className="space-y-2 pr-8">
             <SheetTitle>
-              {isEditing ? "Editar link publico" : "Publicar link"}
+              {isEditing
+                ? "2. Ajustar checkout público"
+                : "2. Publicar checkout público"}
             </SheetTitle>
             <SheetDescription>
               {isEditing
-                ? "Ajusta el slug, precio y condiciones del checkout publico."
-                : "Crea la URL publica de checkout para este producto."}
+                ? "Refiná la URL, la entrega y el estado del checkout sin volver a cargar el producto."
+                : "Después de guardar el producto, definí cómo se presenta y se publica su link de checkout."}
             </SheetDescription>
           </SheetHeader>
           <ProductLinkForm

@@ -10,34 +10,38 @@ import {
 import { CheckIcon, PencilLineIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-type ProductSetupStep = "kind" | "delivery" | "details";
-
-interface ProductSetupStepCardProps {
-  activeStep: ProductSetupStep;
+interface SequentialStepCardProps<TStep extends string> {
+  activeStep: TStep;
   children: ReactNode;
   completed?: boolean;
-  onEdit: (step: ProductSetupStep) => void;
-  step: ProductSetupStep;
+  inactiveHint?: string;
+  onEdit: (step: TStep) => void;
+  step: TStep;
   summary: string[];
   title: string;
+  activeKicker?: string;
+  editLabel?: string;
 }
 
-function ProductSetupStepCard({
+function SequentialStepCard<TStep extends string>({
   activeStep,
+  activeKicker = "Paso activo",
   children,
   completed,
+  editLabel = "Editar",
+  inactiveHint = "Volvé a abrir este paso para ajustar la configuración.",
   onEdit,
   step,
   summary,
   title,
-}: ProductSetupStepCardProps) {
+}: SequentialStepCardProps<TStep>) {
   if (activeStep === step) {
     return (
       <Card className="rounded-[1.75rem] border-border/70 bg-background/95 shadow-sm">
         <CardHeader className="space-y-3">
           <div className="space-y-1">
             <p className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
-              Paso activo
+              {activeKicker}
             </p>
             <CardTitle className="text-2xl tracking-[-0.03em]">
               {title}
@@ -78,19 +82,21 @@ function ProductSetupStepCard({
               ))
             ) : (
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Volvé a abrir este paso para ajustar la configuración.
+                {inactiveHint}
               </p>
             )}
           </div>
         </div>
         <span className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border/70 bg-muted/25 px-3 py-1.5 font-medium text-foreground text-sm">
           <PencilLineIcon className="size-4" />
-          Editar
+          {editLabel}
         </span>
       </div>
     </Button>
   );
 }
 
-export { ProductSetupStepCard };
-export type { ProductSetupStep };
+const ProductSetupStepCard = SequentialStepCard;
+
+export { SequentialStepCard, ProductSetupStepCard };
+export type { SequentialStepCardProps };

@@ -8,8 +8,7 @@ import { ProductNameField } from "@repo/design-system/components/product/product
 import { ProductPriceField } from "@repo/design-system/components/product/product-price-field";
 import { ProductChoiceCardsField } from "@repo/design-system/components/product/product-choice-cards-field";
 import {
-  ProductSetupStepCard,
-  type ProductSetupStep,
+  SequentialStepCard,
 } from "@repo/design-system/components/product/product-setup-step-card";
 import { ProductStatusSelect } from "@repo/design-system/components/product/product-status-select";
 import { ProductStockField } from "@repo/design-system/components/product/product-stock-field";
@@ -43,6 +42,8 @@ interface ProductBasicsSectionProps<TFieldValues extends FieldValues> {
   statusOptions: ProductSelectOption[];
   stockName: FieldPath<TFieldValues>;
 }
+
+type ProductSetupStep = "kind" | "delivery" | "details";
 
 function ProductBasicsSection<TFieldValues extends FieldValues>({
   categoryName,
@@ -110,7 +111,7 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
     <div className="bg-[linear-gradient(180deg,hsl(var(--muted)/0.32),hsl(var(--background))_28%)]">
       <div className="mx-auto w-full max-w-6xl">
         <div className="space-y-5 xl:space-y-6">
-          <ProductSetupStepCard
+          <SequentialStepCard
             activeStep={activeStep}
             completed={completedSteps.kind}
             onEdit={setActiveStep}
@@ -143,9 +144,9 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
                 </Button>
               </div>
             </div>
-          </ProductSetupStepCard>
+          </SequentialStepCard>
 
-          <ProductSetupStepCard
+          <SequentialStepCard
             activeStep={activeStep}
             completed={completedSteps.delivery}
             onEdit={setActiveStep}
@@ -184,9 +185,9 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
                 </Button>
               </div>
             </div>
-          </ProductSetupStepCard>
+          </SequentialStepCard>
 
-          <ProductSetupStepCard
+          <SequentialStepCard
             activeStep={activeStep}
             completed={completedSteps.details}
             onEdit={setActiveStep}
@@ -287,11 +288,11 @@ function ProductBasicsSection<TFieldValues extends FieldValues>({
                   }}
                   type="button"
                 >
-                  Validar configuración
+                  Producto listo para publicar
                 </Button>
               </div>
             </div>
-          </ProductSetupStepCard>
+          </SequentialStepCard>
         </div>
       </div>
     </div>

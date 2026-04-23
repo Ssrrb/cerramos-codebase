@@ -135,7 +135,7 @@ const getPendingLabel = (isEditing: boolean) =>
   isEditing ? "Actualizando producto" : "Guardando producto";
 
 const getSubmitLabel = (isEditing: boolean) =>
-  isEditing ? "Guardar cambios" : "Guardar producto";
+  isEditing ? "Guardar cambios" : "Guardar producto y seguir con el link";
 
 export const AddProductForm = ({
   mode = "create",

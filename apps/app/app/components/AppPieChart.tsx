@@ -11,7 +11,7 @@ import {
 
 const chartConfig = {
   visitors: {
-    label: "Visitors",
+    label: "Visitantes",
   },
   chrome: {
     label: "Chrome",
@@ -30,7 +30,7 @@ const chartConfig = {
     color: "var(--chart-4)",
   },
   other: {
-    label: "Other",
+    label: "Otros",
     color: "var(--chart-5)",
   },
 } satisfies ChartConfig;
@@ -88,7 +88,7 @@ const AppPieChart = () => {
                         x={viewBox.cx}
                         y={(viewBox.cy || 0) + 24}
                       >
-                        Visitors
+                        Visitantes
                       </tspan>
                     </text>
                   );
@@ -100,11 +100,11 @@ const AppPieChart = () => {
       </ChartContainer>
       <div className="mt-4 flex flex-col items-center gap-2">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month{" "}
+          Crecimiento del 5,2 % este mes{" "}
           <TrendingUp className="h-4 w-4 text-[var(--dashboard-success)]" />
         </div>
         <div className="dashboard-subtle leading-none">
-          Showing total visitors for the last 6 months
+          Total de visitantes de los últimos 6 meses
         </div>
       </div>
     </div>

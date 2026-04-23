@@ -15,24 +15,24 @@ const chartConfig = {
     color: "var(--chart-1)",
   },
   successful: {
-    label: "Successful",
+    label: "Completadas",
     color: "var(--chart-4)",
   },
 } satisfies ChartConfig;
 
 const chartData = [
-  { month: "January", total: 186, successful: 80 },
-  { month: "February", total: 305, successful: 200 },
-  { month: "March", total: 237, successful: 120 },
-  { month: "April", total: 173, successful: 100 },
-  { month: "May", total: 209, successful: 130 },
-  { month: "June", total: 214, successful: 140 },
+  { month: "Enero", total: 186, successful: 80 },
+  { month: "Febrero", total: 305, successful: 200 },
+  { month: "Marzo", total: 237, successful: 120 },
+  { month: "Abril", total: 173, successful: 100 },
+  { month: "Mayo", total: 209, successful: 130 },
+  { month: "Junio", total: 214, successful: 140 },
 ];
 
 const AppBarChart = () => {
   return (
     <div>
-      <h1 className="dashboard-panel-title">Ingresos</h1>
+      <h1 className="dashboard-panel-title">Ventas</h1>
       <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
         <BarChart accessibilityLayer data={chartData}>
           <CartesianGrid vertical={false} />

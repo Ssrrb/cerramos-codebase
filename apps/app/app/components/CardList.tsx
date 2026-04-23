@@ -5,11 +5,11 @@ import { Card, CardContent, CardFooter, CardTitle } from "./ui/card";
 const popularProducts = [
   {
     id: 1,
-    name: "Adidas CoreFit T-Shirt",
+    name: "Remera Adidas CoreFit",
     shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Remera deportiva liviana para uso diario y entrenamientos.",
     description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Remera deportiva liviana con calce comodo, ideal para entrenamientos y uso casual durante todo el dia.",
     price: 39.9,
     sizes: ["s", "m", "l", "xl", "xxl"],
     colors: ["gray", "purple", "green"],
@@ -21,11 +21,11 @@ const popularProducts = [
   },
   {
     id: 2,
-    name: "Puma Ultra Warm Zip",
+    name: "Campera Puma Ultra Warm",
     shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Campera con cierre pensada para dias frescos y salidas urbanas.",
     description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Campera con interior suave y buen abrigo, ideal para sumar una capa extra sin perder comodidad.",
     price: 59.9,
     sizes: ["s", "m", "l", "xl"],
     colors: ["gray", "green"],
@@ -33,11 +33,11 @@ const popularProducts = [
   },
   {
     id: 3,
-    name: "Nike Air Essentials Pullover",
+    name: "Buzo Nike Air Essentials",
     shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Buzo versatil con perfil deportivo para looks comodos y modernos.",
     description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Buzo de tejido suave con corte relajado, pensado para acompanarte en jornadas activas o de descanso.",
     price: 69.9,
     sizes: ["s", "m", "l"],
     colors: ["green", "blue", "black"],
@@ -49,11 +49,11 @@ const popularProducts = [
   },
   {
     id: 4,
-    name: "Nike Dri Flex T-Shirt",
+    name: "Remera Nike Dri-Flex",
     shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Remera flexible de secado rapido para entrenar con mas comodidad.",
     description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Remera tecnica de secado rapido que ayuda a mantener la frescura incluso en entrenamientos intensos.",
     price: 29.9,
     sizes: ["s", "m", "l"],
     colors: ["white", "pink"],
@@ -61,11 +61,11 @@ const popularProducts = [
   },
   {
     id: 5,
-    name: "Under Armour StormFleece",
+    name: "Buzo Under Armour StormFleece",
     shortDescription:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Buzo abrigado con terminacion deportiva para dias frios.",
     description:
-      "Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit. Lorem ipsum dolor sit amet consect adipisicing elit lorem ipsum dolor sit.",
+      "Buzo abrigado y resistente, pensado para proteger del frio sin resignar movilidad ni estilo.",
     price: 49.9,
     sizes: ["s", "m", "l"],
     colors: ["red", "orange", "black"],
@@ -80,7 +80,7 @@ const popularProducts = [
 const latestTransactions = [
   {
     id: 1,
-    title: "Order Payment",
+    title: "Pago de pedido",
     badge: "John Doe",
     image:
       "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=800",
@@ -88,7 +88,7 @@ const latestTransactions = [
   },
   {
     id: 2,
-    title: "Order Payment",
+    title: "Pago de pedido",
     badge: "Jane Smith",
     image:
       "https://images.pexels.com/photos/4969918/pexels-photo-4969918.jpeg?auto=compress&cs=tinysrgb&w=800",
@@ -96,7 +96,7 @@ const latestTransactions = [
   },
   {
     id: 3,
-    title: "Order Payment",
+    title: "Pago de pedido",
     badge: "Michael Johnson",
     image:
       "https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=800",
@@ -104,7 +104,7 @@ const latestTransactions = [
   },
   {
     id: 4,
-    title: "Order Payment",
+    title: "Pago de pedido",
     badge: "Lily Adams",
     image:
       "https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=800",
@@ -112,7 +112,7 @@ const latestTransactions = [
   },
   {
     id: 5,
-    title: "Order Payment",
+    title: "Pago de pedido",
     badge: "Sam Brown",
     image:
       "https://images.pexels.com/photos/1680175/pexels-photo-1680175.jpeg?auto=compress&cs=tinysrgb&w=800",

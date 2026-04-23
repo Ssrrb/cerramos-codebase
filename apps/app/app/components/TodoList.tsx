@@ -1,5 +1,6 @@
 "use client";
 
+import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
@@ -88,7 +89,7 @@ const TodoList = () => {
         <PopoverTrigger asChild>
           <Button className="w-full justify-start rounded-2xl shadow-none">
             <CalendarIcon />
-            {date ? format(date, "PPP") : <span>Pick a date</span>}
+            {date ? format(date, "PPP", { locale: es }) : <span>Elegí una fecha</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">

@@ -6,7 +6,14 @@ import { env } from "@/env";
 
 let nextConfig: NextConfig = withToolbar(withLogging(config));
 
-nextConfig.images?.remotePatterns?.push({
+nextConfig.images = nextConfig.images ?? {};
+nextConfig.images.localPatterns = nextConfig.images.localPatterns ?? [];
+nextConfig.images.localPatterns.push({
+  pathname: "/api/products/image",
+});
+
+nextConfig.images.remotePatterns = nextConfig.images.remotePatterns ?? [];
+nextConfig.images.remotePatterns.push({
   protocol: "https",
   hostname: "images.pexels.com",
 });

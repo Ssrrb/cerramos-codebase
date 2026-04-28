@@ -95,6 +95,9 @@ vi.mock("./keys", () => ({
   }),
 }));
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 describe("auth server commerce context", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -142,9 +145,15 @@ describe("auth server commerce context", () => {
       (generateId as (input: { model: string }) => string)({
         model: "verification",
       })
-    ).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    );
+    ).toMatch(UUID_REGEX);
+  });
+
+  test("does not enable Better Auth cookie-backed session caching", async () => {
+    await import("./server");
+
+    const config = vi.mocked(betterAuth).mock.calls[0]?.[0];
+
+    expect(config?.session?.cookieCache?.enabled).not.toBe(true);
   });
 
   test("wires Better Auth hooks to keep buyer customer profiles linked", async () => {
@@ -319,6 +328,40 @@ describe("auth server commerce context", () => {
     expect((response as Response).status).toBe(401);
     await expect((response as Response).json()).resolves.toEqual({
       error: "Unauthorized",
+    });
+  });
+
+  test("does not expose a stale session id when session lookup fails", async () => {
+    getSessionCookieMock.mockReturnValue("stale_session_token");
+    getSessionMock.mockRejectedValue(new Error("database offline"));
+
+    const { auth } = await import("./server");
+
+    await expect(auth()).resolves.toMatchObject({
+      orgId: null,
+      sessionId: null,
+      userId: null,
+    });
+  });
+
+  test("exposes the session id only when the session is valid", async () => {
+    getSessionCookieMock.mockReturnValue("session_123");
+    getSessionMock.mockResolvedValue({
+      user: {
+        commerceId: "commerce_1",
+        email: "owner@example.com",
+        id: "user_1",
+        image: null,
+        name: "Sebastian",
+      },
+    });
+
+    const { auth } = await import("./server");
+
+    await expect(auth()).resolves.toMatchObject({
+      orgId: "commerce_1",
+      sessionId: "session_123",
+      userId: "user_1",
     });
   });
 

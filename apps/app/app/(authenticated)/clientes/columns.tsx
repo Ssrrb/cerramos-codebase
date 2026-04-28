@@ -2,8 +2,8 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -16,12 +16,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-export type User = {
-  id: string;
+export interface User {
   avatar: string;
-  fullName: string;
   email: string;
+  fullName: string;
+  id: string;
   status: "active" | "inactive";
+}
+
+const getInitials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+const getAvatarSrc = (avatar: string) => {
+  if (avatar.startsWith("/users/")) {
+    return undefined;
+  }
+
+  return avatar;
 };
 
 export const columns: ColumnDef<User>[] = [
@@ -48,15 +65,18 @@ export const columns: ColumnDef<User>[] = [
     header: "Avatar",
     cell: ({ row }) => {
       const user = row.original;
+
       return (
-        <div className="relative h-9 w-9">
-          <Image
+        <Avatar className="h-9 w-9">
+          <AvatarImage
             alt={user.fullName}
-            className="rounded-full object-cover"
-            fill
-            src={user.avatar}
+            className="object-cover"
+            src={getAvatarSrc(user.avatar)}
           />
-        </div>
+          <AvatarFallback className="text-xs">
+            {getInitials(user.fullName)}
+          </AvatarFallback>
+        </Avatar>
       );
     },
   },

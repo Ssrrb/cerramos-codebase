@@ -96,12 +96,7 @@ export const betterAuthServer = betterAuth({
   },
   plugins: [nextCookies()],
   secret: authKeys.BETTER_AUTH_SECRET,
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 60 * 5,
-    },
-  },
+  //Removed session cookie cache bc after the max age it was not updating the session cookie with the new values, causing stale data to be served from the cookie. Better Auth's session management relies on the session cookie payload for user and commerce context, so it's important to always have the latest data in there.
   socialProviders:
     authKeys.AUTH_GOOGLE_CLIENT_ID && authKeys.AUTH_GOOGLE_CLIENT_SECRET
       ? {
@@ -372,7 +367,7 @@ export const auth = async (): Promise<AuthContext> => {
   return {
     orgId: session?.user.commerceId ?? null,
     redirectToSignIn: () => redirect(getSignInUrl()),
-    sessionId,
+    sessionId: session ? sessionId : null,
     userId: session?.user.id ?? null,
   };
 };
@@ -407,8 +402,13 @@ export const listCommerceMembers = async (
 };
 
 export const listUsersById = async (userId?: string | string[]) => {
-  const ids =
-    typeof userId === "string" ? [userId] : Array.isArray(userId) ? userId : [];
+  let ids: string[] = [];
+
+  if (typeof userId === "string") {
+    ids = [userId];
+  } else if (Array.isArray(userId)) {
+    ids = userId;
+  }
 
   const users = ids.length
     ? await database

@@ -1,5 +1,12 @@
-//TODO:Implement a page that displays all the orders of the commerce, with the option to filter by status (pending, completed, cancelled) and sort by date or amount. Each order should have a link to view the details of the order, including the products ordered, the total amount, and the status of the order.
+import { requireCommerceContext } from "@repo/auth/server";
+import { getMerchantOrders } from "@/lib/orders";
+import { OrdersView } from "./orders-view";
 
-export default function OrdersPage() {
-    return <div>Orders</div>;
-}
+const OrdersPage = async () => {
+  const context = await requireCommerceContext();
+  const orders = await getMerchantOrders(context.commerce.id);
+
+  return <OrdersView orders={orders} />;
+};
+
+export default OrdersPage;

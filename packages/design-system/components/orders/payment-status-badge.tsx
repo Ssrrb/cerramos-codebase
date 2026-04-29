@@ -5,7 +5,9 @@ import {
   CreditCard,
   RotateCcw,
   ShieldCheck,
+  TimerOff,
   WalletCards,
+  XCircle,
 } from "lucide-react";
 import type { PaymentStatus } from "./types";
 
@@ -44,6 +46,17 @@ const paymentStatusConfig: Record<
       "border-destructive/25 bg-destructive/10 text-destructive dark:text-red-300",
     icon: CreditCard,
     label: "Fallido",
+  },
+  expired: {
+    className: "border-muted-foreground/20 bg-muted text-muted-foreground",
+    icon: TimerOff,
+    label: "Expirado",
+  },
+  cancelled: {
+    className:
+      "border-destructive/25 bg-destructive/10 text-destructive dark:text-red-300",
+    icon: XCircle,
+    label: "Cancelado",
   },
   refunded: {
     className: "border-muted-foreground/25 bg-muted text-muted-foreground",

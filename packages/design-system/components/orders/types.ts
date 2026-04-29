@@ -14,6 +14,8 @@ export type PaymentStatus =
   | "authorized"
   | "paid"
   | "failed"
+  | "expired"
+  | "cancelled"
   | "refunded";
 
 export type OrdersFilter = "all" | "actionable" | OrderStatus;

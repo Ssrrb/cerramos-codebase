@@ -150,9 +150,9 @@ function OrdersTable({
           <TableHead className="min-w-64">Pedido</TableHead>
           <TableHead>Cliente</TableHead>
           <TableHead>Estados</TableHead>
-          <TableHead>Entrega</TableHead>
-          <TableHead className="text-right">Total</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
+          <TableHead className="w-48">Entrega</TableHead>
+          <TableHead className="w-36 text-right">Total</TableHead>
+          <TableHead className="w-52 text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -195,25 +195,13 @@ function OrdersTable({
                   <PaymentStatusBadge status={order.paymentStatus} />
                 </div>
               </TableCell>
-              <TableCell className="align-top">
-                <div className="max-w-44 space-y-1 text-sm">
-                  <p>{order.fulfillmentLabel}</p>
-                  {order.expiresAtLabel ? (
-                    <p className="text-muted-foreground text-xs">
-                      Vence {order.expiresAtLabel}
-                    </p>
-                  ) : null}
-                  {order.note ? (
-                    <p className="text-muted-foreground text-xs">
-                      {order.note}
-                    </p>
-                  ) : null}
-                </div>
+              <TableCell className="w-48 max-w-48 align-top">
+                <p className="truncate text-sm">{order.fulfillmentLabel}</p>
               </TableCell>
-              <TableCell className="text-right align-top font-semibold">
+              <TableCell className="w-36 whitespace-nowrap text-right align-top font-semibold">
                 {order.totalLabel}
               </TableCell>
-              <TableCell className="align-top">
+              <TableCell className="w-52 align-top">
                 <OrderActions
                   isUpdating={isUpdating}
                   onCancel={() => onCancelOrder?.(order.id)}

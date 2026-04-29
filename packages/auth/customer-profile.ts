@@ -15,6 +15,7 @@ export interface CustomerProfileRecord {
   id: string;
   image: string | null;
   name: string | null;
+  phone: string | null;
   userId: string | null;
 }
 
@@ -43,6 +44,7 @@ const getCustomerProfileById = async (customerId: string) => {
       id: schema.customerProfile.id,
       image: schema.customerProfile.image,
       name: schema.customerProfile.name,
+      phone: schema.customerProfile.phone,
       userId: schema.customerProfile.userId,
     })
     .from(schema.customerProfile)
@@ -59,6 +61,7 @@ const getCustomerProfileByUserId = async (userId: string) => {
       id: schema.customerProfile.id,
       image: schema.customerProfile.image,
       name: schema.customerProfile.name,
+      phone: schema.customerProfile.phone,
       userId: schema.customerProfile.userId,
     })
     .from(schema.customerProfile)
@@ -75,6 +78,7 @@ const getCustomerProfileByEmail = async (email: string) => {
       id: schema.customerProfile.id,
       image: schema.customerProfile.image,
       name: schema.customerProfile.name,
+      phone: schema.customerProfile.phone,
       userId: schema.customerProfile.userId,
     })
     .from(schema.customerProfile)
@@ -115,6 +119,7 @@ const createCustomerProfileForUser = async (user: BuyerUserRecord) => {
         id: schema.customerProfile.id,
         image: schema.customerProfile.image,
         name: schema.customerProfile.name,
+        phone: schema.customerProfile.phone,
         userId: schema.customerProfile.userId,
       });
 
@@ -147,6 +152,7 @@ const refreshCustomerProfileMirror = async (
       id: schema.customerProfile.id,
       image: schema.customerProfile.image,
       name: schema.customerProfile.name,
+      phone: schema.customerProfile.phone,
       userId: schema.customerProfile.userId,
     });
 

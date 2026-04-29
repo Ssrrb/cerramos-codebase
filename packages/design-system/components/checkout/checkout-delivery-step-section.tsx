@@ -16,6 +16,7 @@ import {
   type CheckoutDeliveryFieldNames,
   CheckoutDeliveryModeField,
   CheckoutInputField,
+  CheckoutSelectField,
   CheckoutTextareaField,
 } from "./checkout-form-fields";
 import { CheckoutLocationFields } from "./checkout-location-fields";
@@ -54,8 +55,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
   }) as CheckoutDeliveryMode | undefined;
 
   const isDelivery = (deliveryMode ?? "delivery") === "delivery";
-  const hasSavedAddresses = savedAddresses.length > 0;
-  const canSaveNewAddress = allowSavedAddresses && !hasSavedAddresses;
+  const hasMultipleSavedAddresses = savedAddresses.length > 1;
 
   return (
     <Card
@@ -84,6 +84,20 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
           />
           {isDelivery ? (
             <>
+              {allowSavedAddresses && hasMultipleSavedAddresses ? (
+                <CheckoutSelectField
+                  control={control}
+                  description="Podés elegir una dirección guardada o editar los campos."
+                  disabled={disabled}
+                  label="Dirección guardada"
+                  name={names.customerAddressId}
+                  options={savedAddresses.map((address) => ({
+                    label: `Dirección: ${address.summary}`,
+                    value: address.id,
+                  }))}
+                  placeholder="Elegí una dirección"
+                />
+              ) : null}
               <CheckoutLocationFields
                 control={control}
                 disabled={disabled}

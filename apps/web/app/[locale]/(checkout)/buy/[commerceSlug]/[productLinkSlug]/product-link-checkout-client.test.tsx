@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import * as React from "react";
+import { act, type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   cleanup,
@@ -46,16 +46,35 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
     isOrderConfirmed,
     onPaymentConfirm,
     onReset,
+    onSaveDetails,
     onSubmit,
     orderReference,
     paymentStage,
     processorSlot,
   }: {
-    accountAction?: React.ReactNode;
-    footerContent?: React.ReactNode;
+    accountAction?: ReactNode;
+    footerContent?: ReactNode;
     isOrderConfirmed?: boolean;
     onPaymentConfirm?: () => Promise<string | null | undefined>;
     onReset?: () => void;
+    onSaveDetails?: (values: {
+      cityId: string;
+      countryId: string;
+      customerAddressId?: string;
+      email: string;
+      mode: "delivery" | "pickup";
+      notes: string;
+      phone: string;
+      postalCode: string;
+      quantity: number;
+      referenceNote: string;
+      recipientName: string;
+      saveAddress?: boolean;
+      saveAsDefault?: boolean;
+      stateId: string;
+      streetLine1: string;
+      streetLine2: string;
+    }) => Promise<string | null | undefined>;
     onSubmit?: (values: {
       cityId: string;
       countryId: string;
@@ -76,12 +95,29 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
     }) => Promise<string | null | undefined>;
     orderReference?: string | null;
     paymentStage?: string;
-    processorSlot?: React.ReactNode;
+    processorSlot?: ReactNode;
   }) => {
-    const [submitResult, setSubmitResult] = React.useState<string | null>(null);
-    const [paymentResult, setPaymentResult] = React.useState<string | null>(
-      null
-    );
+    const [submitResult, setSubmitResult] = useState<string | null>(null);
+    const [paymentResult, setPaymentResult] = useState<string | null>(null);
+    const [saveResult, setSaveResult] = useState<string | null>(null);
+    const checkoutValues = {
+      cityId: "city_db_asuncion",
+      countryId: "country_db_py",
+      customerAddressId: "",
+      email: "buyer@example.com",
+      mode: "delivery" as const,
+      notes: "",
+      postalCode: "",
+      phone: "0981000000",
+      quantity: 2,
+      referenceNote: "",
+      recipientName: "Buyer Name",
+      saveAddress: false,
+      saveAsDefault: false,
+      stateId: "state_db_asuncion",
+      streetLine1: "Av. Espana 742",
+      streetLine2: "",
+    };
 
     return (
       <div>
@@ -92,27 +128,11 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
         <div data-testid="payment-stage">{paymentStage ?? "idle"}</div>
         <div data-testid="submit-result">{submitResult ?? "none"}</div>
         <div data-testid="payment-result">{paymentResult ?? "none"}</div>
+        <div data-testid="save-result">{saveResult ?? "none"}</div>
         <div data-testid="processor-slot">{processorSlot}</div>
         <button
           onClick={async () => {
-            const result = await onSubmit?.({
-              cityId: "city_db_asuncion",
-              countryId: "country_db_py",
-              customerAddressId: "",
-              email: "buyer@example.com",
-              mode: "delivery",
-              notes: "",
-              postalCode: "",
-              phone: "0981000000",
-              quantity: 2,
-              referenceNote: "",
-              recipientName: "Buyer Name",
-              saveAddress: false,
-              saveAsDefault: false,
-              stateId: "state_db_asuncion",
-              streetLine1: "Av. Espana 742",
-              streetLine2: "",
-            });
+            const result = await onSubmit?.(checkoutValues);
 
             setSubmitResult(result ?? "success");
           }}
@@ -132,6 +152,17 @@ vi.mock("@repo/design-system/components/checkout/checkout-page", () => ({
         <button onClick={onReset} type="button">
           reset
         </button>
+        {onSaveDetails ? (
+          <button
+            onClick={async () => {
+              const result = await onSaveDetails(checkoutValues);
+              setSaveResult(result ?? "success");
+            }}
+            type="button"
+          >
+            save-details
+          </button>
+        ) : null}
       </div>
     );
   },
@@ -260,6 +291,49 @@ describe("product link checkout client", () => {
     );
   });
 
+  test("posts saved details for signed-in confirmed checkouts", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue({
+      json: async () => ({ success: true }),
+      ok: true,
+    } as Response);
+
+    render(
+      <ProductLinkCheckoutClient
+        {...baseProps}
+        initialAuthUser={{
+          email: "buyer@example.com",
+          name: "Buyer",
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "save-details" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("save-result").textContent).toBe("success");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/checkout/saved-details",
+      expect.objectContaining({
+        method: "POST",
+      })
+    );
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))
+    ).toMatchObject({
+      email: "buyer@example.com",
+      phone: "0981000000",
+      recipientName: "Buyer Name",
+    });
+  });
+
+  test("does not expose saved details action to guests", () => {
+    render(<ProductLinkCheckoutClient {...baseProps} />);
+
+    expect(screen.queryByRole("button", { name: "save-details" })).toBeNull();
+  });
+
   test("transitions payment checkouts from initializing to ready and confirms them", async () => {
     vi.useFakeTimers();
 
@@ -276,7 +350,7 @@ describe("product link checkout client", () => {
 
     render(<ProductLinkCheckoutClient {...baseProps} />);
 
-    await React.act(async () => {
+    await act(() => {
       fireEvent.click(screen.getByRole("button", { name: "submit" }));
     });
 
@@ -289,17 +363,17 @@ describe("product link checkout client", () => {
     expect(screen.queryByText("Referencia")).toBeNull();
     expect(screen.getByTestId("upay-loader").textContent).toBe("form_payment");
 
-    await React.act(async () => {
+    await act(async () => {
       await vi.advanceTimersByTimeAsync(1200);
     });
 
     expect(screen.getByTestId("payment-stage").textContent).toBe("ready");
 
-    await React.act(async () => {
+    await act(() => {
       fireEvent.click(screen.getByRole("button", { name: "confirm-payment" }));
     });
 
-    await React.act(async () => {
+    await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
 

@@ -149,6 +149,8 @@ describe("product link checkout page", () => {
     });
     getCurrentCustomerProfileMock.mockResolvedValue({
       id: "customer_1",
+      name: "Profile Buyer",
+      phone: "0981555555",
     });
     listCheckoutSavedAddressesMock.mockResolvedValue([
       {
@@ -193,6 +195,8 @@ describe("product link checkout page", () => {
     expect(html).toContain("mate-shop");
     expect(html).toContain("mate-premium");
     expect(html).toContain("buyer@example.com");
+    expect(html).toContain("Profile Buyer");
+    expect(html).toContain("0981555555");
     expect(html).toContain("country_db_py");
     expect(html).toContain("address_1");
     expect(html).toContain("paymentRequired&quot;:true");

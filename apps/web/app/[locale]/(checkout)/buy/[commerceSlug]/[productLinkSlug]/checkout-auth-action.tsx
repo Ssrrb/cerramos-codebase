@@ -17,6 +17,7 @@ type PendingAction = "email" | "google" | null;
 export interface CheckoutAuthUser {
   email: string;
   name?: string | null;
+  phone?: string | null;
 }
 
 interface CheckoutAuthActionProps {

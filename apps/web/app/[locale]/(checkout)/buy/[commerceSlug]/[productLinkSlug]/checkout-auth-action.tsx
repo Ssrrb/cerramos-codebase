@@ -95,7 +95,7 @@ const CheckoutSignInContent = ({
 
     startTransition(async () => {
       try {
-        const { data, error: signInError } = await signIn.email({
+        const { error: signInError } = await signIn.email({
           callbackURL: callbackUrl,
           email,
           password,
@@ -107,9 +107,9 @@ const CheckoutSignInContent = ({
           return;
         }
 
-        onAuthenticated();
-        router.push(data?.url ?? callbackUrl);
         router.refresh();
+        onAuthenticated();
+        router.push(callbackUrl);
       } catch {
         setError("No se pudo iniciar sesion. Intenta de nuevo.");
         setPendingAction(null);
@@ -212,9 +212,9 @@ const CheckoutSignUpContent = ({
           return;
         }
 
+        router.refresh();
         onAuthenticated();
         router.push(callbackUrl);
-        router.refresh();
       } catch {
         setError("No se pudo crear la cuenta. Intenta de nuevo.");
         setPendingAction(null);

@@ -8,6 +8,16 @@ import {
   SignUpFormView,
 } from "@repo/design-system/components/registration";
 import { Button } from "@repo/design-system/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/design-system/components/ui/dropdown-menu";
+import { ChevronDown, MapPin, Package } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -276,6 +286,7 @@ export const CheckoutAuthAction = ({
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const callbackUrl = pathname || "/";
+  const locale = pathname.split("/")[1];
   const sessionUser = normalizeCheckoutAuthUser(session?.user);
   const resolvedUser = isSessionPending ? initialUser : sessionUser;
 
@@ -292,9 +303,35 @@ export const CheckoutAuthAction = ({
 
   if (resolvedUser) {
     return (
-      <span className="max-w-[12rem] truncate text-muted-foreground">
-        {resolvedUser.name ?? resolvedUser.email}
-      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="flex max-w-[12rem] items-center gap-1 truncate text-muted-foreground text-xs"
+            type="button"
+          >
+            <span className="truncate">{resolvedUser.name ?? resolvedUser.email}</span>
+            <ChevronDown className="size-3 shrink-0" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel className="max-w-[12rem] truncate">
+            {resolvedUser.email}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href={`/${locale}/account/ordenes`}>
+              <Package className="size-4" />
+              Mis órdenes
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/${locale}/account/direcciones`}>
+              <MapPin className="size-4" />
+              Mis direcciones
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 

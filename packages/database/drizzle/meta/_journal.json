@@ -113,6 +113,13 @@
       "when": 1776816000000,
       "tag": "0015_offer_checkout_model",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1746126000000,
+      "tag": "0016_verification_value_jsonb",
+      "breakpoints": true
     }
   ]
 }

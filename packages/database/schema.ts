@@ -284,7 +284,7 @@ export const verification = pgTable(
   {
     id: cuidPrimaryKey(),
     identifier: text("identifier").notNull(),
-    value: text("value").notNull(),
+    value: jsonb("value").notNull(),
     expiresAt: timestamp("expiresAt", { mode: "date", precision: 3 }).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

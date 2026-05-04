@@ -7,10 +7,6 @@ import {
   type AddressFormValues,
   type CustomerAddressSummary,
 } from "@repo/design-system/components/addresses";
-import {
-  getCheckoutParaguayCityName,
-  getCheckoutParaguayStateName,
-} from "@repo/design-system/components/checkout/checkout-paraguay-locations";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Form } from "@repo/design-system/components/ui/form";
 import { useEffect, useRef, useState } from "react";
@@ -63,65 +59,7 @@ const formNames = {
   streetLine2: "streetLine2",
 } as const;
 
-const sampleAddresses: CustomerAddressSummary[] = [
-  {
-    cityId: "city_py_11_fernando_de_la_mora",
-    countryId: "country_py",
-    id: "address_home",
-    isDefault: true,
-    label: "Casa",
-    phone: "0982 403 532",
-    postalCode: "2309",
-    recipientName: "Sebas Rojas",
-    referenceNote: "Portón gris frente al surtidor.",
-    stateId: "state_py_11",
-    streetLine1: "Camino de la Torre 618",
-    streetLine2: "Sabanera Dorado",
-    summary: "Fernando de la Mora, Central",
-  },
-  {
-    cityId: "city_py_asu_asuncion",
-    countryId: "country_py",
-    id: "address_office",
-    isDefault: false,
-    label: "Oficina",
-    phone: "0971 222 111",
-    postalCode: "",
-    recipientName: "Sebas Rojas",
-    referenceNote: "Recepción del piso 4.",
-    stateId: "state_py_asu",
-    streetLine1: "Aviadores del Chaco 2450",
-    streetLine2: "World Trade Center, Torre 3",
-    summary: "Asunción",
-  },
-  {
-    cityId: "city_py_11_luque",
-    countryId: "country_py",
-    id: "address_family",
-    isDefault: false,
-    label: "Familia",
-    phone: "0991 888 222",
-    postalCode: "",
-    recipientName: "Sebastián Rojas",
-    referenceNote: "",
-    stateId: "state_py_11",
-    streetLine1: "Paraje Ambay",
-    streetLine2: "San Antonio",
-    summary: "Luque, Central",
-  },
-];
-
 type FormMode = "create" | "edit";
-
-const createAddressSummary = ({
-  cityId,
-  stateId,
-}: Pick<AddressFormValues, "cityId" | "stateId">) => {
-  const cityName = getCheckoutParaguayCityName(cityId);
-  const stateName = getCheckoutParaguayStateName(stateId);
-
-  return [cityName, stateName].filter(Boolean).join(", ") || "Paraguay";
-};
 
 const toFormValues = (address: CustomerAddressSummary): AddressFormValues => ({
   cityId: address.cityId,
@@ -137,28 +75,15 @@ const toFormValues = (address: CustomerAddressSummary): AddressFormValues => ({
   streetLine2: address.streetLine2 ?? "",
 });
 
-const toAddressSummary = (
-  values: AddressFormValues,
-  id: string
-): CustomerAddressSummary => ({
-  cityId: values.cityId,
-  countryId: values.countryId,
-  id,
-  isDefault: values.isDefault,
-  label: values.label,
-  phone: values.phone,
-  postalCode: values.postalCode,
-  recipientName: values.recipientName,
-  referenceNote: values.referenceNote,
-  stateId: values.stateId,
-  streetLine1: values.streetLine1,
-  streetLine2: values.streetLine2,
-  summary: createAddressSummary(values),
-});
+interface CustomerAddressesPageClientProps {
+  initialAddresses: CustomerAddressSummary[];
+}
 
-export function CustomerAddressesPageClient() {
+export function CustomerAddressesPageClient({
+  initialAddresses,
+}: CustomerAddressesPageClientProps) {
   const [addresses, setAddresses] =
-    useState<CustomerAddressSummary[]>(sampleAddresses);
+    useState<CustomerAddressSummary[]>(initialAddresses);
   const [formMode, setFormMode] = useState<FormMode>("create");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
@@ -208,48 +133,69 @@ export function CustomerAddressesPageClient() {
     setIsFormOpen(true);
   };
 
-  const runPendingAction = (addressId: string, action: () => void) => {
+  const runPendingAction = (
+    addressId: string,
+    action: () => Promise<void>
+  ) => {
     setPendingAddressIds((current) =>
       current.includes(addressId) ? current : [...current, addressId]
     );
-    const timeoutId = window.setTimeout(() => {
-      action();
-      setPendingAddressIds((current) =>
-        current.filter((item) => item !== addressId)
-      );
-      pendingTimeoutsRef.current = pendingTimeoutsRef.current.filter(
-        (item) => item !== timeoutId
-      );
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        await action();
+      } finally {
+        setPendingAddressIds((current) =>
+          current.filter((item) => item !== addressId)
+        );
+        pendingTimeoutsRef.current = pendingTimeoutsRef.current.filter(
+          (item) => item !== timeoutId
+        );
+      }
     }, 450);
 
     pendingTimeoutsRef.current = [...pendingTimeoutsRef.current, timeoutId];
   };
 
   const setDefaultAddress = (addressId: string) => {
-    runPendingAction(addressId, () => {
+    runPendingAction(addressId, async () => {
+      const response = await fetch(`/api/account/addresses/${addressId}`, {
+        body: JSON.stringify({ isDefault: true }),
+        headers: {
+          "content-type": "application/json",
+        },
+        method: "PATCH",
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const updatedAddress =
+        (await response.json()) as CustomerAddressSummary;
+
       setAddresses((current) =>
-        current.map((address) => ({
-          ...address,
-          isDefault: address.id === addressId,
-        }))
+        current.map((address) =>
+          address.id === addressId
+            ? updatedAddress
+            : { ...address, isDefault: false }
+        )
       );
     });
   };
 
   const removeAddress = (addressId: string) => {
-    runPendingAction(addressId, () => {
-      setAddresses((current) => {
-        const next = current.filter((address) => address.id !== addressId);
-
-        if (next.some((address) => address.isDefault) || next.length === 0) {
-          return next;
-        }
-
-        return next.map((address, index) => ({
-          ...address,
-          isDefault: index === 0,
-        }));
+    runPendingAction(addressId, async () => {
+      const response = await fetch(`/api/account/addresses/${addressId}`, {
+        method: "DELETE",
       });
+
+      if (!response.ok) {
+        return;
+      }
+
+      setAddresses((current) =>
+        current.filter((address) => address.id !== addressId)
+      );
 
       if (editingAddressId === addressId) {
         closeForm();
@@ -257,33 +203,50 @@ export function CustomerAddressesPageClient() {
     });
   };
 
-  const handleSubmit = form.handleSubmit((values) => {
-    const nextId = editingAddressId ?? `address_${Date.now()}`;
-    const currentAddress = addresses.find((address) => address.id === nextId);
+  const handleSubmit = form.handleSubmit(async (values) => {
+    const currentAddress = addresses.find(
+      (address) => address.id === editingAddressId
+    );
     const hasOtherDefaultAddress = addresses.some(
-      (address) => address.id !== nextId && address.isDefault
+      (address) => address.id !== editingAddressId && address.isDefault
     );
     const shouldBeDefault =
       values.isDefault ||
       addresses.length === 0 ||
       Boolean(currentAddress?.isDefault && !hasOtherDefaultAddress);
-    const nextAddress = toAddressSummary(
-      {
-        ...values,
-        isDefault: shouldBeDefault,
+    const payload = {
+      ...values,
+      isDefault: shouldBeDefault,
+    };
+    const endpoint =
+      formMode === "edit" && editingAddressId
+        ? `/api/account/addresses/${editingAddressId}`
+        : "/api/account/addresses";
+    const response = await fetch(endpoint, {
+      body: JSON.stringify(payload),
+      headers: {
+        "content-type": "application/json",
       },
-      nextId
-    );
+      method: formMode === "edit" ? "PATCH" : "POST",
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const nextAddress = (await response.json()) as CustomerAddressSummary;
 
     setAddresses((current) => {
-      const withoutEdited = current.filter((address) => address.id !== nextId);
+      const withoutEdited = current.filter(
+        (address) => address.id !== nextAddress.id
+      );
       const normalized = nextAddress.isDefault
         ? withoutEdited.map((address) => ({ ...address, isDefault: false }))
         : withoutEdited;
 
       return formMode === "edit"
         ? current.map((address) =>
-            address.id === nextId
+            address.id === nextAddress.id
               ? nextAddress
               : {
                   ...address,

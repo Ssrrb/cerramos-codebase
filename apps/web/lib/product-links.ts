@@ -416,7 +416,95 @@ export const getPublicProductLinkCheckout = cache(
         return null;
       }
 
-      throw error;
+      const isConnectionError = (err: unknown): boolean => {
+        if (!err || typeof err !== "object") {
+          return false;
+        }
+
+        const cause = (err as { cause?: unknown }).cause;
+
+        if (
+          cause &&
+          typeof cause === "object" &&
+          (cause as { constructor?: { name?: string } }).constructor?.name ===
+            "ErrorEvent"
+        ) {
+          return true;
+        }
+
+        const message = (err as { message?: string }).message ?? "";
+
+        return message.includes("connection") || message.includes("ErrorEvent");
+      };
+
+      if (!isConnectionError(error)) {
+        throw error;
+      }
+
+      // Retry once on database connection errors (Neon cold start).
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      try {
+        [record] = await database
+          .select({
+            billingMode: schema.productLink.billingMode,
+            commerceId: schema.commerce.id,
+            commerceLogoImageUrl: schema.commerce.logoImageUrl,
+            commerceName: schema.commerce.name,
+            commerceSlug: schema.commerce.slug,
+            currency: schema.productLink.currency,
+            defaultOrderExpiryHours: schema.commerce.defaultOrderExpiryHours,
+            description: schema.productLink.description,
+            expiresAt: schema.productLink.expiresAt,
+            fulfillmentMode: schema.productLink.fulfillmentMode,
+            imageObjectKey: schema.productImage.objectKey,
+            paymentRequired: schema.productLink.paymentRequired,
+            productId: schema.product.id,
+            productKind: schema.product.kind,
+            productLinkId: schema.productLink.id,
+            productStatus: schema.product.status,
+            productLinkStatus: schema.productLink.status,
+            slug: schema.productLink.slug,
+            stock: schema.product.stock,
+            subscriptionCadence: schema.productLink.subscriptionCadence,
+            title: schema.productLink.title,
+            trustState: schema.commerce.trustState,
+            unitPrice: schema.productLink.unitPrice,
+          })
+          .from(schema.commerce)
+          .innerJoin(
+            schema.productLink,
+            and(
+              eq(schema.productLink.commerceId, schema.commerce.id),
+              eq(schema.productLink.slug, productLinkSlug)
+            )
+          )
+          .innerJoin(
+            schema.product,
+            eq(schema.product.id, schema.productLink.productId)
+          )
+          .leftJoin(
+            schema.productImage,
+            // Checkout tolerates products whose image row is temporarily missing
+            // or inconsistent. Matching both keys keeps the join aligned with the
+            // composite FK used by Product.primaryImageId.
+            and(
+              eq(schema.productImage.id, schema.product.primaryImageId),
+              eq(schema.productImage.productId, schema.product.id)
+            )
+          )
+          .where(eq(schema.commerce.slug, commerceSlug));
+      } catch (retryError) {
+        if (isMissingRelationError(retryError, "ProductLink")) {
+          return null;
+        }
+
+        throw retryError;
+      }
+
+      if (!record) {
+        throw error;
+      }
     }
 
     if (!record) {

@@ -1,5 +1,6 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
 import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
+import { warmDatabaseConnection } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listCheckoutSavedAddresses } from "@/lib/checkout-customer-addresses";
@@ -24,6 +25,7 @@ export const generateMetadata = async ({
   params,
 }: ProductLinkCheckoutPageProps): Promise<Metadata> => {
   const { commerceSlug, productLinkSlug } = await params;
+  await warmDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -47,6 +49,7 @@ const ProductLinkCheckoutPage = async ({
   params,
 }: ProductLinkCheckoutPageProps) => {
   const { commerceSlug, productLinkSlug } = await params;
+  await warmDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug

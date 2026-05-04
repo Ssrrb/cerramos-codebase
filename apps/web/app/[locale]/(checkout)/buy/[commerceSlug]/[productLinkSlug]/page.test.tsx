@@ -9,6 +9,7 @@ const {
   listCheckoutSavedAddressesMock,
   getSessionMock,
   notFoundMock,
+  warmDatabaseConnectionMock,
 } = vi.hoisted(() => ({
   createCheckoutViewModelMock: vi.fn(),
   getCheckoutLocationDataMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
   }),
+  warmDatabaseConnectionMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -45,6 +47,10 @@ vi.mock("@repo/auth/keys", () => ({
 vi.mock("@repo/auth/server", () => ({
   getCurrentCustomerProfile: getCurrentCustomerProfileMock,
   getSession: getSessionMock,
+}));
+
+vi.mock("@repo/database", () => ({
+  warmDatabaseConnection: warmDatabaseConnectionMock,
 }));
 
 vi.mock("./product-link-checkout-client", () => ({
@@ -106,6 +112,7 @@ describe("product link checkout page", () => {
     getPublicProductLinkCheckoutMock.mockReset();
     listCheckoutSavedAddressesMock.mockReset();
     getSessionMock.mockReset();
+    warmDatabaseConnectionMock.mockReset();
     notFoundMock.mockClear();
     getSessionMock.mockResolvedValue(null);
     getCurrentCustomerProfileMock.mockResolvedValue(null);

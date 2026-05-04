@@ -10,11 +10,17 @@ import {
 } from "../../../../../../../app/node_modules/@testing-library/react";
 import { CheckoutAuthAction } from "./checkout-auth-action";
 
+const buyerNamePattern = /Buyer Name/i;
+const closeSessionPattern = /Cerrar sesión/i;
+const addressesMenuItemPattern = /Mis direcciones/i;
+const ordersMenuItemPattern = /Mis órdenes/i;
+
 const {
   pushMock,
   refreshMock,
   signInEmailMock,
   signInSocialMock,
+  signOutMock,
   signUpEmailMock,
   useSessionMock,
 } = vi.hoisted(() => ({
@@ -22,6 +28,7 @@ const {
   refreshMock: vi.fn(),
   signInEmailMock: vi.fn(),
   signInSocialMock: vi.fn(),
+  signOutMock: vi.fn(),
   signUpEmailMock: vi.fn(),
   useSessionMock: vi.fn(),
 }));
@@ -31,6 +38,7 @@ vi.mock("@repo/auth/client", () => ({
     email: signInEmailMock,
     social: signInSocialMock,
   },
+  signOut: signOutMock,
   signUp: {
     email: signUpEmailMock,
   },
@@ -38,6 +46,7 @@ vi.mock("@repo/auth/client", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  useParams: () => ({ locale: "en" }),
   usePathname: () => "/en/buy/mate-shop/mate-premium",
   useRouter: () => ({
     push: pushMock,
@@ -51,6 +60,7 @@ describe("CheckoutAuthAction", () => {
     refreshMock.mockReset();
     signInEmailMock.mockReset();
     signInSocialMock.mockReset();
+    signOutMock.mockReset();
     signUpEmailMock.mockReset();
     useSessionMock.mockReset();
 
@@ -68,6 +78,7 @@ describe("CheckoutAuthAction", () => {
       error: null,
     });
     signInSocialMock.mockResolvedValue({ error: null });
+    signOutMock.mockResolvedValue(undefined);
     signUpEmailMock.mockResolvedValue({ error: null });
   });
 
@@ -168,10 +179,69 @@ describe("CheckoutAuthAction", () => {
     expect(screen.queryByRole("button", { name: "Ingresar" })).toBeNull();
   });
 
+  test("routes account menu actions through the current locale", async () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: "buyer@example.com",
+          name: "Buyer Name",
+        },
+      },
+      error: null,
+      isPending: false,
+      isRefetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<CheckoutAuthAction />);
+
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: buyerNamePattern })
+    );
+
+    expect(
+      (
+        await screen.findByRole("menuitem", { name: ordersMenuItemPattern })
+      ).getAttribute("href")
+    ).toBe("/en/account/ordenes");
+    expect(
+      screen
+        .getByRole("menuitem", { name: addressesMenuItemPattern })
+        .getAttribute("href")
+    ).toBe("/en/account/direcciones");
+  });
+
+  test("signs out from the checkout account menu", async () => {
+    useSessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: "buyer@example.com",
+          name: "Buyer Name",
+        },
+      },
+      error: null,
+      isPending: false,
+      isRefetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<CheckoutAuthAction />);
+
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: buyerNamePattern })
+    );
+    fireEvent.click(
+      await screen.findByRole("menuitem", { name: closeSessionPattern })
+    );
+
+    await waitFor(() => expect(signOutMock).toHaveBeenCalled());
+    expect(refreshMock).toHaveBeenCalled();
+  });
+
   test("does not loop when useSession returns a fresh user object every render", () => {
     const consoleErrorMock = vi
       .spyOn(console, "error")
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
 
     try {
       useSessionMock.mockImplementation(() => ({

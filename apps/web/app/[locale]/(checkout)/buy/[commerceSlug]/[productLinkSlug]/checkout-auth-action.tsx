@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, signUp, useSession } from "@repo/auth/client";
+import { signIn, signOut, signUp, useSession } from "@repo/auth/client";
 import { buildAuthRedirectUrl } from "@repo/auth/utils";
 import {
   AuthModal,
@@ -16,13 +16,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/design-system/components/ui/dropdown-menu";
-import { ChevronDown, MapPin, Package } from "lucide-react";
+import { ChevronDown, LogOut, MapPin, Package } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 type AuthMode = "sign-in" | "sign-up";
 type PendingAction = "email" | "google" | null;
+
+const noop = () => undefined;
 
 export interface CheckoutAuthUser {
   email: string;
@@ -263,7 +265,7 @@ const CheckoutSignUpContent = ({
       onPasswordChange={setPassword}
       onSubmit={handleSubmit}
       onSwitchToSignIn={onSwitchToSignIn}
-      onUsageChange={() => {}}
+      onUsageChange={noop}
       password={password}
       privacyUrl={privacyUrl}
       step="account"
@@ -281,24 +283,40 @@ export const CheckoutAuthAction = ({
   supportUrl,
   termsUrl,
 }: CheckoutAuthActionProps) => {
+  const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthMode>("sign-in");
+  const [isSignOutPending, startSignOutTransition] = useTransition();
   const callbackUrl = pathname || "/";
-  const locale = pathname.split("/")[1];
+  const locale =
+    typeof params.locale === "string"
+      ? params.locale
+      : (pathname.split("/").filter(Boolean)[0] ?? "es");
+  const accountOrdersHref = `/${locale}/account/ordenes`;
+  const accountAddressesHref = `/${locale}/account/direcciones`;
   const sessionUser = normalizeCheckoutAuthUser(session?.user);
   const resolvedUser = isSessionPending ? initialUser : sessionUser;
+  const resolvedUserEmail = resolvedUser?.email;
 
   useEffect(() => {
-    if (resolvedUser) {
+    if (resolvedUserEmail) {
       setIsOpen(false);
     }
-  }, [resolvedUser?.email, resolvedUser?.name]);
+  }, [resolvedUserEmail]);
 
   const handleClose = () => {
     setIsOpen(false);
     setMode("sign-in");
+  };
+
+  const handleSignOut = () => {
+    startSignOutTransition(async () => {
+      await signOut();
+      router.refresh();
+    });
   };
 
   if (resolvedUser) {
@@ -309,7 +327,9 @@ export const CheckoutAuthAction = ({
             className="flex max-w-[12rem] items-center gap-1 truncate text-muted-foreground text-xs"
             type="button"
           >
-            <span className="truncate">{resolvedUser.name ?? resolvedUser.email}</span>
+            <span className="truncate">
+              {resolvedUser.name ?? resolvedUser.email}
+            </span>
             <ChevronDown className="size-3 shrink-0" />
           </button>
         </DropdownMenuTrigger>
@@ -319,16 +339,27 @@ export const CheckoutAuthAction = ({
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href={`/${locale}/account/ordenes`}>
+            <Link href={accountOrdersHref}>
               <Package className="size-4" />
               Mis órdenes
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href={`/${locale}/account/direcciones`}>
+            <Link href={accountAddressesHref}>
               <MapPin className="size-4" />
               Mis direcciones
             </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={isSignOutPending}
+            onSelect={(event) => {
+              event.preventDefault();
+              handleSignOut();
+            }}
+          >
+            <LogOut className="size-4" />
+            {isSignOutPending ? "Cerrando..." : "Cerrar sesión"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

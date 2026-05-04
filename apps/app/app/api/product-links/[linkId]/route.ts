@@ -13,6 +13,8 @@ import {
   productLinksMigrationRequiredMessage,
 } from "@/lib/product-links";
 
+export const dynamic = "force-dynamic";
+
 interface ProductLinkRouteContext {
   params: Promise<{
     linkId: string;

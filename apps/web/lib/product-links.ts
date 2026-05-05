@@ -858,6 +858,20 @@ const applyDefaultAddressSelection = async (
   customerId: string,
   customerAddressId: string
 ) => {
+  const [address] = await tx
+    .select({ id: schema.customerAddress.id })
+    .from(schema.customerAddress)
+    .where(
+      and(
+        eq(schema.customerAddress.id, customerAddressId),
+        eq(schema.customerAddress.customerId, customerId)
+      )
+    );
+
+  if (!address) {
+    throw new Error("The selected address does not belong to this customer.");
+  }
+
   await tx
     .update(schema.customerAddress)
     .set({
@@ -879,6 +893,8 @@ const applyDefaultAddressSelection = async (
       )
     );
 };
+
+export const _applyDefaultAddressSelection = applyDefaultAddressSelection;
 
 const persistCustomerAddressForCheckout = async (
   tx: Parameters<Parameters<typeof database.transaction>[0]>[0],

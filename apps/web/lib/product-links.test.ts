@@ -1125,7 +1125,8 @@ describe("web product links", () => {
           countryId: "country_py",
           stateId: "state_capital",
         },
-      ]);
+      ])
+      .mockResolvedValueOnce([{ id: "address_new" }]);
 
     const insertedValues: Array<{
       table: string;
@@ -1230,6 +1231,33 @@ describe("web product links", () => {
     expect(deliveryInsert?.values).toMatchObject({
       customerAddressId: "address_new",
     });
+  });
+
+  test("applyDefaultAddressSelection rejects foreign address without mutating defaults", async () => {
+    const { _applyDefaultAddressSelection } = await import("./product-links");
+
+    const txMock = {
+      select: vi.fn().mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      })),
+    };
+
+    await expect(
+      _applyDefaultAddressSelection(
+        txMock as Parameters<typeof _applyDefaultAddressSelection>[0],
+        "customer_real",
+        "address_foreign"
+      )
+    ).rejects.toThrow("does not belong to this customer");
+
+    expect(txMock.update).not.toHaveBeenCalled();
   });
 
   test("does not create a payment intent when the link does not require payment", async () => {

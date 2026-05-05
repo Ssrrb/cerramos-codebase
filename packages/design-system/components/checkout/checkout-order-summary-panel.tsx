@@ -1,5 +1,5 @@
-import * as React from "react";
 import { MinusIcon, PlusIcon, ReceiptTextIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
   Drawer,
@@ -47,9 +47,6 @@ function CheckoutSummaryContent({
             {orderSummary.title ?? "Tu pedido"}
           </h2>
         </div>
-        <div className="rounded-full border border-border/70 bg-muted/30 px-3 py-1 text-muted-foreground text-xs">
-          {orderSummary.badgeLabel ?? "Compra protegida"}
-        </div>
       </div>
 
       <div className="mt-5 space-y-4">
@@ -72,7 +69,7 @@ function CheckoutSummaryContent({
         </div>
       </div>
 
-      <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-muted/15 p-4">
+      <div className="mt-5 rounded-3xl border border-border/70 bg-muted/15 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="font-medium text-foreground text-sm">Cantidad</p>
@@ -202,11 +199,11 @@ function CheckoutMobileSummaryBar({
   orderSummary,
   product,
 }: CheckoutMobileSummaryBarProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const drawerContentRef = React.useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const drawerContentRef = useRef<HTMLDivElement>(null);
   const totalLabel = formatPriceLabel(product.unitPrice * product.quantity);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       const focusId = window.requestAnimationFrame(() => {
         drawerContentRef.current?.focus();
@@ -222,7 +219,7 @@ function CheckoutMobileSummaryBar({
     <Drawer autoFocus={false} onOpenChange={setIsOpen} open={isOpen}>
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/90 lg:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-border/80 border-t bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-background/90 lg:hidden",
           className
         )}
       >

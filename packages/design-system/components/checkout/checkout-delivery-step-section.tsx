@@ -14,7 +14,6 @@ import type { Control, FieldValues } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import {
   type CheckoutDeliveryFieldNames,
-  CheckoutCheckboxField,
   CheckoutDeliveryModeField,
   CheckoutInputField,
   CheckoutSelectField,
@@ -155,7 +154,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
             name={names.notes}
             placeholder="Torre 2, Dpto 204."
           />
-          {isDelivery && canShowSaveAddress ? (
+          {/* {isDelivery && canShowSaveAddress ? (
             <div className="rounded-[1.25rem] border border-border/70 bg-muted/15 px-4 py-4">
               <div className="space-y-1">
                 <p className="font-medium text-foreground text-sm">
@@ -184,6 +183,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
               </div>
             </div>
           ) : null}
+          */}
         </FieldGroup>
       </CardContent>
       <CardFooter className="border-border/70 border-t px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">

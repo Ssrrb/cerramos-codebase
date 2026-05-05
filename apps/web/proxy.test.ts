@@ -12,7 +12,6 @@ vi.mock("@repo/security", () => ({
 
 vi.mock("@repo/security/proxy", () => ({
   noseconeOptions: {},
-  noseconeOptionsWithToolbar: {},
   securityMiddleware: () => () => undefined,
 }));
 
@@ -23,7 +22,6 @@ vi.mock("@rescale/nemo", () => ({
 vi.mock("@/env", () => ({
   env: {
     ARCJET_KEY: "",
-    FLAGS_SECRET: "",
   },
 }));
 

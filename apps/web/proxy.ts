@@ -4,7 +4,6 @@ import { parseError } from "@repo/observability/error";
 import { secure } from "@repo/security";
 import {
   noseconeOptions,
-  noseconeOptionsWithToolbar,
   securityMiddleware,
 } from "@repo/security/proxy";
 import { createNEMO } from "@rescale/nemo";
@@ -22,9 +21,7 @@ export const config = {
 export const shouldBypassProxy = (pathname: string) =>
   pathname.startsWith("/api/");
 
-const securityHeaders = env.FLAGS_SECRET
-  ? securityMiddleware(noseconeOptionsWithToolbar)
-  : securityMiddleware(noseconeOptions);
+const securityHeaders = securityMiddleware(noseconeOptions);
 
 // Custom middleware for Arcjet security checks
 const arcjetMiddleware = async (request: NextRequest) => {

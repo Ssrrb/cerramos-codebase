@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, signUp, useSession } from "@repo/auth/client";
+import { signIn, signOut, signUp, useSession } from "@repo/auth/client";
 import { buildAuthRedirectUrl } from "@repo/auth/utils";
 import {
   AuthModal,
@@ -8,15 +8,28 @@ import {
   SignUpFormView,
 } from "@repo/design-system/components/registration";
 import { Button } from "@repo/design-system/components/ui/button";
-import { usePathname, useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/design-system/components/ui/dropdown-menu";
+import { ChevronDown, LogOut, MapPin, Package } from "lucide-react";
+import Link from "next/link";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 type AuthMode = "sign-in" | "sign-up";
 type PendingAction = "email" | "google" | null;
 
+const noop = () => undefined;
+
 export interface CheckoutAuthUser {
   email: string;
   name?: string | null;
+  phone?: string | null;
 }
 
 interface CheckoutAuthActionProps {
@@ -84,7 +97,7 @@ const CheckoutSignInContent = ({
 
     startTransition(async () => {
       try {
-        const { data, error: signInError } = await signIn.email({
+        const { error: signInError } = await signIn.email({
           callbackURL: callbackUrl,
           email,
           password,
@@ -96,9 +109,9 @@ const CheckoutSignInContent = ({
           return;
         }
 
-        onAuthenticated();
-        router.push(data?.url ?? callbackUrl);
         router.refresh();
+        onAuthenticated();
+        router.push(callbackUrl);
       } catch {
         setError("No se pudo iniciar sesion. Intenta de nuevo.");
         setPendingAction(null);
@@ -201,9 +214,9 @@ const CheckoutSignUpContent = ({
           return;
         }
 
+        router.refresh();
         onAuthenticated();
         router.push(callbackUrl);
-        router.refresh();
       } catch {
         setError("No se pudo crear la cuenta. Intenta de nuevo.");
         setPendingAction(null);
@@ -252,7 +265,7 @@ const CheckoutSignUpContent = ({
       onPasswordChange={setPassword}
       onSubmit={handleSubmit}
       onSwitchToSignIn={onSwitchToSignIn}
-      onUsageChange={() => {}}
+      onUsageChange={noop}
       password={password}
       privacyUrl={privacyUrl}
       step="account"
@@ -270,30 +283,86 @@ export const CheckoutAuthAction = ({
   supportUrl,
   termsUrl,
 }: CheckoutAuthActionProps) => {
+  const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthMode>("sign-in");
+  const [isSignOutPending, startSignOutTransition] = useTransition();
   const callbackUrl = pathname || "/";
+  const locale =
+    typeof params.locale === "string"
+      ? params.locale
+      : (pathname.split("/").filter(Boolean)[0] ?? "es");
+  const accountOrdersHref = `/${locale}/account/ordenes`;
+  const accountAddressesHref = `/${locale}/account/direcciones`;
   const sessionUser = normalizeCheckoutAuthUser(session?.user);
   const resolvedUser = isSessionPending ? initialUser : sessionUser;
+  const resolvedUserEmail = resolvedUser?.email;
 
   useEffect(() => {
-    if (resolvedUser) {
+    if (resolvedUserEmail) {
       setIsOpen(false);
     }
-  }, [resolvedUser?.email, resolvedUser?.name]);
+  }, [resolvedUserEmail]);
 
   const handleClose = () => {
     setIsOpen(false);
     setMode("sign-in");
   };
 
+  const handleSignOut = () => {
+    startSignOutTransition(async () => {
+      await signOut();
+      router.refresh();
+    });
+  };
+
   if (resolvedUser) {
     return (
-      <span className="max-w-[12rem] truncate text-muted-foreground">
-        {resolvedUser.name ?? resolvedUser.email}
-      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="flex max-w-[12rem] items-center gap-1 truncate text-muted-foreground text-xs"
+            type="button"
+          >
+            <span className="truncate">
+              {resolvedUser.name ?? resolvedUser.email}
+            </span>
+            <ChevronDown className="size-3 shrink-0" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel className="max-w-[12rem] truncate">
+            {resolvedUser.email}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href={accountOrdersHref}>
+              <Package className="size-4" />
+              Mis órdenes
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={accountAddressesHref}>
+              <MapPin className="size-4" />
+              Mis direcciones
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={isSignOutPending}
+            onSelect={(event) => {
+              event.preventDefault();
+              handleSignOut();
+            }}
+          >
+            <LogOut className="size-4" />
+            {isSignOutPending ? "Cerrando..." : "Cerrar sesión"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   }
 

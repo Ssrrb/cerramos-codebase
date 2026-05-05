@@ -16,6 +16,7 @@ import {
   type CheckoutDeliveryFieldNames,
   CheckoutDeliveryModeField,
   CheckoutInputField,
+  CheckoutSelectField,
   CheckoutTextareaField,
 } from "./checkout-form-fields";
 import { CheckoutLocationFields } from "./checkout-location-fields";
@@ -27,6 +28,7 @@ import type {
 
 interface CheckoutDeliveryStepSectionProps<TFieldValues extends FieldValues> {
   allowSavedAddresses?: boolean;
+  canSaveNewAddress?: boolean;
   className?: string;
   control: Control<TFieldValues>;
   deliveryEnabled?: boolean;
@@ -39,6 +41,7 @@ interface CheckoutDeliveryStepSectionProps<TFieldValues extends FieldValues> {
 
 function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
   allowSavedAddresses = false,
+  canSaveNewAddress = false,
   className,
   control,
   deliveryEnabled = true,
@@ -54,8 +57,8 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
   }) as CheckoutDeliveryMode | undefined;
 
   const isDelivery = (deliveryMode ?? "delivery") === "delivery";
-  const hasSavedAddresses = savedAddresses.length > 0;
-  const canSaveNewAddress = allowSavedAddresses && !hasSavedAddresses;
+  const hasMultipleSavedAddresses = savedAddresses.length > 1;
+  const canShowSaveAddress = canSaveNewAddress || allowSavedAddresses;
 
   return (
     <Card
@@ -84,6 +87,20 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
           />
           {isDelivery ? (
             <>
+              {allowSavedAddresses && hasMultipleSavedAddresses ? (
+                <CheckoutSelectField
+                  control={control}
+                  description="Podés elegir una dirección guardada o editar los campos."
+                  disabled={disabled}
+                  label="Dirección guardada"
+                  name={names.customerAddressId}
+                  options={savedAddresses.map((address) => ({
+                    label: `Dirección: ${address.summary}`,
+                    value: address.id,
+                  }))}
+                  placeholder="Elegí una dirección"
+                />
+              ) : null}
               <CheckoutLocationFields
                 control={control}
                 disabled={disabled}
@@ -137,7 +154,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
             name={names.notes}
             placeholder="Torre 2, Dpto 204."
           />
-          {/* TODO: Add a proper functionality and user story outside of this component to handle address saving {isDelivery && canSaveNewAddress ? (
+          {/* {isDelivery && canShowSaveAddress ? (
             <div className="rounded-[1.25rem] border border-border/70 bg-muted/15 px-4 py-4">
               <div className="space-y-1">
                 <p className="font-medium text-foreground text-sm">
@@ -166,7 +183,7 @@ function CheckoutDeliveryStepSection<TFieldValues extends FieldValues>({
               </div>
             </div>
           ) : null}
-        */}
+          */}
         </FieldGroup>
       </CardContent>
       <CardFooter className="border-border/70 border-t px-5 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6">

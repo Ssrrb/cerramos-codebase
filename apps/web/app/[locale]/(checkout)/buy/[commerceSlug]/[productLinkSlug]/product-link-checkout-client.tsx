@@ -49,6 +49,77 @@ interface CreateOrderResponse {
   upayFormId: string | null;
 }
 
+const resolveFulfillmentMode = ({
+  deliveryEnabled,
+  fulfillmentMode,
+  pickupEnabled,
+}: Pick<
+  ProductLinkCheckoutClientProps,
+  "deliveryEnabled" | "fulfillmentMode" | "pickupEnabled"
+>) => {
+  if (fulfillmentMode) {
+    return fulfillmentMode;
+  }
+
+  if (deliveryEnabled && pickupEnabled) {
+    return "delivery_or_pickup";
+  }
+
+  if (deliveryEnabled) {
+    return "delivery";
+  }
+
+  return pickupEnabled ? "pickup" : "none";
+};
+
+const getConfirmationMessage = (
+  copyVariant: ProductLinkCheckoutClientProps["copyVariant"],
+  skipFulfillmentStep: boolean
+) => {
+  if (copyVariant === "subscription") {
+    return "Registramos tu suscripción y el pago inicial se completa dentro de Cerramos. La activación comercial seguirá por separado.";
+  }
+
+  if (skipFulfillmentStep) {
+    return "Registramos tu reserva y el pago se completa dentro de Cerramos. La coordinación comercial seguirá por separado.";
+  }
+
+  return "Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado.";
+};
+
+const saveCheckoutDetails = async (
+  values: CheckoutDeliveryValues & { quantity: number }
+) => {
+  const response = await fetch("/api/checkout/saved-details", {
+    body: JSON.stringify(values),
+    headers: {
+      "content-type": "application/json",
+    },
+    method: "POST",
+  });
+
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    fieldErrors?: Record<string, string[] | undefined>;
+  } | null;
+
+  if (response.ok) {
+    return null;
+  }
+
+  if (payload?.fieldErrors) {
+    const firstError = Object.values(payload.fieldErrors).find(
+      (messages) => messages?.[0]
+    )?.[0];
+
+    if (firstError) {
+      return firstError;
+    }
+  }
+
+  return payload?.error ?? "No se pudieron guardar tus detalles.";
+};
+
 const wait = (ms: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
@@ -111,27 +182,21 @@ export const ProductLinkCheckoutClient = ({
     );
   }, [orderReference, paymentRequired, upayFormId]);
 
-  const resolvedFulfillmentMode =
-    fulfillmentMode ??
-    (deliveryEnabledProp && pickupEnabledProp
-      ? "delivery_or_pickup"
-      : deliveryEnabledProp
-        ? "delivery"
-        : pickupEnabledProp
-          ? "pickup"
-          : "none");
+  const resolvedFulfillmentMode = resolveFulfillmentMode({
+    deliveryEnabled: deliveryEnabledProp,
+    fulfillmentMode,
+    pickupEnabled: pickupEnabledProp,
+  });
   const deliveryEnabled =
     resolvedFulfillmentMode === "delivery" ||
     resolvedFulfillmentMode === "delivery_or_pickup";
   const pickupEnabled =
     resolvedFulfillmentMode === "pickup" ||
     resolvedFulfillmentMode === "delivery_or_pickup";
-  const confirmationMessage =
-    copyVariant === "subscription"
-      ? "Registramos tu suscripción y el pago inicial se completa dentro de Cerramos. La activación comercial seguirá por separado."
-      : skipFulfillmentStep
-        ? "Registramos tu reserva y el pago se completa dentro de Cerramos. La coordinación comercial seguirá por separado."
-        : "Registramos tu pedido y el pago se completa dentro de Cerramos. La confirmación comercial seguirá por separado.";
+  const confirmationMessage = getConfirmationMessage(
+    copyVariant,
+    skipFulfillmentStep
+  );
 
   return (
     <CheckoutPage
@@ -149,6 +214,7 @@ export const ProductLinkCheckoutClient = ({
         countryId: initialLocationData.countries[0]?.value ?? "",
         mode: deliveryEnabled ? "delivery" : "pickup",
         recipientName: initialAuthUser?.name ?? "",
+        phone: initialAuthUser?.phone ?? "",
       }}
       deliveryEnabled={deliveryEnabled}
       footerContent="Powered by Cheki"
@@ -166,6 +232,7 @@ export const ProductLinkCheckoutClient = ({
         setPaymentStage("idle");
         setUpayFormId(null);
       }}
+      onSaveDetails={initialAuthUser ? saveCheckoutDetails : undefined}
       onSubmit={
         orderReference
           ? undefined

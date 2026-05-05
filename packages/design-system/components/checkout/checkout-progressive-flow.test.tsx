@@ -73,6 +73,23 @@ const savedAddresses: CheckoutSavedAddress[] = [
     summary: "Av. España 742 casi Perú, San Lorenzo",
   },
 ];
+const multipleSavedAddresses: CheckoutSavedAddress[] = [
+  ...savedAddresses,
+  {
+    cityId: sanLorenzoCityOption?.value ?? "city_py_san_lorenzo",
+    countryId: checkoutParaguayCountryOption.value,
+    id: "address_work",
+    isDefault: false,
+    label: "Trabajo",
+    postalCode: "1200",
+    recipientName: "Camila Ferreira",
+    referenceNote: "Recepción",
+    stateId: centralStateOption?.value ?? "state_py_central",
+    streetLine1: "Ruta 2 Km 14",
+    streetLine2: "",
+    summary: "Ruta 2 Km 14, San Lorenzo",
+  },
+];
 
 const fillDetailsStep = () => {
   fireEvent.change(screen.getByLabelText("Nombre y apellido"), {
@@ -84,10 +101,21 @@ const fillDetailsStep = () => {
   fireEvent.change(screen.getByLabelText("Teléfono"), {
     target: { value: "0981123456" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Continuar a entrega" }));
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: continueFromDetailsPattern,
+    })
+  );
 };
 
+const continueFromDetailsPattern = /Continuar a (entrega|coordinación|pago)/;
+
 describe("CheckoutProgressiveFlow", () => {
+  const scrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "scrollIntoView"
+  );
+
   beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
@@ -96,7 +124,19 @@ describe("CheckoutProgressiveFlow", () => {
   });
 
   afterAll(() => {
-    (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView = undefined;
+    if (scrollIntoViewDescriptor) {
+      Object.defineProperty(
+        HTMLElement.prototype,
+        "scrollIntoView",
+        scrollIntoViewDescriptor
+      );
+      return;
+    }
+
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: undefined,
+    });
   });
 
   afterEach(() => {
@@ -183,6 +223,29 @@ describe("CheckoutProgressiveFlow", () => {
     });
   });
 
+  test("shows a saved-address dropdown when multiple addresses are available", async () => {
+    render(
+      <CheckoutProgressiveFlow
+        allowSavedAddresses
+        merchant={merchant}
+        orderSummary={orderSummary}
+        paymentRequired={false}
+        product={product}
+        savedAddresses={multipleSavedAddresses}
+      />
+    );
+
+    fillDetailsStep();
+
+    await waitFor(() => {
+      expect(screen.getByText("Dirección guardada")).toBeDefined();
+    });
+
+    expect(
+      screen.getByRole("combobox", { name: "Dirección guardada" })
+    ).toBeDefined();
+  });
+
   test("skips the fulfillment step and submits from details into payment", async () => {
     const onSubmit = vi.fn().mockResolvedValue(null);
 
@@ -237,18 +300,11 @@ describe("CheckoutProgressiveFlow", () => {
         orderSummary={orderSummary}
         paymentRequired
         product={product}
+        skipFulfillmentStep
       />
     );
 
     fillDetailsStep();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Continuar a pago" })
-      ).toBeDefined();
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Continuar a pago" }));
 
     await waitFor(() => {
       expect(

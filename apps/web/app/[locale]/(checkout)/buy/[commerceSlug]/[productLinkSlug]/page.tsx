@@ -1,5 +1,6 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
 import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
+import { warmDatabaseConnection } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listCheckoutSavedAddresses } from "@/lib/checkout-customer-addresses";
@@ -24,6 +25,7 @@ export const generateMetadata = async ({
   params,
 }: ProductLinkCheckoutPageProps): Promise<Metadata> => {
   const { commerceSlug, productLinkSlug } = await params;
+  await warmDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -47,6 +49,7 @@ const ProductLinkCheckoutPage = async ({
   params,
 }: ProductLinkCheckoutPageProps) => {
   const { commerceSlug, productLinkSlug } = await params;
+  await warmDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -68,25 +71,26 @@ const ProductLinkCheckoutPage = async ({
   const initialAuthUser = session?.user.email
     ? {
         email: session.user.email,
-        name: session.user.name ?? null,
+        name: customerProfile?.name ?? session.user.name ?? null,
+        phone: customerProfile?.phone ?? null,
       }
     : null;
 
   return (
     <ProductLinkCheckoutClient
       commerceSlug={commerceSlug}
+      copyVariant={viewModel.copyVariant}
+      fulfillmentMode={checkout.fulfillmentMode}
       googleEnabled={isGoogleAuthEnabled()}
-      initialLocationData={locationData}
       initialAuthUser={initialAuthUser}
+      initialLocationData={locationData}
       initialSavedAddresses={savedAddresses}
       merchant={viewModel.merchant}
-      copyVariant={viewModel.copyVariant}
       orderSummary={viewModel.orderSummary}
       paymentRequired={checkout.paymentRequired}
       product={viewModel.product}
       productLinkSlug={productLinkSlug}
       skipFulfillmentStep={viewModel.skipFulfillmentStep}
-      fulfillmentMode={checkout.fulfillmentMode}
     />
   );
 };

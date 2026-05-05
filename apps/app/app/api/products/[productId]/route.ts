@@ -7,6 +7,8 @@ import {
   productPayloadSchema,
 } from "@/lib/products";
 
+export const dynamic = "force-dynamic";
+
 interface ProductRouteContext {
   params: Promise<{
     productId: string;

@@ -5,15 +5,11 @@ import {
 } from "@repo/auth/utils";
 import {
   noseconeOptions,
-  noseconeOptionsWithToolbar,
   securityMiddleware,
 } from "@repo/security/proxy";
 import { type NextProxy, NextResponse } from "next/server";
-import { env } from "./env";
 
-const securityHeaders = env.FLAGS_SECRET
-  ? securityMiddleware(noseconeOptionsWithToolbar)
-  : securityMiddleware(noseconeOptions);
+const securityHeaders = securityMiddleware(noseconeOptions);
 
 const isAuthPage = (pathname: string) =>
   pathname === "/sign-in" ||

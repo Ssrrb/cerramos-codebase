@@ -1,7 +1,7 @@
 import "server-only";
 
 export { and, eq, gte } from "drizzle-orm";
-export { database, schema, sql } from "./client";
+export { database, schema, sql, warmDatabaseConnection } from "./client";
 export {
   isForeignKeyConstraintError,
   isMissingRelationError,

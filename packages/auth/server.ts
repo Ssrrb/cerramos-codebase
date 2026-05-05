@@ -1,6 +1,6 @@
 import "server-only";
 
-import { database, schema } from "@repo/database";
+import { database, schema, warmDatabaseConnection } from "@repo/database";
 import { log } from "@repo/observability/log";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -163,6 +163,7 @@ const getSessionState = cache(async (): Promise<SessionResult> => {
   const requestHeaders = await headers();
 
   try {
+    await warmDatabaseConnection();
     return await betterAuthServer.api.getSession({
       headers: requestHeaders,
     });

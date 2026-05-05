@@ -11,6 +11,7 @@ const {
   redirectMock,
   selectMock,
   syncCustomerProfileForUserMock,
+  warmDatabaseConnectionMock,
   whereMock,
 } = vi.hoisted(() => ({
   fromMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
   }),
   selectMock: vi.fn(),
   syncCustomerProfileForUserMock: vi.fn(),
+  warmDatabaseConnectionMock: vi.fn(),
   whereMock: vi.fn(),
 }));
 
@@ -48,6 +50,7 @@ vi.mock("@repo/database", () => ({
       role: "user.role",
     },
   },
+  warmDatabaseConnection: warmDatabaseConnectionMock,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -110,6 +113,7 @@ describe("auth server commerce context", () => {
     redirectMock.mockClear();
     selectMock.mockReset();
     syncCustomerProfileForUserMock.mockReset();
+    warmDatabaseConnectionMock.mockReset();
     whereMock.mockReset();
 
     getSessionCookieMock.mockReturnValue("session_123");

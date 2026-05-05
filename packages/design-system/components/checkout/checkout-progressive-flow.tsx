@@ -65,6 +65,10 @@ interface CheckoutCopyConfig {
   paymentProcessorPlaceholderTitle: string;
   paymentReadyDescription: string;
   paymentStepTitle: string;
+  saveDetailsErrorLabel: string;
+  saveDetailsLabel: string;
+  saveDetailsPendingLabel: string;
+  saveDetailsSuccessLabel: string;
 }
 
 const deliveryFieldNames: CheckoutDeliveryFieldNames<CheckoutDeliveryValues> = {
@@ -187,6 +191,10 @@ const checkoutCopyByVariant: Record<CheckoutCopyVariant, CheckoutCopyConfig> = {
     paymentProcessorPlaceholderTitle: "Formulario de pago",
     paymentReadyDescription: "Ingresá tu tarjeta en el formulario seguro.",
     paymentStepTitle: "Pago",
+    saveDetailsErrorLabel: "No se pudieron guardar tus detalles.",
+    saveDetailsLabel: "Guardar detalles",
+    saveDetailsPendingLabel: "Guardando detalles",
+    saveDetailsSuccessLabel: "Detalles guardados para tu próximo checkout.",
   },
   subscription: {
     confirmationEyebrow: "Suscripción confirmada",
@@ -206,6 +214,10 @@ const checkoutCopyByVariant: Record<CheckoutCopyVariant, CheckoutCopyConfig> = {
     paymentReadyDescription:
       "Ingresá tu tarjeta para activar la suscripción en el formulario seguro.",
     paymentStepTitle: "Pago",
+    saveDetailsErrorLabel: "No se pudieron guardar tus detalles.",
+    saveDetailsLabel: "Guardar detalles",
+    saveDetailsPendingLabel: "Guardando detalles",
+    saveDetailsSuccessLabel: "Detalles guardados para tu próximo checkout.",
   },
 };
 
@@ -237,6 +249,9 @@ export interface CheckoutProgressiveFlowProps {
   merchant: CheckoutMerchantSummary;
   onPaymentConfirm?: () => Promise<string | null | undefined>;
   onReset?: () => void;
+  onSaveDetails?: (
+    values: CheckoutDeliveryValues & { quantity: number }
+  ) => Promise<string | null | undefined>;
   onSubmit?: (
     values: CheckoutDeliveryValues & { quantity: number }
   ) => Promise<string | null | undefined>;
@@ -272,6 +287,7 @@ function CheckoutProgressiveFlow({
   merchant,
   onPaymentConfirm,
   onReset,
+  onSaveDetails,
   onSubmit,
   orderSummary,
   orderReference,
@@ -320,6 +336,11 @@ function CheckoutProgressiveFlow({
   const [isPaymentProcessing, startPaymentProcessing] = useTransition();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
+  const [saveDetailsError, setSaveDetailsError] = useState<string | null>(null);
+  const [saveDetailsState, setSaveDetailsState] = useState<
+    "idle" | "error" | "saved"
+  >("idle");
+  const [isSavingDetails, startSavingDetails] = useTransition();
   const [quantity, setQuantity] = useState(() =>
     Math.max(1, Math.min(product.quantity, Math.max(product.availableStock, 1)))
   );
@@ -667,6 +688,34 @@ function CheckoutProgressiveFlow({
     });
   };
 
+  const handleSaveDetails = () => {
+    if (!onSaveDetails) {
+      return;
+    }
+
+    setSaveDetailsError(null);
+    setSaveDetailsState("idle");
+    startSavingDetails(async () => {
+      try {
+        const errorMessage = await onSaveDetails({
+          ...form.getValues(),
+          quantity,
+        });
+
+        if (errorMessage) {
+          setSaveDetailsError(errorMessage);
+          setSaveDetailsState("error");
+          return;
+        }
+
+        setSaveDetailsState("saved");
+      } catch {
+        setSaveDetailsError(copy.saveDetailsErrorLabel);
+        setSaveDetailsState("error");
+      }
+    });
+  };
+
   const detailStep: CheckoutVerticalStepperStep = {
     id: "details",
     title: "Mis datos",
@@ -923,18 +972,46 @@ function CheckoutProgressiveFlow({
                         </p>
                       </div>
                     ) : null}
-                    {onReset ? (
-                      <Button
-                        onClick={() => {
-                          setQuantity(initialQuantity);
-                          onReset?.();
-                        }}
-                        type="button"
-                        variant="outline"
-                      >
-                        {copy.createAnotherLabel}
-                      </Button>
+                    {saveDetailsState === "saved" ? (
+                      <p className="font-medium text-emerald-700 text-sm">
+                        {copy.saveDetailsSuccessLabel}
+                      </p>
                     ) : null}
+                    {saveDetailsState === "error" ? (
+                      <p className="font-medium text-destructive text-sm">
+                        {saveDetailsError ?? copy.saveDetailsErrorLabel}
+                      </p>
+                    ) : null}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      {onSaveDetails ? (
+                        <Button
+                          disabled={isSavingDetails}
+                          onClick={handleSaveDetails}
+                          type="button"
+                        >
+                          {isSavingDetails ? (
+                            <>
+                              <LoaderCircle className="size-4 animate-spin" />
+                              {copy.saveDetailsPendingLabel}
+                            </>
+                          ) : (
+                            copy.saveDetailsLabel
+                          )}
+                        </Button>
+                      ) : null}
+                      {onReset ? (
+                        <Button
+                          onClick={() => {
+                            setQuantity(initialQuantity);
+                            onReset?.();
+                          }}
+                          type="button"
+                          variant="outline"
+                        >
+                          {copy.createAnotherLabel}
+                        </Button>
+                      ) : null}
+                    </div>
                   </CardContent>
                 </Card>
               </div>

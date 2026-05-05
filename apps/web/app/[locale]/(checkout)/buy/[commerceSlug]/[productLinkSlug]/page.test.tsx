@@ -9,6 +9,7 @@ const {
   listCheckoutSavedAddressesMock,
   getSessionMock,
   notFoundMock,
+  warmDatabaseConnectionMock,
 } = vi.hoisted(() => ({
   createCheckoutViewModelMock: vi.fn(),
   getCheckoutLocationDataMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
   }),
+  warmDatabaseConnectionMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -45,6 +47,10 @@ vi.mock("@repo/auth/keys", () => ({
 vi.mock("@repo/auth/server", () => ({
   getCurrentCustomerProfile: getCurrentCustomerProfileMock,
   getSession: getSessionMock,
+}));
+
+vi.mock("@repo/database", () => ({
+  warmDatabaseConnection: warmDatabaseConnectionMock,
 }));
 
 vi.mock("./product-link-checkout-client", () => ({
@@ -106,6 +112,7 @@ describe("product link checkout page", () => {
     getPublicProductLinkCheckoutMock.mockReset();
     listCheckoutSavedAddressesMock.mockReset();
     getSessionMock.mockReset();
+    warmDatabaseConnectionMock.mockReset();
     notFoundMock.mockClear();
     getSessionMock.mockResolvedValue(null);
     getCurrentCustomerProfileMock.mockResolvedValue(null);
@@ -149,6 +156,8 @@ describe("product link checkout page", () => {
     });
     getCurrentCustomerProfileMock.mockResolvedValue({
       id: "customer_1",
+      name: "Profile Buyer",
+      phone: "0981555555",
     });
     listCheckoutSavedAddressesMock.mockResolvedValue([
       {
@@ -193,6 +202,8 @@ describe("product link checkout page", () => {
     expect(html).toContain("mate-shop");
     expect(html).toContain("mate-premium");
     expect(html).toContain("buyer@example.com");
+    expect(html).toContain("Profile Buyer");
+    expect(html).toContain("0981555555");
     expect(html).toContain("country_db_py");
     expect(html).toContain("address_1");
     expect(html).toContain("paymentRequired&quot;:true");

@@ -1,4 +1,4 @@
-import { requireSession } from "@repo/auth/server";
+import { getCurrentCustomerProfile, requireSession } from "@repo/auth/server";
 import { CustomerAccountHeader } from "@repo/design-system/components/customer-ordenes";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
@@ -30,9 +30,11 @@ const CustomerAddressesRoute = async ({
   const session = await requireSession();
 
   try {
-    const initialAddresses = await getCustomerAddressesPageData(
-      session.user.customerId ?? session.user.id
-    );
+    const customerProfile = await getCurrentCustomerProfile();
+    const customerId = customerProfile?.id ?? session.user.customerId;
+    const initialAddresses = customerId
+      ? await getCustomerAddressesPageData(customerId)
+      : [];
 
     return (
       <CustomerAddressesPageClient initialAddresses={initialAddresses} />

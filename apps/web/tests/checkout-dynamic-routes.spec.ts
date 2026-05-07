@@ -43,6 +43,7 @@ const getNavigationMetrics = async (page: Page) =>
       domContentLoadedMs: Math.round(
         navigation.domContentLoadedEventEnd - navigation.startTime
       ),
+      loadTimeMs: Math.round(navigation.loadEventEnd - navigation.startTime),
       responseEndMs: Math.round(navigation.responseEnd - navigation.startTime),
     };
   });
@@ -233,6 +234,9 @@ test.describe("checkout dynamic routes", () => {
 
       const interactionTimings = await interactWithCheckout(page);
       const navigationTimings = await getNavigationMetrics(page);
+      console.log(
+        `LOAD_TIME_MS\t${route.path}\t${navigationTimings.loadTimeMs}`
+      );
 
       await testInfo.attach(`${route.name}-timings.json`, {
         body: JSON.stringify(

@@ -1,0 +1,3 @@
+timestamp	session	branch	commit	route	load_time_ms	delta_ms	status	optimization	files_changed	notes
+2026-05-07T20:19:15-03:00	may7-checkout-load	codex/web-loadtime-may7-checkout-load	93eb9e9	/es/buy/tutienda/campera-tutienda	3216	0	baseline	unchanged checkout source	apps/web/tests/checkout-dynamic-routes.spec.ts	checkout fixture with metric logging added
+2026-05-07T20:20:25-03:00	may7-checkout-load	codex/web-loadtime-may7-checkout-load	uncommitted	/es/buy/tutienda/campera-tutienda	2910	-306	keep	parallelize checkout page server reads	apps/web/app/[locale]/(checkout)/buy/[commerceSlug]/[productLinkSlug]/page.tsx;apps/web/tests/checkout-dynamic-routes.spec.ts	playwright passed; check blocked by missing ultracite/core; typecheck/build blocked by TS5101

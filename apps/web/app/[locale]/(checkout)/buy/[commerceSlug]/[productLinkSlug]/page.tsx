@@ -3,6 +3,7 @@ import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
 import { warmDatabaseConnection } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { listCheckoutSavedAddresses } from "@/lib/checkout-customer-addresses";
 import { getCheckoutLocationData } from "@/lib/checkout-locations";
 import {
@@ -10,6 +11,8 @@ import {
   getPublicProductLinkCheckout,
 } from "@/lib/product-links";
 import { ProductLinkCheckoutClient } from "./product-link-checkout-client";
+
+const warmCheckoutDatabaseConnection = cache(warmDatabaseConnection);
 
 interface ProductLinkCheckoutPageProps {
   params: Promise<{
@@ -25,7 +28,7 @@ export const generateMetadata = async ({
   params,
 }: ProductLinkCheckoutPageProps): Promise<Metadata> => {
   const { commerceSlug, productLinkSlug } = await params;
-  await warmDatabaseConnection();
+  await warmCheckoutDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -49,7 +52,7 @@ const ProductLinkCheckoutPage = async ({
   params,
 }: ProductLinkCheckoutPageProps) => {
   const { commerceSlug, productLinkSlug } = await params;
-  await warmDatabaseConnection();
+  await warmCheckoutDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -60,8 +63,10 @@ const ProductLinkCheckoutPage = async ({
   }
 
   const viewModel = createCheckoutViewModel(checkout);
-  const locationData = await getCheckoutLocationData();
-  const session = await getSession();
+  const [locationData, session] = await Promise.all([
+    getCheckoutLocationData(),
+    getSession(),
+  ]);
   const customerProfile = session?.user.id
     ? await getCurrentCustomerProfile()
     : null;

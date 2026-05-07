@@ -7,8 +7,8 @@
     "start": "bun --bun next start",
     "analyze": "ANALYZE=true npm run build",
     "test": "NODE_ENV=test vitest run --config vitest.config.mts",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui",
+    "evaluate": "playwright test",
+    "evaluate:ui": "playwright test --ui",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
@@ -49,6 +49,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.1",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "25.6.0",

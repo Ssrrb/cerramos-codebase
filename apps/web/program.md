@@ -1,114 +1,165 @@
-# autoresearch
+# web load-time optimization
 
-This is an experiment to have the LLM do its own research.
+This program is an experiment loop for improving `apps/web` load time while preserving the repo's next-forge-derived Turborepo standards.
+
+The goal is simple: lower measured page load time without weakening public marketing, localization, or buyer checkout behavior.
+
+Relevant codebase information:
+
+- `apps/web` is the public surface for marketing, localized public pages, and buyer-facing checkout flows; it does not own merchant operations or standalone webhook/cron infrastructure. See [`README.md`](./README.md).
+- The next-forge architecture for this repo keeps deployable apps under `apps/`, shared modules under `packages/`, and shared imports under `@repo/*`. See [`../../skills/next-forge/references/architecture.md`](../../skills/next-forge/references/architecture.md).
+- Root commands are Bun/Turbo-based: `bun run dev`, `bun run build`, `bun run test`, `bun run check`, and `bun run fix`. See [`../../package.json`](../../package.json).
+- Formatting and linting use Ultracite/Biome presets for React and Next.js. See [`../../biome.jsonc`](../../biome.jsonc).
 
 ## Setup
 
-To set up a new experiment, work with the user to:
+To set up a new optimization session:
 
-1. **Agree on a run tag**: propose a tag based on today's date (e.g. `mar5`). The branch `autoresearch/<tag>` must not already exist — this is a fresh run.
-2. **Create the branch**: `git checkout -b autoresearch/<tag>` from current master.
-3. **Read the in-scope files**: The repo is small. Read these files for full context:
-   - `README.md` — repository context.
-   - `prepare.py` — fixed constants, data prep, tokenizer, dataloader, evaluation. Do not modify.
-   - `train.py` — the file you modify. Model architecture, optimizer, training loop.
-4. **Verify data exists**: Check that `~/.cache/autoresearch/` contains data shards and a tokenizer. If not, tell the human to run `uv run prepare.py`.
-5. **Initialize results.tsv**: Create `results.tsv` with just the header row. The baseline will be recorded after the first run.
-6. **Confirm and go**: Confirm setup looks good.
+1. **Agree on a run tag**: propose a tag based on today's date and scope, for example `may6-web-load`. Use a fresh branch such as `codex/web-loadtime-<tag>`.
+2. **Confirm the current state**: run `git status --short` and note any existing user changes before editing. Do not revert unrelated changes.
+3. **Read the in-scope files**:
+   - [`README.md`](./README.md) for `apps/web` ownership.
+   - [`package.json`](./package.json) for app-local commands.
+   - [`playwright.config.ts`](./playwright.config.ts) for the Playwright server, base URL, and browser target.
+   - [`tests/home.spec.ts`](./tests/home.spec.ts) for the current Playwright navigation/load-time pattern.
+   - Target route and component files under [`app/`](./app) and [`components/`](./components) before changing UI or routing.
+   - Shared `@repo/*` packages only when the optimization crosses package boundaries.
+4. **Initialize the session TSV**: create `load-time-results.tsv` beside this file with only the header row. The baseline run must be the first data row.
+5. **Confirm Playwright can measure the page**: run `bun run --cwd apps/web evaluate`. Playwright is already configured to start `bun run dev`, reuse `http://127.0.0.1:3001`, and run Chromium.
+6. **Record the baseline**: measure the current load time before making any optimization.
 
-Once you get confirmation, kick off the experimentation.
+Relevant codebase information:
+
+- `apps/web/package.json` exposes `evaluate` and `evaluate:ui` as Playwright commands.
+- `apps/web/playwright.config.ts` sets `baseURL` to `http://127.0.0.1:3001`, starts the app with `bun run dev`, and uses the Desktop Chrome project.
+- `apps/web/tests/home.spec.ts` already uses Playwright's `page.goto`, `performance.getEntriesByType("navigation")`, and `loadEventEnd - startTime` pattern. If the test uses a fixed mocked value, do not treat that mocked value as the optimization metric; use the same browser timing API without stubbing for real measurements.
 
 ## Experimentation
 
-Each experiment runs on a single GPU. The training script runs for a **fixed time budget of 5 minutes** (wall clock training time, excluding startup/compilation). You launch it simply as: `uv run train.py`.
+Each experiment should make one focused optimization and then measure again.
 
-**What you CAN do:**
-- Modify `train.py` — this is the only file you edit. Everything is fair game: model architecture, optimizer, hyperparameters, training loop, batch size, model size, etc.
+What you can do:
 
-**What you CANNOT do:**
-- Modify `prepare.py`. It is read-only. It contains the fixed evaluation, data loading, tokenizer, and training constants (time budget, sequence length, etc).
-- Install new packages or add dependencies. You can only use what's already in `pyproject.toml`.
-- Modify the evaluation harness. The `evaluate_bpb` function in `prepare.py` is the ground truth metric.
+- Modify `apps/web` routes, layouts, components, styles, and tests when the change directly affects public load time.
+- Move reusable logic into the smallest appropriate `packages/*` boundary if reuse is real and already aligned with the codebase.
+- Use App Router defaults: prefer server components, and add client components only where interactivity is required.
+- Optimize images, imports, data loading, metadata, CSS, and route-level rendering work when evidence shows they affect load time.
 
-**The goal is simple: get the lowest val_bpb.** Since the time budget is fixed, you don't need to worry about training time — it's always 5 minutes. Everything is fair game: change the architecture, the optimizer, the hyperparameters, the batch size, the model size. The only constraint is that the code runs without crashing and finishes within the time budget.
+What you cannot do:
 
-**VRAM** is a soft constraint. Some increase is acceptable for meaningful val_bpb gains, but it should not blow up dramatically.
+- Do not move public checkout or marketing behavior into `apps/app` or webhook/cron behavior into `apps/web`; preserve app ownership.
+- Do not collapse order state and payment state or treat messaging channels as the operational source of truth.
+- Do not install new dependencies unless the optimization cannot be done with existing Next.js, React, Bun, Playwright, or `@repo/*` capabilities.
+- Do not change Playwright to hide regressions. The measurement path must stay able to report real navigation timing.
+- Do not skip `bun run check` after source changes that affect TypeScript, React, styling, or imports.
 
-**Simplicity criterion**: All else being equal, simpler is better. A small improvement that adds ugly complexity is not worth it. Conversely, removing something and getting equal or better results is a great outcome — that's a simplification win. When evaluating whether to keep a change, weigh the complexity cost against the improvement magnitude. A 0.001 val_bpb improvement that adds 20 lines of hacky code? Probably not worth it. A 0.001 val_bpb improvement from deleting code? Definitely keep. An improvement of ~0 but much simpler code? Keep.
+The load-time measurement should use Playwright because this app already has Playwright installed and configured for `apps/web`. A measurement test or helper should collect the navigation timing in the browser:
 
-**The first run**: Your very first run should always be to establish the baseline, so you will run the training script as is.
+```ts
+const loadTimeMs = await page.evaluate(() => {
+  const [navigation] = performance.getEntriesByType(
+    "navigation"
+  ) as PerformanceNavigationTiming[];
+
+  if (!navigation) {
+    throw new Error("Navigation timing entry was not available.");
+  }
+
+  return Math.round(navigation.loadEventEnd - navigation.startTime);
+});
+```
+
+For each run, measure at least the default public homepage (`/`). When an optimization touches localization, measure every locale route covered by `tests/home.spec.ts`. When it touches checkout, also measure a representative buyer checkout route with stable fixture data.
+
+Relevant codebase information:
+
+- `apps/web` owns localized public pages and buyer-facing checkout flows, so load-time changes should be evaluated against those surfaces.
+- The root Turborepo pipeline builds apps with `bun run build` and checks all workspaces with `bun run check`; app-local tests run through `bun run --cwd apps/web test`, and Playwright evaluation runs through `bun run --cwd apps/web evaluate`.
+- Shared modules should stay under `packages/*` and be imported through `@repo/*`, matching the next-forge architecture.
 
 ## Output format
 
-Once the script finishes it prints a summary like this:
+For every measured run, capture the important output in the terminal log and append a TSV row.
 
-```
----
-val_bpb:          0.997900
-training_seconds: 300.1
-total_seconds:    325.9
-peak_vram_mb:     45060.2
-mfu_percent:      39.80
-total_tokens_M:   499.6
-num_steps:        953
-num_params_M:     50.3
-depth:            8
+Playwright output should include a machine-readable line per measured route:
+
+```text
+LOAD_TIME_MS	/	1234
 ```
 
-Note that the script is configured to always stop after 5 minutes, so depending on the computing platform of this computer the numbers might look different. You can extract the key metric from the log file:
+If multiple routes are measured, each route can be logged separately, then summarized in the TSV with the primary route or median route value. Keep the raw Playwright log until the TSV row is appended.
 
-```
-grep "^val_bpb:" run.log
-```
+When a run crashes or never reaches navigation timing, use `0` for `load_time_ms`, mark the status as `crash`, and include the failure class in the description.
+
+Relevant codebase information:
+
+- `apps/web/playwright.config.ts` enables traces on first retry, which can help debug failed measurement runs.
+- `apps/web/package.json` keeps Playwright under the app's own scripts, so use `bun run --cwd apps/web evaluate` instead of inventing a root-level command.
 
 ## Logging results
 
-When an experiment is done, log it to `results.tsv` (tab-separated, NOT comma-separated — commas break in descriptions).
+Log results to `load-time-results.tsv` as tab-separated values, not comma-separated values. Leave the TSV untracked unless the user explicitly asks to commit experiment logs.
 
-The TSV has a header row and 5 columns:
+The TSV has one header row and these columns:
 
+```text
+timestamp	session	branch	commit	route	load_time_ms	delta_ms	status	optimization	files_changed	notes
 ```
-commit	val_bpb	memory_gb	status	description
-```
 
-1. git commit hash (short, 7 chars)
-2. val_bpb achieved (e.g. 1.234567) — use 0.000000 for crashes
-3. peak memory in GB, round to .1f (e.g. 12.3 — divide peak_vram_mb by 1024) — use 0.0 for crashes
-4. status: `keep`, `discard`, or `crash`
-5. short text description of what this experiment tried
+Column rules:
+
+- `timestamp`: ISO-8601 timestamp for when the run completed.
+- `session`: the agreed run tag.
+- `branch`: current branch name.
+- `commit`: short git commit hash for the measured source state, or `uncommitted` if the run is intentionally measured before commit.
+- `route`: measured route, for example `/`, `/en`, or a checkout route.
+- `load_time_ms`: measured `loadEventEnd - startTime` in milliseconds.
+- `delta_ms`: difference from the current best baseline for the same route. Negative is better.
+- `status`: `baseline`, `keep`, `discard`, or `crash`.
+- `optimization`: short description of the change tried.
+- `files_changed`: semicolon-separated file list; avoid commas.
+- `notes`: short context such as `homepage only`, `all locales`, `checkout fixture`, or the crash reason.
 
 Example:
 
+```text
+timestamp	session	branch	commit	route	load_time_ms	delta_ms	status	optimization	files_changed	notes
+2026-05-06T14:00:00-04:00	may6-web-load	codex/web-loadtime-may6	a1b2c3d	/	1432	0	baseline	unchanged source	none	first measurement
+2026-05-06T14:18:00-04:00	may6-web-load	codex/web-loadtime-may6	b2c3d4e	/	1198	-234	keep	defer noncritical hero media	app/[locale]/(marketing)/(home)/components/hero.tsx	homepage improved
+2026-05-06T14:32:00-04:00	may6-web-load	codex/web-loadtime-may6	uncommitted	/	1510	312	discard	add extra client animation	app/[locale]/(marketing)/(home)/components/hero.tsx	slower and more client JS
+2026-05-06T14:45:00-04:00	may6-web-load	codex/web-loadtime-may6	uncommitted	/	0	0	crash	change image loader	app/[locale]/(marketing)/(home)/components/hero.tsx	build failed
 ```
-commit	val_bpb	memory_gb	status	description
-a1b2c3d	0.997900	44.0	keep	baseline
-b2c3d4e	0.993200	44.2	keep	increase LR to 0.04
-c3d4e5f	1.005000	44.0	discard	switch to GeLU activation
-d4e5f6g	0.000000	0.0	crash	double model width (OOM)
-```
+
+Relevant codebase information:
+
+- The repo uses concise, scoped commits, but local experiment TSV files are session artifacts, not product source.
+- Product docs require docs updates when ownership boundaries or canonical architecture direction changes; routine load-time experiments usually only update local docs when the process changes.
 
 ## The experiment loop
 
-The experiment runs on a dedicated branch (e.g. `autoresearch/mar5` or `autoresearch/mar5-gpu0`).
+Run this loop until the user stops the session:
 
-LOOP FOREVER:
+1. Check `git status --short`, the current branch, and the current best TSV row for the route being optimized.
+2. Pick one optimization idea and write down the expected mechanism before editing.
+3. Edit the smallest relevant surface. Stay inside `apps/web` unless a shared package is the correct owner.
+4. Run the relevant validation:
+   - `bun run --cwd apps/web evaluate` for Playwright load-time measurement.
+   - `bun run --cwd apps/web test` when app behavior or helpers changed.
+   - `bun run check` before keeping source changes.
+   - `bun run build --filter web` when the optimization affects rendering, imports, Next.js config, or production-only behavior.
+5. Extract `LOAD_TIME_MS` rows from the Playwright log and append one TSV row per route or summary route.
+6. Compare against the current best route value.
+7. If load time improves and validation passes, keep the source change and optionally commit it with a concise lower-case subject.
+8. If load time is equal or worse, revert only your own experimental changes and log `discard`.
+9. If the run crashes, inspect the Playwright output and trace. Fix simple mistakes and rerun; otherwise revert your own experimental changes and log `crash`.
+10. Repeat with the next idea.
 
-1. Look at the git state: the current branch/commit we're on
-2. Tune `train.py` with an experimental idea by directly hacking the code.
-3. git commit
-4. Run the experiment: `uv run train.py > run.log 2>&1` (redirect everything — do NOT use tee or let output flood your context)
-5. Read out the results: `grep "^val_bpb:\|^peak_vram_mb:" run.log`
-6. If the grep output is empty, the run crashed. Run `tail -n 50 run.log` to read the Python stack trace and attempt a fix. If you can't get things to work after more than a few attempts, give up.
-7. Record the results in the tsv (NOTE: do not commit the results.tsv file, leave it untracked by git)
-8. If val_bpb improved (lower), you "advance" the branch, keeping the git commit
-9. If val_bpb is equal or worse, you git reset back to where you started
+Relevant codebase information:
 
-The idea is that you are a completely autonomous researcher trying things out. If they work, keep. If they don't, discard. And you're advancing the branch so that you can iterate. If you feel like you're getting stuck in some way, you can rewind but you should probably do this very very sparingly (if ever).
+- Root scripts in `package.json` and Turbo filters are the source of truth for build, test, check, and app-scoped runs.
+- `turbo.json` marks `dev` as persistent and uncached, while `build` depends on upstream builds and tests. Use app filters when the workspace-wide command is unnecessary.
+- The product architecture favors clear domain ownership over broad rewrites, so optimize incrementally and preserve public/operational boundaries.
 
-**Timeout**: Each experiment should take ~5 minutes total (+ a few seconds for startup and eval overhead). If a run exceeds 10 minutes, kill it and treat it as a failure (discard and revert).
+**Timeout**: If a single Playwright measurement or production build hangs beyond a reasonable local threshold, stop that run, log `crash` or `discard`, and include the command that stalled in the TSV notes.
 
-**Crashes**: If a run crashes (OOM, or a bug, or etc.), use your judgment: If it's something dumb and easy to fix (e.g. a typo, a missing import), fix it and re-run. If the idea itself is fundamentally broken, just skip it, log "crash" as the status in the tsv, and move on.
-
-**NEVER STOP**: Once the experiment loop has begun (after the initial setup), do NOT pause to ask the human if you should continue. Do NOT ask "should I keep going?" or "is this a good stopping point?". The human might be asleep, or gone from a computer and expects you to continue working *indefinitely* until you are manually stopped. You are autonomous. If you run out of ideas, think harder — read papers referenced in the code, re-read the in-scope files for new angles, try combining previous near-misses, try more radical architectural changes. The loop runs until the human interrupts you, period.
-
-As an example use case, a user might leave you running while they sleep. If each experiment takes you ~5 minutes then you can run approx 12/hour, for a total of about 100 over the duration of the average human sleep. The user then wakes up to experimental results, all completed by you while they slept!
+**Crashes**: If a crash is caused by a typo, missing import, or test fixture issue, fix it and rerun. If the optimization idea itself breaks rendering, routing, localization, or checkout semantics, revert your own changes and move on.

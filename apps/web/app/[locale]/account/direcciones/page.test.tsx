@@ -108,6 +108,36 @@ describe("customer direcciones page route", () => {
     expect(html).toContain("&quot;initialAddresses&quot;:[]");
   });
 
+  test("passes a safe checkout return target to the addresses client", async () => {
+    const { default: CustomerAddressesRoute } = await import("./page");
+    const html = renderToStaticMarkup(
+      await CustomerAddressesRoute({
+        params: Promise.resolve({ locale: "es" }),
+        searchParams: Promise.resolve({
+          returnTo: "/es/buy/mate-shop/mate-premium?color=verde",
+        }),
+      })
+    );
+
+    expect(html).toContain(
+      "&quot;returnToHref&quot;:&quot;/es/buy/mate-shop/mate-premium?color=verde&quot;"
+    );
+  });
+
+  test("drops unsafe checkout return targets", async () => {
+    const { default: CustomerAddressesRoute } = await import("./page");
+    const html = renderToStaticMarkup(
+      await CustomerAddressesRoute({
+        params: Promise.resolve({ locale: "es" }),
+        searchParams: Promise.resolve({
+          returnTo: "https://example.com/phishing",
+        }),
+      })
+    );
+
+    expect(html).toContain("&quot;returnToHref&quot;:null");
+  });
+
   test("renders the error state when data loading fails", async () => {
     getCurrentCustomerProfileMock.mockResolvedValue({
       id: "customer_profile_1",

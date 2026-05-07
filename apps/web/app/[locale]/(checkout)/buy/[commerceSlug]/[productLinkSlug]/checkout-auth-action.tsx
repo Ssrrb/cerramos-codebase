@@ -18,13 +18,27 @@ import {
 } from "@repo/design-system/components/ui/dropdown-menu";
 import { ChevronDown, LogOut, MapPin, Package } from "lucide-react";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 type AuthMode = "sign-in" | "sign-up";
 type PendingAction = "email" | "google" | null;
 
 const noop = () => undefined;
+
+const buildHrefWithSearch = (
+  pathname: string,
+  searchParams: Pick<URLSearchParams, "toString">
+) => {
+  const search = searchParams.toString();
+
+  return search ? `${pathname}?${search}` : pathname;
+};
 
 export interface CheckoutAuthUser {
   email: string;
@@ -286,17 +300,21 @@ export const CheckoutAuthAction = ({
   const params = useParams<{ locale?: string }>();
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending: isSessionPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [isSignOutPending, startSignOutTransition] = useTransition();
-  const callbackUrl = pathname || "/";
+  const callbackUrl = buildHrefWithSearch(pathname || "/", searchParams);
   const locale =
     typeof params.locale === "string"
       ? params.locale
       : (pathname.split("/").filter(Boolean)[0] ?? "es");
   const accountOrdersHref = `/${locale}/account/ordenes`;
-  const accountAddressesHref = `/${locale}/account/direcciones`;
+  const accountAddressesHref = buildAuthRedirectUrl(
+    `/${locale}/account/direcciones`,
+    callbackUrl
+  );
   const sessionUser = normalizeCheckoutAuthUser(session?.user);
   const resolvedUser = isSessionPending ? initialUser : sessionUser;
   const resolvedUserEmail = resolvedUser?.email;

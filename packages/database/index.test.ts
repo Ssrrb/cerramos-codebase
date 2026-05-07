@@ -1,7 +1,6 @@
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { WebSocket } from "undici";
 import { expect, test } from "vitest";
 import { keys } from "./keys";
 import * as schema from "./schema";
@@ -10,7 +9,7 @@ const runDatabaseTest =
   process.env.RUN_DATABASE_TESTS === "1" && Boolean(process.env.DATABASE_URL);
 
 const databaseTest = runDatabaseTest ? test : test.skip;
-neonConfig.webSocketConstructor ??= WebSocket;
+neonConfig.webSocketConstructor ??= globalThis.WebSocket;
 
 const database = drizzle({
   client: new Pool({

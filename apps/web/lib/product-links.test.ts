@@ -1251,7 +1251,7 @@ describe("web product links", () => {
 
     await expect(
       _applyDefaultAddressSelection(
-        txMock as Parameters<typeof _applyDefaultAddressSelection>[0],
+        txMock as unknown as Parameters<typeof _applyDefaultAddressSelection>[0],
         "customer_real",
         "address_foreign"
       )

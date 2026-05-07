@@ -8,13 +8,13 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@arcjet/next": "1.2.0",
-    "@nosecone/next": "1.2.0",
-    "@t3-oss/env-nextjs": "^0.13.10",
-    "zod": "^4.3.6"
+    "@arcjet/next": "1.4.0",
+    "@nosecone/next": "1.4.0",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

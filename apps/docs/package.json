@@ -6,7 +6,7 @@
     "lint": "bun ./node_modules/mintlify/index.js broken-links"
   },
   "devDependencies": {
-    "mintlify": "^4.0.440",
-    "typescript": "^5.9.3"
+    "mintlify": "^4.2.551",
+    "typescript": "^6.0.3"
   }
 }

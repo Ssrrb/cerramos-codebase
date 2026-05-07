@@ -7,6 +7,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    exclude: [...configDefaults.exclude, "tests/**"],
   },
   resolve: {
     alias: [

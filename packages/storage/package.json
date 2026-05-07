@@ -8,13 +8,13 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.17.2",
-    "@t3-oss/env-nextjs": "^0.13.10",
+    "@google-cloud/storage": "^7.19.0",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "server-only": "^0.0.1",
-    "zod": "^4.3.6"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.5"
   }
 }

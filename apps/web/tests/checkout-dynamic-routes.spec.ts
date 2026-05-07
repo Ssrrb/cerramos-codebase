@@ -18,13 +18,6 @@ const checkoutImageSvg = [
 
 const checkoutRoutes = [
   {
-    expectedPathname: "/en/buy/tutienda/campera-tutienda",
-    lang: "en",
-    name: "campera English checkout",
-    path: "/en/buy/tutienda/campera-tutienda",
-    productName: /campera/i,
-  },
-  {
     expectedPathname: "/buy/tutienda/campera-tutienda",
     lang: "es",
     name: "campera Spanish checkout",

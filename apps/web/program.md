@@ -2,7 +2,7 @@
 
 This program is an experiment loop for improving `apps/web` load time while preserving the repo's next-forge-derived Turborepo standards.
 
-The goal is simple: lower measured page load time without weakening public marketing, localization, or buyer checkout behavior.
+The goal is simple: lower measured page load time of the checkout flow without weakening buyer checkout behavior.
 
 Relevant codebase information:
 
@@ -21,7 +21,7 @@ To set up a new optimization session:
    - [`README.md`](./README.md) for `apps/web` ownership.
    - [`package.json`](./package.json) for app-local commands.
    - [`playwright.config.ts`](./playwright.config.ts) for the Playwright server, base URL, and browser target.
-   - [`tests/home.spec.ts`](./tests/home.spec.ts) for the current Playwright navigation/load-time pattern.
+   - [`apps/web/tests/checkout-dynamic-routes.spec.ts`](./apps/web/tests/checkout-dynamic-routes.spec.ts) for the current Playwright navigation/load-time pattern.
    - Target route and component files under [`app/`](./app) and [`components/`](./components) before changing UI or routing.
    - Shared `@repo/*` packages only when the optimization crosses package boundaries.
 4. **Initialize the session TSV**: create `load-time-results.tsv` beside this file with only the header row. The baseline run must be the first data row.
@@ -32,7 +32,7 @@ Relevant codebase information:
 
 - `apps/web/package.json` exposes `evaluate` and `evaluate:ui` as Playwright commands.
 - `apps/web/playwright.config.ts` sets `baseURL` to `http://127.0.0.1:3001`, starts the app with `bun run dev`, and uses the Desktop Chrome project.
-- `apps/web/tests/home.spec.ts` already uses Playwright's `page.goto`, `performance.getEntriesByType("navigation")`, and `loadEventEnd - startTime` pattern. If the test uses a fixed mocked value, do not treat that mocked value as the optimization metric; use the same browser timing API without stubbing for real measurements.
+- `apps/web/apps/web/tests/checkout-dynamic-routes.spec.ts` already uses Playwright's `page.goto`, `performance.getEntriesByType("navigation")`, and `loadEventEnd - startTime` pattern. If the test uses a fixed mocked value, do not treat that mocked value as the optimization metric; use the same browser timing API without stubbing for real measurements.
 
 ## Experimentation
 
@@ -69,7 +69,7 @@ const loadTimeMs = await page.evaluate(() => {
 });
 ```
 
-For each run, measure at least the default public homepage (`/`). When an optimization touches localization, measure every locale route covered by `tests/home.spec.ts`. When it touches checkout, also measure a representative buyer checkout route with stable fixture data.
+For each run, measure at least the default public homepage (`/`). When an optimization touches localization, measure every locale route covered by `apps/web/tests/checkout-dynamic-routes.spec.ts`. When it touches checkout, also measure a representative buyer checkout route with stable fixture data.
 
 Relevant codebase information:
 
@@ -151,7 +151,7 @@ Run this loop until the user stops the session:
 6. Compare against the current best route value.
 7. If load time improves and validation passes, keep the source change and optionally commit it with a concise lower-case subject.
 8. If load time is equal or worse, revert only your own experimental changes and log `discard`.
-9. If the run crashes, inspect the Playwright output and trace. Fix simple mistakes and rerun; otherwise revert your own experimental changes and log `crash`.
+9. If the run crashes, inspect the Playwright output and trace. Fix simple mistakes and rerun; otherwise revert your own experimental changes and log `crash`
 10. Repeat with the next idea.
 
 Relevant codebase information:

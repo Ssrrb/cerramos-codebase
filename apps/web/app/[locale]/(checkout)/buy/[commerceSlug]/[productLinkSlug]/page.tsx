@@ -57,23 +57,25 @@ const ProductLinkCheckoutPage = async ({
 }: ProductLinkCheckoutPageProps) => {
   const { commerceSlug, productLinkSlug } = await params;
   await warmCheckoutDatabaseConnection();
-  const checkout = await getPublicProductLinkCheckout(
+  const checkoutPromise = getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
   );
+  const locationDataPromise = getCheckoutLocationData();
+  const sessionPromise = hasSessionToken().then((hasToken) =>
+    hasToken ? getSession() : null
+  );
+  const [checkout, locationData, session] = await Promise.all([
+    checkoutPromise,
+    locationDataPromise,
+    sessionPromise,
+  ]);
 
   if (!checkout) {
     notFound();
   }
 
   const viewModel = createCheckoutViewModel(checkout);
-  const sessionPromise = hasSessionToken().then((hasToken) =>
-    hasToken ? getSession() : null
-  );
-  const [locationData, session] = await Promise.all([
-    getCheckoutLocationData(),
-    sessionPromise,
-  ]);
   const customerProfile = session?.user.id
     ? await getCurrentCustomerProfile()
     : null;

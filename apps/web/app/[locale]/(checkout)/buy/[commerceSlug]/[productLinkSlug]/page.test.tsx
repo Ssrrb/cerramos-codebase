@@ -8,6 +8,7 @@ const {
   getPublicProductLinkCheckoutMock,
   listCheckoutSavedAddressesMock,
   getSessionMock,
+  hasSessionTokenMock,
   notFoundMock,
   warmDatabaseConnectionMock,
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
   getPublicProductLinkCheckoutMock: vi.fn(),
   listCheckoutSavedAddressesMock: vi.fn(),
   getSessionMock: vi.fn(),
+  hasSessionTokenMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
   }),
@@ -47,6 +49,7 @@ vi.mock("@repo/auth/keys", () => ({
 vi.mock("@repo/auth/server", () => ({
   getCurrentCustomerProfile: getCurrentCustomerProfileMock,
   getSession: getSessionMock,
+  hasSessionToken: hasSessionTokenMock,
 }));
 
 vi.mock("@repo/database", () => ({
@@ -112,9 +115,11 @@ describe("product link checkout page", () => {
     getPublicProductLinkCheckoutMock.mockReset();
     listCheckoutSavedAddressesMock.mockReset();
     getSessionMock.mockReset();
+    hasSessionTokenMock.mockReset();
     warmDatabaseConnectionMock.mockReset();
     notFoundMock.mockClear();
     getSessionMock.mockResolvedValue(null);
+    hasSessionTokenMock.mockResolvedValue(false);
     getCurrentCustomerProfileMock.mockResolvedValue(null);
     getCheckoutLocationDataMock.mockResolvedValue(locationData);
     listCheckoutSavedAddressesMock.mockResolvedValue([]);
@@ -147,6 +152,7 @@ describe("product link checkout page", () => {
 
   test("renders the checkout client with the resolved server data", async () => {
     getPublicProductLinkCheckoutMock.mockResolvedValue(checkoutRecord);
+    hasSessionTokenMock.mockResolvedValue(true);
     getSessionMock.mockResolvedValue({
       user: {
         email: "buyer@example.com",
@@ -207,6 +213,39 @@ describe("product link checkout page", () => {
     expect(html).toContain("country_db_py");
     expect(html).toContain("address_1");
     expect(html).toContain("paymentRequired&quot;:true");
+  });
+
+  test("skips session lookup when the request has no auth token", async () => {
+    getPublicProductLinkCheckoutMock.mockResolvedValue(checkoutRecord);
+    hasSessionTokenMock.mockResolvedValue(false);
+    createCheckoutViewModelMock.mockReturnValue({
+      merchant: {
+        name: "Mate Shop",
+      },
+      orderSummary: {
+        title: "Tu pedido",
+      },
+      product: {
+        name: "Mate premium",
+      },
+    });
+
+    const { default: ProductLinkCheckoutPage } = await import("./page");
+
+    renderToStaticMarkup(
+      await ProductLinkCheckoutPage({
+        params: Promise.resolve({
+          commerceSlug: "mate-shop",
+          locale: "en",
+          productLinkSlug: "mate-premium",
+        }),
+      })
+    );
+
+    expect(hasSessionTokenMock).toHaveBeenCalledTimes(1);
+    expect(getSessionMock).not.toHaveBeenCalled();
+    expect(getCurrentCustomerProfileMock).not.toHaveBeenCalled();
+    expect(listCheckoutSavedAddressesMock).not.toHaveBeenCalled();
   });
 
   test("returns notFound for missing checkout links", async () => {

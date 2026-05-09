@@ -1,5 +1,9 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
-import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
+import {
+  getCurrentCustomerProfile,
+  getSession,
+  hasSessionToken,
+} from "@repo/auth/server";
 import { warmDatabaseConnection } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -63,9 +67,12 @@ const ProductLinkCheckoutPage = async ({
   }
 
   const viewModel = createCheckoutViewModel(checkout);
+  const sessionPromise = hasSessionToken().then((hasToken) =>
+    hasToken ? getSession() : null
+  );
   const [locationData, session] = await Promise.all([
     getCheckoutLocationData(),
-    getSession(),
+    sessionPromise,
   ]);
   const customerProfile = session?.user.id
     ? await getCurrentCustomerProfile()

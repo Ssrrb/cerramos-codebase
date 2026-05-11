@@ -48,10 +48,21 @@ export const Testimonials = ({ dictionary }: TestimonialsProps) => {
           </h2>
           <Carousel className="w-full" setApi={setApi}>
             <CarouselContent>
-              {dictionary.web.home.testimonials.items.map((item) => (
+              {dictionary.web.home.testimonials.items.map((item, index) => (
                 <CarouselItem className="lg:basis-1/2" key={item.title}>
                   <div className="flex aspect-video h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2">
-                    <User className="h-8 w-8 stroke-1" />
+                    {index === 0 ? (
+                      // biome-ignore lint/performance/noImgElement: remote placeholder image required for the landing-page experiment.
+                      <img
+                        alt="Cheki checkout screen with product details"
+                        className="h-16 w-32 rounded-lg object-cover"
+                        height={64}
+                        src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80"
+                        width={128}
+                      />
+                    ) : (
+                      <User className="h-8 w-8 stroke-1" />
+                    )}
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col">
                         <h3 className="text-xl tracking-tight">{item.title}</h3>

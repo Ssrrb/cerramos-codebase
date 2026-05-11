@@ -190,6 +190,8 @@ const getSessionToken = cache(async () => {
   });
 });
 
+export const hasSessionToken = async () => Boolean(await getSessionToken());
+
 export const getSession = async () => getSessionState();
 
 export const getCurrentCustomerProfile = cache(async () => {

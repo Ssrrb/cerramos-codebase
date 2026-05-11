@@ -1,8 +1,13 @@
 import { isGoogleAuthEnabled } from "@repo/auth/keys";
-import { getCurrentCustomerProfile, getSession } from "@repo/auth/server";
+import {
+  getCurrentCustomerProfile,
+  getSession,
+  hasSessionToken,
+} from "@repo/auth/server";
 import { warmDatabaseConnection } from "@repo/database";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { listCheckoutSavedAddresses } from "@/lib/checkout-customer-addresses";
 import { getCheckoutLocationData } from "@/lib/checkout-locations";
 import {
@@ -10,6 +15,8 @@ import {
   getPublicProductLinkCheckout,
 } from "@/lib/product-links";
 import { ProductLinkCheckoutClient } from "./product-link-checkout-client";
+
+const warmCheckoutDatabaseConnection = cache(warmDatabaseConnection);
 
 interface ProductLinkCheckoutPageProps {
   params: Promise<{
@@ -25,7 +32,7 @@ export const generateMetadata = async ({
   params,
 }: ProductLinkCheckoutPageProps): Promise<Metadata> => {
   const { commerceSlug, productLinkSlug } = await params;
-  await warmDatabaseConnection();
+  await warmCheckoutDatabaseConnection();
   const checkout = await getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
@@ -49,19 +56,26 @@ const ProductLinkCheckoutPage = async ({
   params,
 }: ProductLinkCheckoutPageProps) => {
   const { commerceSlug, productLinkSlug } = await params;
-  await warmDatabaseConnection();
-  const checkout = await getPublicProductLinkCheckout(
+  await warmCheckoutDatabaseConnection();
+  const checkoutPromise = getPublicProductLinkCheckout(
     commerceSlug,
     productLinkSlug
   );
+  const locationDataPromise = getCheckoutLocationData();
+  const sessionPromise = hasSessionToken().then((hasToken) =>
+    hasToken ? getSession() : null
+  );
+  const [checkout, locationData, session] = await Promise.all([
+    checkoutPromise,
+    locationDataPromise,
+    sessionPromise,
+  ]);
 
   if (!checkout) {
     notFound();
   }
 
   const viewModel = createCheckoutViewModel(checkout);
-  const locationData = await getCheckoutLocationData();
-  const session = await getSession();
   const customerProfile = session?.user.id
     ? await getCurrentCustomerProfile()
     : null;

@@ -14,30 +14,27 @@ const sortLocationOptions = <T extends { label: string }>(options: T[]) =>
 
 export const getCheckoutLocationData = cache(
   async (): Promise<CheckoutLocationData> => {
-    const countries: CheckoutLocationOption[] = sortLocationOptions(
-      await database
+    const [countries, states, cities] = await Promise.all([
+      database
         .select({
           label: schema.country.name,
           value: schema.country.id,
         })
         .from(schema.country)
-        .where(eq(schema.country.isActive, true))
-    );
-
-    const states: CheckoutLocationState[] = sortLocationOptions(
-      await database
+        .where(eq(schema.country.isActive, true)),
+      database
         .select({
           countryId: schema.state.countryId,
           label: schema.state.name,
           value: schema.state.id,
         })
         .from(schema.state)
-        .innerJoin(schema.country, eq(schema.state.countryId, schema.country.id))
-        .where(eq(schema.country.isActive, true))
-    );
-
-    const cities: CheckoutLocationCity[] = sortLocationOptions(
-      await database
+        .innerJoin(
+          schema.country,
+          eq(schema.state.countryId, schema.country.id)
+        )
+        .where(eq(schema.country.isActive, true)),
+      database
         .select({
           label: schema.city.name,
           stateId: schema.city.stateId,
@@ -45,14 +42,17 @@ export const getCheckoutLocationData = cache(
         })
         .from(schema.city)
         .innerJoin(schema.state, eq(schema.city.stateId, schema.state.id))
-        .innerJoin(schema.country, eq(schema.state.countryId, schema.country.id))
-        .where(eq(schema.country.isActive, true))
-    );
+        .innerJoin(
+          schema.country,
+          eq(schema.state.countryId, schema.country.id)
+        )
+        .where(eq(schema.country.isActive, true)),
+    ]);
 
     return {
-      cities,
-      countries,
-      states,
+      cities: sortLocationOptions<CheckoutLocationCity>(cities),
+      countries: sortLocationOptions<CheckoutLocationOption>(countries),
+      states: sortLocationOptions<CheckoutLocationState>(states),
     };
   }
 );

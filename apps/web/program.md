@@ -152,7 +152,7 @@ Run this loop until the user stops the session:
 7. If load time improves and validation passes, keep the source change and optionally commit it with a concise lower-case subject.
 8. If load time is equal or worse, revert only your own experimental changes and log `discard`.
 9. If the run crashes, inspect the Playwright output and trace. Fix simple mistakes and rerun; otherwise revert your own experimental changes and log `crash`
-10. Repeat with the next idea.
+10. Repeat from the best experiment base.
 
 Relevant codebase information:
 

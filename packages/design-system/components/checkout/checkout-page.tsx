@@ -1,15 +1,21 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { lazy, type ReactNode, Suspense, useState } from "react";
 import { cn } from "../../lib/utils";
 import { NonDistractingFooter } from "../layout/non-distracting-footer";
 import { NonDistractingHeader } from "../layout/non-distracting-header";
-import { AuthModal } from "../registration/auth-modal";
+import type { AuthModalType } from "../registration/auth-modal";
 import { Button } from "../ui/button";
 import {
   CheckoutProgressiveFlow,
   type CheckoutProgressiveFlowProps,
 } from "./checkout-progressive-flow";
+
+const AuthModal = lazy(async () => {
+  const module = await import("../registration/auth-modal");
+
+  return { default: module.AuthModal };
+});
 
 interface CheckoutPageProps
   extends Omit<CheckoutProgressiveFlowProps, "className" | "showHeader"> {
@@ -61,11 +67,13 @@ function CheckoutPage({
         </NonDistractingFooter>
       </div>
       {accountAction == null ? (
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-          type="sign-in"
-        />
+        <Suspense fallback={null}>
+          <AuthModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+            type={"sign-in" satisfies AuthModalType}
+          />
+        </Suspense>
       ) : null}
     </>
   );

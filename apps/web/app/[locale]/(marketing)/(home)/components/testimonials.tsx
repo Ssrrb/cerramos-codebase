@@ -13,6 +13,7 @@ import {
 } from "@repo/design-system/components/ui/carousel";
 import type { Dictionary } from "@repo/internationalization";
 import { User } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 interface TestimonialsProps {
@@ -52,13 +53,12 @@ export const Testimonials = ({ dictionary }: TestimonialsProps) => {
                 <CarouselItem className="lg:basis-1/2" key={item.title}>
                   <div className="flex aspect-video h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2">
                     {index === 0 ? (
-                      // biome-ignore lint/performance/noImgElement: remote placeholder image required for the landing-page experiment.
-                      <img
-                        alt="Cheki checkout screen with product details"
-                        className="h-16 w-32 rounded-lg object-cover"
-                        height={64}
-                        src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80"
-                        width={128}
+                      <Image
+                        alt="Cheki orders dashboard with order and payment statuses"
+                        className="h-24 w-full rounded-lg object-cover object-left-top"
+                        height={96}
+                        src="/marketing/screenshots/cheki-orders.png"
+                        width={360}
                       />
                     ) : (
                       <User className="h-8 w-8 stroke-1" />

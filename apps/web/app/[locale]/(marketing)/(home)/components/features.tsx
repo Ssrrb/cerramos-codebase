@@ -1,5 +1,6 @@
 import type { Dictionary } from "@repo/internationalization";
 import { BarChart3, Shield, ShoppingCart, Store } from "lucide-react";
+import Image from "next/image";
 
 interface FeaturesProps {
   dictionary: Dictionary;
@@ -23,12 +24,11 @@ export const Features = ({ dictionary }: FeaturesProps) => (
           <div className="flex aspect-square h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2 lg:aspect-auto">
             <div>
               <Store className="mb-4 h-8 w-8 stroke-1" />
-              {/* biome-ignore lint/performance/noImgElement: remote placeholder image required for the landing-page experiment. */}
-              <img
-                alt="Cheki seller dashboard showing sales analytics"
+              <Image
+                alt="Cheki merchant dashboard showing orders and customer activity"
                 className="mb-4 h-48 w-full rounded-lg object-cover"
                 height={192}
-                src="https://images.unsplash.com/photo-1553729459-afe8f2e2e910?w=800&q=80"
+                src="/marketing/screenshots/cheki-dashboard.png"
                 width={400}
               />
             </div>
@@ -65,7 +65,16 @@ export const Features = ({ dictionary }: FeaturesProps) => (
             </div>
           </div>
           <div className="flex aspect-square h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2 lg:aspect-auto">
-            <BarChart3 className="h-8 w-8 stroke-1" />
+            <div>
+              <BarChart3 className="mb-4 h-8 w-8 stroke-1" />
+              <Image
+                alt="Cheki products table with active payment links and prices"
+                className="mb-4 h-48 w-full rounded-lg object-cover object-left-top"
+                height={192}
+                src="/marketing/screenshots/cheki-products.png"
+                width={400}
+              />
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[3].title}

@@ -20,7 +20,7 @@
     "home": {
       "meta": {
         "title": "Sell Online in Seconds with Cheki",
-        "description": "Publish your products or services online and sell 24/7 with no complications. Cheki gives you the tools to grow."
+        "description": "Publish your products or services online and sell 24/7 in Paraguay with no complications. Cheki gives you the support to grow."
       },
       "hero": {
         "announcement": "Read our latest article"
@@ -48,7 +48,11 @@
             "title": "Control Panel",
             "description": "Monitor your sales, customers and inventory in real time from a simple yet powerful dashboard."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Cheki checkout showing a customer order summary and contact form",
+          "secure": "PagoPar logo for secure online payments"
+        }
       },
       "stats": {
         "title": "Results that matter",

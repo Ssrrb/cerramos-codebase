@@ -48,7 +48,11 @@
             "title": "Painel de controle",
             "description": "Monitore suas vendas, clientes e estoque em tempo real em um dashboard simples e poderoso."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Checkout da Cheki com resumo do pedido e formulario de contato",
+          "secure": "Logo da PagoPar para pagamentos online seguros"
+        }
       },
       "stats": {
         "title": "Resultados que importam",

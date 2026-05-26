@@ -42,7 +42,16 @@ export const Features = ({ dictionary }: FeaturesProps) => (
             </div>
           </div>
           <div className="flex aspect-square flex-col justify-between rounded-md bg-muted p-6">
-            <ShoppingCart className="h-8 w-8 stroke-1" />
+            <div>
+              <ShoppingCart className="mb-4 h-8 w-8 stroke-1" />
+              <Image
+                alt={dictionary.web.home.features.imageAlts.cart}
+                className="mb-4 h-32 w-full rounded-lg object-cover object-left-top"
+                height={160}
+                src="/marketing/screenshots/cheki-cart.png"
+                width={400}
+              />
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[1].title}
@@ -54,7 +63,18 @@ export const Features = ({ dictionary }: FeaturesProps) => (
           </div>
 
           <div className="flex aspect-square flex-col justify-between rounded-md bg-muted p-6">
-            <Shield className="h-8 w-8 stroke-1" />
+            <div>
+              <Shield className="mb-4 h-8 w-8 stroke-1" />
+              <div className="mb-4 flex h-32 w-full items-center justify-center rounded-lg bg-background p-8">
+                <Image
+                  alt={dictionary.web.home.features.imageAlts.secure}
+                  className="h-auto max-h-full w-full object-contain"
+                  height={102}
+                  src="/marketing/screenshots/logo-pagopar-400px.png"
+                  width={400}
+                />
+              </div>
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[2].title}

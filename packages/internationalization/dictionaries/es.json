@@ -20,7 +20,7 @@
     "home": {
       "meta": {
         "title": "Vendé online en segundos",
-        "description": "Publica tus productos o servicios online y vendé 24/7 sin complicaciones. Cheki te da las herramientas para crecer."
+        "description": "Publica tus productos o servicios online en Paraguay y vendé 24/7 sin complicaciones. Cheki te da el soporte para crecer."
       },
       "hero": {
         "announcement": "Lee nuestro último artículo"
@@ -48,7 +48,11 @@
             "title": "Panel de control",
             "description": "Monitoreá tus ventas, clientes e inventario en tiempo real desde un dashboard simple y poderoso."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Checkout de Cheki con resumen del pedido y formulario de contacto",
+          "secure": "Logo de PagoPar para pagos online seguros"
+        }
       },
       "stats": {
         "title": "Resultados que importan",

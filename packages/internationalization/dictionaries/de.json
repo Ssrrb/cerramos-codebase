@@ -48,7 +48,11 @@
             "title": "Sichere Transaktionen",
             "description": "Seien Sie unbesorgt, denn Ihre Geschäftsabläufe sind durch Sicherheits- und Verschlüsselungsmaßnahmen auf Unternehmensniveau geschützt."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Cheki-Checkout mit Bestellübersicht und Kontaktformular",
+          "secure": "PagoPar-Logo für sichere Online-Zahlungen"
+        }
       },
       "stats": {
         "title": "Echte Ergebnisse, echte Auswirkungen",

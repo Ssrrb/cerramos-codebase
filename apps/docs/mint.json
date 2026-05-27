@@ -1,60 +1,60 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Starter Kit",
+  "name": "Cheki Docs",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#0D9373",
-    "light": "#07C983",
-    "dark": "#0D9373",
+    "primary": "#10110F",
+    "light": "#22C55E",
+    "dark": "#22C55E",
     "anchors": {
-      "from": "#0D9373",
-      "to": "#07C983"
+      "from": "#10110F",
+      "to": "#22C55E"
     }
   },
   "topbarLinks": [
     {
-      "name": "Support",
-      "url": "mailto:support@mintlify.com"
+      "name": "Marketing",
+      "url": "https://cheki.app"
     }
   ],
   "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://dashboard.mintlify.com"
+    "name": "App",
+    "url": "https://app.cheki.app"
   },
   "tabs": [
     {
-      "name": "API Reference",
-      "url": "api-reference"
+      "name": "Template",
+      "url": "template"
     }
   ],
   "anchors": [
     {
-      "name": "Documentation",
+      "name": "Cheki",
       "icon": "book-open-cover",
-      "url": "https://mintlify.com/docs"
+      "url": "https://cheki.app"
     },
     {
-      "name": "Community",
-      "icon": "slack",
-      "url": "https://mintlify.com/community"
+      "name": "Dashboard",
+      "icon": "layout-dashboard",
+      "url": "https://app.cheki.app"
     },
     {
-      "name": "Blog",
-      "icon": "newspaper",
-      "url": "https://mintlify.com/blog"
+      "name": "Source",
+      "icon": "github",
+      "url": "https://github.com/vercel/next-forge"
     }
   ],
   "navigation": [
     {
-      "group": "Get Started",
-      "pages": ["introduction", "quickstart", "development"]
+      "group": "Start",
+      "pages": ["introduction", "quickstart", "development", "template"]
     },
     {
-      "group": "Essentials",
+      "group": "Mintlify Essentials",
       "pages": [
         "essentials/markdown",
         "essentials/code",
@@ -78,8 +78,6 @@
     }
   ],
   "footerSocials": {
-    "x": "https://x.com/mintlify",
-    "github": "https://github.com/mintlify",
-    "linkedin": "https://www.linkedin.com/company/mintlify"
+    "github": "https://github.com/vercel/next-forge"
   }
 }

@@ -1,44 +1,42 @@
 import "server-only";
 
-import { existsSync } from "node:fs";
-import { basename, dirname, isAbsolute, join } from "node:path";
 import { Storage } from "@google-cloud/storage";
 import { keys } from "./keys";
 
 export type StorageClient = Storage;
 
-export type BuildObjectKeyOptions = {
+export interface BuildObjectKeyOptions {
   directory?: string;
   fileName: string;
   prefix?: string;
-};
+}
 
-export type CreateSignedUploadUrlOptions = {
+export interface CreateSignedUploadUrlOptions {
   bucketName?: string;
   contentType: string;
   expiresInSeconds?: number;
   maxBytes?: number;
   objectKey: string;
-};
+}
 
-export type CreateSignedReadUrlOptions = {
+export interface CreateSignedReadUrlOptions {
   bucketName?: string;
   expiresInSeconds?: number;
   objectKey: string;
-};
+}
 
-export type DeleteObjectOptions = {
+export interface DeleteObjectOptions {
   bucketName?: string;
   ignoreNotFound?: boolean;
   objectKey: string;
-};
+}
 
-export type ObjectExistsOptions = {
+export interface ObjectExistsOptions {
   bucketName?: string;
   objectKey: string;
-};
+}
 
-export type SignedUploadTarget = {
+export interface SignedUploadTarget {
   bucketName: string;
   contentType: string;
   expiresAt: string;
@@ -47,14 +45,14 @@ export type SignedUploadTarget = {
   method: "PUT";
   objectKey: string;
   url: string;
-};
+}
 
-export type SignedReadTarget = {
+export interface SignedReadTarget {
   bucketName: string;
   expiresAt: string;
   objectKey: string;
   url: string;
-};
+}
 
 const DEFAULT_DIRECTORY = "uploads";
 const DEFAULT_UPLOAD_URL_TTL_SECONDS = 15 * 60;
@@ -86,34 +84,7 @@ const getUploadTtlSeconds = (seconds?: number) =>
 const getReadTtlSeconds = (seconds?: number) =>
   seconds ?? keys().GCS_READ_URL_TTL_SECONDS ?? DEFAULT_READ_URL_TTL_SECONDS;
 
-const resolveCredentialPath = (credentialPath?: string) => {
-  if (!credentialPath) {
-    return undefined;
-  }
-
-  if (!isAbsolute(credentialPath) || existsSync(credentialPath)) {
-    return credentialPath;
-  }
-
-  const fileName = basename(credentialPath);
-  let currentDirectory = process.cwd();
-
-  while (true) {
-    const candidatePath = join(currentDirectory, fileName);
-
-    if (existsSync(candidatePath)) {
-      return candidatePath;
-    }
-
-    const parentDirectory = dirname(currentDirectory);
-
-    if (parentDirectory === currentDirectory) {
-      return credentialPath;
-    }
-
-    currentDirectory = parentDirectory;
-  }
-};
+const resolveCredentialPath = (credentialPath?: string) => credentialPath;
 
 export const createStorageClient = (): Storage => {
   if (cachedStorageClient) {

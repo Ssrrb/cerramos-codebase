@@ -48,7 +48,11 @@
             "title": "安全交易",
             "description": "放心，您的业务运营受到企业级安全和加密的保护。"
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Cheki 结账页，显示订单摘要和联系表单",
+          "secure": "用于安全在线支付的 PagoPar 标志"
+        }
       },
       "stats": {
         "title": "真实结果，真实影响",

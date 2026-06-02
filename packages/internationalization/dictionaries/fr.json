@@ -48,7 +48,11 @@
             "title": "Transactions sécurisées",
             "description": "Soyez tranquille en sachant que vos opérations commerciales sont protégées par une sécurité et un cryptage de niveau entreprise."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Checkout Cheki avec résumé de commande et formulaire de contact",
+          "secure": "Logo PagoPar pour les paiements en ligne sécurisés"
+        }
       },
       "stats": {
         "title": "Résultats réels, impact réel",

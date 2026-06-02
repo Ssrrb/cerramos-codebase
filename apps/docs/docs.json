@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Starter Kit",
+  "name": "Cheki Docs",
   "colors": {
-    "primary": "#0D9373",
-    "light": "#07C983",
-    "dark": "#0D9373"
+    "primary": "#10110F",
+    "light": "#22C55E",
+    "dark": "#22C55E"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -14,15 +14,16 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Start",
             "pages": [
               "introduction",
               "quickstart",
-              "development"
+              "development",
+              "template"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Mintlify Essentials",
             "pages": [
               "essentials/markdown",
               "essentials/code",
@@ -57,19 +58,19 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "anchor": "Cheki",
+          "href": "https://cheki.app",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
+          "anchor": "Dashboard",
+          "href": "https://app.cheki.app",
+          "icon": "layout-dashboard"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Source",
+          "href": "https://github.com/vercel/next-forge",
+          "icon": "github"
         }
       ]
     }
@@ -81,21 +82,19 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
+        "label": "Marketing",
+        "href": "https://cheki.app"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "App",
+      "href": "https://app.cheki.app"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://www.linkedin.com/company/mintlify"
+      "github": "https://github.com/vercel/next-forge"
     }
   }
 }

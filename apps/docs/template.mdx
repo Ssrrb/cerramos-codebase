@@ -1,0 +1,67 @@
+---
+title: 'Template'
+description: 'How Cheki uses the next-forge template without losing product ownership.'
+---
+
+Cheki is built from a next-forge-style Turborepo, but the repository has already moved toward Cheki-specific auth, database, payments, and product modules.
+
+<Frame>
+  <img src="/images/cheki-products.png" alt="Cheki product links screen" />
+</Frame>
+
+## Current workspace shape
+
+<CardGroup cols={2}>
+  <Card title="apps/app" icon="monitor-cog">
+    Authenticated product surface for merchants and operators.
+  </Card>
+  <Card title="apps/web" icon="globe">
+    Public marketing, checkout, commerce media, and buyer-facing flows.
+  </Card>
+  <Card title="apps/api" icon="webhook">
+    Health checks, cron, inbound webhooks, and integration edges.
+  </Card>
+  <Card title="packages/*" icon="package">
+    Shared modules exposed as `@repo/*`, including auth, database, design system, payments, and configuration.
+  </Card>
+</CardGroup>
+
+## Template boundaries to preserve
+
+- Keep shared logic in the smallest appropriate `packages/*` boundary.
+- Prefer server components unless a route needs client interactivity.
+- Treat PostgreSQL as the always-on infrastructure.
+- Use Drizzle for the database layer and Better Auth for authentication.
+- Keep PagoPar/uPay payment behavior inside the payments integration surface.
+
+## Cheki-specific rules
+
+<AccordionGroup>
+  <Accordion icon="split" title="Order state is not payment state">
+    Order operations and payment settlement move independently. Do not collapse them into one model.
+  </Accordion>
+  <Accordion icon="message-circle" title="Messaging is not the source of truth">
+    WhatsApp and other channels can notify users, but Cheki product surfaces own operational state.
+  </Accordion>
+  <Accordion icon="shopping-bag" title="One link, one offer">
+    MVP purchase links represent one product or offer, and MVP orders contain one item.
+  </Accordion>
+</AccordionGroup>
+
+## Useful commands
+
+```bash
+bun run dev
+bun run build
+bun run test
+bun run check
+bun run fix
+bun run migrate
+```
+
+Use Turbo filters for scoped work, for example:
+
+```bash
+bun run build --filter @repo/database
+bun run dev --filter app
+```

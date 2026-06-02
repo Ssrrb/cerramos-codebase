@@ -1,5 +1,6 @@
 import type { Dictionary } from "@repo/internationalization";
-import { User } from "lucide-react";
+import { BarChart3, Shield, ShoppingCart, Store } from "lucide-react";
+import Image from "next/image";
 
 interface FeaturesProps {
   dictionary: Dictionary;
@@ -21,7 +22,16 @@ export const Features = ({ dictionary }: FeaturesProps) => (
         </div>
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex aspect-square h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2 lg:aspect-auto">
-            <User className="h-8 w-8 stroke-1" />
+            <div>
+              <Store className="mb-4 h-8 w-8 stroke-1" />
+              <Image
+                alt="Cheki merchant dashboard showing orders and customer activity"
+                className="mb-4 h-48 w-full rounded-lg object-cover"
+                height={192}
+                src="/marketing/screenshots/cheki-dashboard.png"
+                width={400}
+              />
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[0].title}
@@ -32,7 +42,16 @@ export const Features = ({ dictionary }: FeaturesProps) => (
             </div>
           </div>
           <div className="flex aspect-square flex-col justify-between rounded-md bg-muted p-6">
-            <User className="h-8 w-8 stroke-1" />
+            <div>
+              <ShoppingCart className="mb-4 h-8 w-8 stroke-1" />
+              <Image
+                alt={dictionary.web.home.features.imageAlts.cart}
+                className="mb-4 h-32 w-full rounded-lg object-cover object-left-top"
+                height={160}
+                src="/marketing/screenshots/cheki-cart.png"
+                width={400}
+              />
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[1].title}
@@ -44,7 +63,18 @@ export const Features = ({ dictionary }: FeaturesProps) => (
           </div>
 
           <div className="flex aspect-square flex-col justify-between rounded-md bg-muted p-6">
-            <User className="h-8 w-8 stroke-1" />
+            <div>
+              <Shield className="mb-4 h-8 w-8 stroke-1" />
+              <div className="mb-4 flex h-32 w-full items-center justify-center rounded-lg bg-background p-8">
+                <Image
+                  alt={dictionary.web.home.features.imageAlts.secure}
+                  className="h-auto max-h-full w-full object-contain"
+                  height={102}
+                  src="/marketing/screenshots/logo-pagopar-400px.png"
+                  width={400}
+                />
+              </div>
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[2].title}
@@ -55,7 +85,16 @@ export const Features = ({ dictionary }: FeaturesProps) => (
             </div>
           </div>
           <div className="flex aspect-square h-full flex-col justify-between rounded-md bg-muted p-6 lg:col-span-2 lg:aspect-auto">
-            <User className="h-8 w-8 stroke-1" />
+            <div>
+              <BarChart3 className="mb-4 h-8 w-8 stroke-1" />
+              <Image
+                alt="Cheki products table with active payment links and prices"
+                className="mb-4 h-48 w-full rounded-lg object-cover object-left-top"
+                height={192}
+                src="/marketing/screenshots/cheki-products.png"
+                width={400}
+              />
+            </div>
             <div className="flex flex-col">
               <h3 className="text-xl tracking-tight">
                 {dictionary.web.home.features.items[3].title}

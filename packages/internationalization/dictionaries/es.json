@@ -1,8 +1,8 @@
 {
   "web": {
     "global": {
-      "primaryCta": "Reservar una llamada",
-      "secondaryCta": "Regístrate"
+      "primaryCta": "Hablá con nosotros",
+      "secondaryCta": "Crear cuenta gratis"
     },
     "header": {
       "home": "Inicio",
@@ -20,7 +20,7 @@
     "home": {
       "meta": {
         "title": "Vendé online en segundos",
-        "description": "Publica tus productos o servicios online y vendé 24/7 sin complicaciones."
+        "description": "Publica tus productos o servicios online en Paraguay y vendé 24/7 sin complicaciones. Cheki te da el soporte para crecer."
       },
       "hero": {
         "announcement": "Lee nuestro último artículo"
@@ -33,120 +33,124 @@
         "description": "Descubre cómo nuestras características de vanguardia pueden revolucionar tus operaciones diarias.",
         "items": [
           {
-            "title": "Operaciones simplificadas",
-            "description": "Nuestra plataforma simplifica las operaciones, reduce la complejidad y ayuda a las pequeñas empresas a prosperar en la economía moderna."
+            "title": "Publicá en segundos",
+            "description": "Creá tu tienda online en minutos, no en días. Publicá productos con fotos, precios y descripciones al instante."
           },
           {
-            "title": "Análisis en tiempo real",
-            "description": "Obtén información instantánea sobre el rendimiento de tu negocio con herramientas de análisis e informes completos."
+            "title": "Vendé 24/7",
+            "description": "Tus clientes pueden comprar a cualquier hora del día o de la noche. Automatizá cobros, notificaciones y seguimiento."
           },
           {
-            "title": "Flujos de trabajo automatizados",
-            "description": "Ahorra tiempo y reduce errores con automatización inteligente que maneja tareas repetitivas por ti."
+            "title": "Cobros seguros",
+            "description": "Aceptá pagos con tarjeta, transferencias y efectivo. Todos los cobros están protegidos con cifrado de nivel bancario."
           },
           {
-            "title": "Transacciones seguras",
-            "description": "Descansa tranquilo sabiendo que las operaciones de tu negocio están protegidas por seguridad y cifrado de nivel empresarial."
+            "title": "Panel de control",
+            "description": "Monitoreá tus ventas, clientes e inventario en tiempo real desde un dashboard simple y poderoso."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Checkout de Cheki con resumen del pedido y formulario de contacto",
+          "secure": "Logo de PagoPar para pagos online seguros"
+        }
       },
       "stats": {
-        "title": "Resultados reales, impacto real",
-        "description": "Únete a miles de empresas que han transformado sus operaciones con nuestra plataforma. Nuestras soluciones han ayudado a las empresas a reducir los costos administrativos en un 60% y aumentar la eficiencia comercial en un 45% en promedio.",
+        "title": "Resultados que importan",
+        "description": "Únete a miles de emprendedores que ya venden con Cheki. Nuestra plataforma ayuda a negocios de todos los tamaños a crecer y alcanzar nuevos clientes.",
         "items": [
           {
-            "title": "Usuarios activos mensuales",
-            "metric": "100000",
-            "delta": "10",
-            "type": "unidad"
+            "title": "Vendedores activos",
+            "metric": "50000",
+            "delta": "15",
+            "type": "unit"
           },
           {
-            "title": "Usuarios activos diarios",
-            "metric": "10000",
-            "delta": "-5",
-            "type": "unidad"
+            "title": "Productos publicados",
+            "metric": "500000",
+            "delta": "25",
+            "type": "unit"
           },
           {
-            "title": "Ingresos recurrentes mensuales",
-            "metric": "100000",
-            "delta": "20",
-            "type": "moneda"
+            "title": "Ventas mensuales",
+            "metric": "10000000",
+            "delta": "30",
+            "type": "currency"
           },
           {
-            "title": "Costo por adquisición",
-            "metric": "100",
-            "delta": "-10",
-            "type": "moneda"
+            "title": "Tasa de conversión",
+            "metric": "12.5",
+            "delta": "8",
+            "type": "unit"
           }
         ]
       },
       "testimonials": {
-        "title": "Escucha a nuestra comunidad próspera",
+        "title": "Lo que dicen nuestros vendedores",
         "items": [
           {
-            "title": "Mejor decisión",
-            "description": "Nuestro objetivo era simplificar el comercio de las pequeñas y medianas empresas, haciéndolo más fácil y rápido que nunca, y lo logramos juntos.",
+            "title": "Mi negocio despegó",
+            "description": "Empecé vendiendo desde casa y en 3 meses ya tenía más de 200 pedidos. Cheki me ayudó a organizar todo.",
             "author": {
-              "name": "Hayden Bleasel",
-              "image": "https://github.com/haydenbleasel.png"
+              "name": "María García",
+              "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
             }
           },
           {
-            "title": "Cambio radical",
-            "description": "Esta plataforma revolucionó la forma en que manejamos nuestras operaciones diarias. Las ganancias de eficiencia han sido notables.",
+            "title": "Súper fácil de usar",
+            "description": "Lo mejor es lo simple que es publicar un producto. Con el celular sacás la foto, agregás el precio y en 2 minutos ya está online.",
             "author": {
-              "name": "Lee Robinson",
-              "image": "https://github.com/leerob.png"
+              "name": "Carlos Mendoza",
+              "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
             }
           },
           {
-            "title": "Superó las expectativas",
-            "description": "La implementación fue fluida y los resultados fueron inmediatos. Nuestro equipo se adaptó rápidamente y la productividad se disparó.",
+            "title": "Ventas 24/7",
+            "description": "Antes solo vendía cuando estaba abierto. Ahora recibo pedidos mientras duermo. El dashboard me muestra todo al instante.",
             "author": {
-              "name": "shadcn",
-              "image": "https://github.com/shadcn.png"
+              "name": "Ana López",
+              "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80"
             }
           },
           {
-            "title": "Soporte excepcional",
-            "description": "No solo la plataforma es poderosa, sino que el equipo de atención al cliente ha sido excepcional en ayudarnos a maximizar su potencial.",
+            "title": "Atención increíble",
+            "description": "Cuando tuve una duda, el soporte me respondió en minutos. No solo resolvieron mi problema, me dieron ideas para vender más.",
             "author": {
-              "name": "Pontus Abrahamsson",
-              "image": "https://github.com/pontusab.png"
+              "name": "Pedro Ramírez",
+              "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"
             }
           }
         ]
       },
       "faq": {
-        "title": "Preguntas comunes, respuestas de expertos",
-        "description": "Obtén respuestas rápidas a tus preguntas más urgentes sobre nuestra plataforma. Hemos recopilado todo lo que necesitas saber sobre la transformación de las operaciones de tu negocio y cómo comenzar con soluciones comerciales modernas.",
-        "cta": "¿Tienes preguntas? Contáctanos",
+        "title": "Preguntas frecuentes sobre Cheki",
+        "description": "Todo lo que necesitás saber para empezar a vender productos y servicios online con Cheki.",
+        "cta": "¿Tenés preguntas? Hablemos",
         "items": [
           {
-            "question": "¿Qué es la plataforma?",
-            "answer": "La plataforma es una plataforma de comercio que te permite comerciar con confianza."
+            "question": "¿Qué es Cheki?",
+            "answer": "Cheki es una plataforma que te permite vender productos y servicios online de forma sencilla. Publicás tu producto con fotos y precio, y tus clientes pueden comprar al instante, 24/7."
           },
           {
-            "question": "¿Qué tan segura es la plataforma?",
-            "answer": "Nuestra plataforma emplea medidas de seguridad de nivel empresarial, incluyendo cifrado de extremo a extremo y autenticación multifactor, para asegurar que tus actividades comerciales permanezcan completamente seguras."
+            "question": "¿Necesito tener una tienda física?",
+            "answer": "No, para nada. Con Cheki podés vender desde tu casa, tu celular o donde estés. Muchos de nuestros vendedores exitosos empezaron sin local físico."
           },
           {
-            "question": "¿Qué características de comercio están disponibles?",
-            "answer": "La plataforma ofrece herramientas de comercio completas que incluyen datos de mercado en tiempo real, gráficos avanzados, estrategias de comercio automatizadas y análisis detallados para apoyar la toma de decisiones informadas."
+            "question": "¿Qué métodos de pago acepto?",
+            "answer": "Cheki acepta pagos con tarjeta de crédito/débito, transferencias bancarias y efectivo. Todos los pagos están protegidos y seguros."
           },
           {
-            "question": "¿Cómo funciona la fijación de precios?",
-            "answer": "Ofrecemos niveles de precios flexibles diseñados para escalar con las necesidades de tu negocio, desde planes iniciales para comerciantes individuales hasta soluciones empresariales para grandes organizaciones."
+            "question": "¿Cuánto cuesta?",
+            "answer": "Cheki tiene un plan gratuito para empezar. Cuando quieras escalar, ofrecemos planes premium con más herramientas y funcionalidades. Sin contratos ni costos ocultos."
           },
           {
-            "question": "¿Qué tipo de soporte proporcionan?",
-            "answer": "Nuestro equipo de soporte dedicado está disponible 24/7 a través de múltiples canales, incluyendo chat en vivo, correo electrónico y teléfono. También proporcionamos documentación extensa y recursos de capacitación."
+            "question": "¿Cómo recibo soporte?",
+            "answer": "Nuestro equipo de soporte está disponible por chat y correo electrónico. También tenemos tutoriales, guías y una comunidad de vendedores para ayudarte."
           }
         ]
       },
       "cta": {
-        "title": "Comienza la transformación de tu negocio",
-        "description": "Únete a miles de empresas con visión de futuro que ya han modernizado sus operaciones. Nuestra plataforma ofrece las herramientas, el soporte y la eficiencia que necesitas para tener éxito en el competitivo mercado actual. Comienza en minutos."
+        "title": "Empezá a vender hoy",
+        "description": "Creá tu tienda online gratis en menos de 5 minutos. Sin tarjeta de crédito, sin compromisos. Únete a miles de emprendedores que ya confían en Cheki."
       }
     },
     "blog": {

@@ -1,16 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const {
-  existsSyncMock,
   getSignedUrlMock,
   deleteMock,
   existsMock,
   fileMock,
   bucketMock,
-  storageMock,
   storageConstructorMock,
 } = vi.hoisted(() => {
-  const existsSyncMock = vi.fn<(path: string) => boolean>(() => false);
   const getSignedUrlMock = vi.fn();
   const deleteMock = vi.fn();
   const existsMock = vi.fn();
@@ -22,36 +19,26 @@ const {
   const bucketMock = vi.fn(() => ({
     file: fileMock,
   }));
-  const storageMock = {
-    bucket: bucketMock,
-  };
-
   return {
     bucketMock,
     deleteMock,
-    existsSyncMock,
     existsMock,
     fileMock,
     getSignedUrlMock,
     storageConstructorMock: vi.fn((options?: unknown) => ({
       options,
-      storageMock,
     })),
-    storageMock,
   };
 });
 
 vi.mock("@google-cloud/storage", () => ({
   Storage: class MockStorage {
+    bucket = bucketMock;
+
     constructor(options: unknown) {
       storageConstructorMock(options);
-      return storageMock;
     }
   },
-}));
-
-vi.mock("node:fs", () => ({
-  existsSync: existsSyncMock,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -70,8 +57,6 @@ describe("@repo/storage", () => {
     getSignedUrlMock.mockReset();
     deleteMock.mockReset();
     existsMock.mockReset();
-    existsSyncMock.mockReset();
-    existsSyncMock.mockReturnValue(false);
   });
 
   test("builds a deterministic object key shape", async () => {
@@ -170,9 +155,6 @@ describe("@repo/storage", () => {
   test("uses the configured credential file when present", async () => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
       "/tmp/cerramos-service-account.json";
-    existsSyncMock.mockImplementation(
-      (path: string) => path === "/tmp/cerramos-service-account.json"
-    );
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
     const { createSignedUploadUrl } = await import("./index");
 
@@ -187,18 +169,10 @@ describe("@repo/storage", () => {
     });
   });
 
-  test("falls back to a matching credential file in the workspace when an absolute path is stale", async () => {
+  test("passes relative credential files to the storage client", async () => {
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
-      "/Users/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json";
-    existsSyncMock.mockImplementation(
-      (path: string) =>
-        path ===
-        "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json"
-    );
+      "cerramos-service-account.json";
     getSignedUrlMock.mockResolvedValue(["https://upload.example.test"]);
-    const processCwdSpy = vi
-      .spyOn(process, "cwd")
-      .mockReturnValue("/home/sebastian/Desktop/cerramos-codebase/apps/web");
     const { createSignedUploadUrl } = await import("./index");
 
     await createSignedUploadUrl({
@@ -207,12 +181,9 @@ describe("@repo/storage", () => {
     });
 
     expect(storageConstructorMock).toHaveBeenCalledWith({
-      keyFilename:
-        "/home/sebastian/Desktop/cerramos-codebase/cerramos-c686e70540fc.json",
+      keyFilename: "cerramos-service-account.json",
       projectId: undefined,
     });
-
-    processCwdSpy.mockRestore();
   });
 
   test("deletes an object using the configured bucket", async () => {

@@ -1,8 +1,8 @@
 {
   "web": {
     "global": {
-      "primaryCta": "Book a call",
-      "secondaryCta": "Sign up"
+      "primaryCta": "Talk to us",
+      "secondaryCta": "Create free account"
     },
     "header": {
       "home": "Home",
@@ -19,8 +19,8 @@
     },
     "home": {
       "meta": {
-        "title": "Transform Your Business Operations Today",
-        "description": "In today's fast-paced world, your business deserves better than outdated trading systems. Our innovative platform streamlines operations, reduces complexity, and helps small businesses thrive in the modern economy."
+        "title": "Sell Online in Seconds with Cheki",
+        "description": "Publish your products or services online and sell 24/7 in Paraguay with no complications. Cheki gives you the support to grow."
       },
       "hero": {
         "announcement": "Read our latest article"
@@ -29,124 +29,128 @@
         "title": "Empowering Success Stories Across the Globe"
       },
       "features": {
-        "title": "Powerful Tools for Modern Business",
+        "title": "Powerful tools for the modern business",
         "description": "Discover how our cutting-edge features can revolutionize your daily operations.",
         "items": [
           {
-            "title": "Streamlined Operations",
-            "description": "Our platform streamlines operations, reduces complexity, and helps small businesses thrive in the modern economy."
+            "title": "Publish in Seconds",
+            "description": "Create your online store in minutes, not days. Publish products with photos, prices and descriptions instantly."
           },
           {
-            "title": "Real-Time Analytics",
-            "description": "Get instant insights into your business performance with comprehensive analytics and reporting tools."
+            "title": "Sell 24/7",
+            "description": "Your customers can buy at any time of day or night. Automate payments, notifications and follow-ups."
           },
           {
-            "title": "Automated Workflows",
-            "description": "Save time and reduce errors with intelligent automation that handles repetitive tasks for you."
+            "title": "Secure Payments",
+            "description": "Accept card payments, transfers and cash. All payments are protected with bank-level encryption."
           },
           {
-            "title": "Secure Transactions",
-            "description": "Rest easy knowing your business operations are protected by enterprise-grade security and encryption."
+            "title": "Control Panel",
+            "description": "Monitor your sales, customers and inventory in real time from a simple yet powerful dashboard."
           }
-        ]
+        ],
+        "imageAlts": {
+          "cart": "Cheki checkout showing a customer order summary and contact form",
+          "secure": "PagoPar logo for secure online payments"
+        }
       },
       "stats": {
-        "title": "Real Results, Real Impact",
-        "description": "Join thousands of businesses that have transformed their operations with our platform. Our solutions have helped companies reduce administrative overhead by 60% and increase trading efficiency by 45% on average.",
+        "title": "Results that matter",
+        "description": "Join thousands of entrepreneurs who already sell with Cheki. Our platform helps businesses of all sizes grow and reach new customers.",
         "items": [
           {
-            "title": "Monthly active users",
-            "metric": "100000",
-            "delta": "10",
+            "title": "Active sellers",
+            "metric": "50000",
+            "delta": "15",
             "type": "unit"
           },
           {
-            "title": "Daily active users",
-            "metric": "10000",
-            "delta": "-5",
+            "title": "Products published",
+            "metric": "500000",
+            "delta": "25",
             "type": "unit"
           },
           {
-            "title": "Monthly recurring revenue",
-            "metric": "100000",
-            "delta": "20",
+            "title": "Monthly sales",
+            "metric": "10000000",
+            "delta": "30",
             "type": "currency"
           },
           {
-            "title": "Cost per acquisition",
-            "metric": "100",
-            "delta": "-10",
-            "type": "currency"
+            "title": "Conversion rate",
+            "metric": "12.5",
+            "delta": "8",
+            "type": "unit"
           }
         ]
       },
       "testimonials": {
-        "title": "Hear from Our Thriving Community",
+        "title": "What our sellers say",
         "items": [
           {
-            "title": "Best decision",
-            "description": "Our goal was to streamline SMB trade, making it easier and faster than ever and we did it together.",
+            "title": "My business took off",
+            "description": "I started selling from home and in 3 months I already had over 200 orders. Cheki helped me organize everything.",
             "author": {
-              "name": "Hayden Bleasel",
-              "image": "https://github.com/haydenbleasel.png"
+              "name": "María García",
+              "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
             }
           },
           {
-            "title": "Game changer",
-            "description": "This platform revolutionized how we handle our day-to-day operations. The efficiency gains have been remarkable.",
+            "title": "Super easy to use",
+            "description": "The best part is how simple it is to publish a product. Take a photo with your phone, add the price, and in 2 minutes it's online.",
             "author": {
-              "name": "Lee Robinson",
-              "image": "https://github.com/leerob.png"
+              "name": "Carlos Mendoza",
+              "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
             }
           },
           {
-            "title": "Exceeded expectations",
-            "description": "Implementation was smooth and the results were immediate. Our team adapted quickly and productivity soared.",
+            "title": "Sales 24/7",
+            "description": "Before I only sold when I was open. Now I receive orders while I sleep. The dashboard shows me everything instantly.",
             "author": {
-              "name": "shadcn",
-              "image": "https://github.com/shadcn.png"
+              "name": "Ana López",
+              "image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80"
             }
           },
           {
-            "title": "Outstanding support",
-            "description": "Not only is the platform powerful, but the customer support team has been exceptional in helping us maximize its potential.",
+            "title": "Incredible support",
+            "description": "When I had a question, support responded in minutes. They not only solved my problem but gave me ideas to sell more.",
             "author": {
-              "name": "Pontus Abrahamsson",
-              "image": "https://github.com/pontusab.png"
+              "name": "Pedro Ramírez",
+              "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80"
             }
           }
         ]
       },
       "faq": {
-        "title": "Common Questions, Expert Answers",
-        "description": "Get quick answers to your most pressing questions about our platform. We've compiled everything you need to know about transforming your business operations and getting started with modern trading solutions.",
-        "cta": "Any questions? Reach out",
+        "title": "Frequently asked questions about Cheki",
+        "description": "Everything you need to know to start selling products and services online with Cheki.",
+        "cta": "Got questions? Let's talk",
         "items": [
           {
-            "question": "What is the platform?",
-            "answer": "The platform is a trading platform that allows you to trade with confidence."
+            "question": "What is Cheki?",
+            "answer": "Cheki is a platform that lets you sell products and services online simply. You publish your product with photos and price, and your customers can buy instantly, 24/7."
           },
           {
-            "question": "How secure is the platform?",
-            "answer": "Our platform employs enterprise-grade security measures, including end-to-end encryption and multi-factor authentication, to ensure your trading activities remain completely secure."
+            "question": "Do I need a physical store?",
+            "answer": "Not at all. With Cheki you can sell from home, your phone, or wherever you are. Many of our successful sellers started without a physical location."
           },
           {
-            "question": "What trading features are available?",
-            "answer": "The platform offers comprehensive trading tools including real-time market data, advanced charting, automated trading strategies, and detailed analytics to support informed decision-making."
+            "question": "What payment methods do you accept?",
+            "answer": "Cheki accepts credit/debit card payments, bank transfers and cash. All payments are protected and secure."
           },
           {
-            "question": "How does pricing work?",
-            "answer": "We offer flexible pricing tiers designed to scale with your business needs, from starter plans for individual traders to enterprise solutions for large organizations."
+            "question": "How much does it cost?",
+            "answer": "Cheki has a free plan to get started. When you're ready to scale, we offer premium plans with more tools and features. No contracts or hidden costs."
           },
           {
-            "question": "What kind of support do you provide?",
-            "answer": "Our dedicated support team is available 24/7 through multiple channels including live chat, email, and phone. We also provide extensive documentation and training resources."
+            "question": "How do I get support?",
+            "answer": "Our support team is available via chat and email. We also have tutorials, guides and a community of sellers to help you."
           }
         ]
       },
       "cta": {
-        "title": "Start Your Business Transformation",
-        "description": "Join thousands of forward-thinking businesses who have already modernized their operations. Our platform offers the tools, support, and efficiency you need to succeed in today's competitive market. Get started in minutes."
+        "title": "Start selling today",
+        "description": "Create your online store free in less than 5 minutes. No credit card, no commitments. Join thousands of entrepreneurs who already trust Cheki."
       }
     },
     "blog": {

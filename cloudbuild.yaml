@@ -9,9 +9,11 @@ substitutions:
   _WEB_URL: https://cerramos-web.example.com
   _API_URL: https://cerramos-api.example.com
   _DOCS_URL: https://docs.example.com
-  _GCS_BUCKET_NAME: cerramos-assets
+  _GCS_BUCKET_NAME: imagenes-cerramos
   _DATABASE_URL_SECRET: cerramos-database-url
   _BETTER_AUTH_SECRET_NAME: cerramos-better-auth-secret
+  _AUTH_GOOGLE_CLIENT_ID_SECRET: cerramos-google-client-id
+  _AUTH_GOOGLE_CLIENT_SECRET_SECRET: cerramos-google-client-secret
 
 steps:
   - id: build-app
@@ -35,14 +37,14 @@ steps:
       - --build-arg
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$BUILD_ID
       - .
 
   - id: push-app
     name: gcr.io/cloud-builders/docker
     args:
       - push
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$BUILD_ID
     waitFor:
       - build-app
 
@@ -53,7 +55,7 @@ steps:
       - run
       - deploy
       - ${_APP_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
@@ -63,7 +65,7 @@ steps:
       - --min-instances=0
       - --service-account=${_SERVICE_ACCOUNT_NAME}@$PROJECT_ID.iam.gserviceaccount.com
       - --set-env-vars=NODE_ENV=production,HOSTNAME=0.0.0.0,NEXT_TELEMETRY_DISABLED=1,NEXT_PUBLIC_APP_URL=${_APP_URL},NEXT_PUBLIC_WEB_URL=${_WEB_URL},NEXT_PUBLIC_API_URL=${_API_URL},NEXT_PUBLIC_DOCS_URL=${_DOCS_URL},BETTER_AUTH_URL=${_APP_URL},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-      - --set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,BETTER_AUTH_SECRET=${_BETTER_AUTH_SECRET_NAME}:latest
+      - --set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,BETTER_AUTH_SECRET=${_BETTER_AUTH_SECRET_NAME}:latest,AUTH_GOOGLE_CLIENT_ID=${_AUTH_GOOGLE_CLIENT_ID_SECRET}:latest,AUTH_GOOGLE_CLIENT_SECRET=${_AUTH_GOOGLE_CLIENT_SECRET_SECRET}:latest
     waitFor:
       - push-app
 
@@ -82,20 +84,20 @@ steps:
       - --build-arg
       - NEXT_PUBLIC_DOCS_URL=${_DOCS_URL}
       - --build-arg
-      - BETTER_AUTH_URL=${_APP_URL}
+      - BETTER_AUTH_URL=${_WEB_URL}
       - --build-arg
       - GCS_BUCKET_NAME=${_GCS_BUCKET_NAME}
       - --build-arg
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$BUILD_ID
       - .
 
   - id: push-web
     name: gcr.io/cloud-builders/docker
     args:
       - push
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$BUILD_ID
     waitFor:
       - build-web
 
@@ -106,7 +108,7 @@ steps:
       - run
       - deploy
       - ${_WEB_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
@@ -115,8 +117,8 @@ steps:
       - --cpu=1
       - --min-instances=0
       - --service-account=${_SERVICE_ACCOUNT_NAME}@$PROJECT_ID.iam.gserviceaccount.com
-      - --set-env-vars=NODE_ENV=production,HOSTNAME=0.0.0.0,NEXT_TELEMETRY_DISABLED=1,NEXT_PUBLIC_APP_URL=${_APP_URL},NEXT_PUBLIC_WEB_URL=${_WEB_URL},NEXT_PUBLIC_API_URL=${_API_URL},NEXT_PUBLIC_DOCS_URL=${_DOCS_URL},BETTER_AUTH_URL=${_APP_URL},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},GOOGLE_CLOUD_PROJECT=$PROJECT_ID
-      - --set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,BETTER_AUTH_SECRET=${_BETTER_AUTH_SECRET_NAME}:latest
+      - --set-env-vars=NODE_ENV=production,HOSTNAME=0.0.0.0,NEXT_TELEMETRY_DISABLED=1,NEXT_PUBLIC_APP_URL=${_APP_URL},NEXT_PUBLIC_WEB_URL=${_WEB_URL},NEXT_PUBLIC_API_URL=${_API_URL},NEXT_PUBLIC_DOCS_URL=${_DOCS_URL},BETTER_AUTH_URL=${_WEB_URL},GCS_BUCKET_NAME=${_GCS_BUCKET_NAME},GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - --set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,BETTER_AUTH_SECRET=${_BETTER_AUTH_SECRET_NAME}:latest,AUTH_GOOGLE_CLIENT_ID=${_AUTH_GOOGLE_CLIENT_ID_SECRET}:latest,AUTH_GOOGLE_CLIENT_SECRET=${_AUTH_GOOGLE_CLIENT_SECRET_SECRET}:latest
     waitFor:
       - push-web
 
@@ -141,14 +143,14 @@ steps:
       - --build-arg
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$BUILD_ID
       - .
 
   - id: push-api
     name: gcr.io/cloud-builders/docker
     args:
       - push
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$BUILD_ID
     waitFor:
       - build-api
 
@@ -159,7 +161,7 @@ steps:
       - run
       - deploy
       - ${_API_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
@@ -174,9 +176,9 @@ steps:
       - push-api
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$SHORT_SHA
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$SHORT_SHA
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-app:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-web:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPOSITORY}/cerramos-api:$BUILD_ID
 
 options:
   logging: CLOUD_LOGGING_ONLY

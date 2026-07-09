@@ -23,6 +23,7 @@ const {
   signOutMock,
   signUpEmailMock,
   useSessionMock,
+  useSearchParamsMock,
 } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
@@ -31,6 +32,7 @@ const {
   signOutMock: vi.fn(),
   signUpEmailMock: vi.fn(),
   useSessionMock: vi.fn(),
+  useSearchParamsMock: vi.fn(),
 }));
 
 vi.mock("@repo/auth/client", () => ({
@@ -52,6 +54,7 @@ vi.mock("next/navigation", () => ({
     push: pushMock,
     refresh: refreshMock,
   }),
+  useSearchParams: useSearchParamsMock,
 }));
 
 describe("CheckoutAuthAction", () => {
@@ -63,7 +66,9 @@ describe("CheckoutAuthAction", () => {
     signOutMock.mockReset();
     signUpEmailMock.mockReset();
     useSessionMock.mockReset();
+    useSearchParamsMock.mockReset();
 
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
     useSessionMock.mockReturnValue({
       data: null,
       error: null,
@@ -208,7 +213,46 @@ describe("CheckoutAuthAction", () => {
       screen
         .getByRole("menuitem", { name: addressesMenuItemPattern })
         .getAttribute("href")
-    ).toBe("/en/account/direcciones");
+    ).toBe(
+      "/en/account/direcciones?returnTo=%2Fen%2Fbuy%2Fmate-shop%2Fmate-premium"
+    );
+  });
+
+  test("preserves checkout query params in the direcciones return handoff", async () => {
+    useSearchParamsMock.mockReturnValue(
+      new URLSearchParams({
+        color: "verde",
+        size: "grande",
+      })
+    );
+    useSessionMock.mockReturnValue({
+      data: {
+        user: {
+          email: "buyer@example.com",
+          name: "Buyer Name",
+        },
+      },
+      error: null,
+      isPending: false,
+      isRefetching: false,
+      refetch: vi.fn(),
+    });
+
+    render(<CheckoutAuthAction />);
+
+    fireEvent.pointerDown(
+      screen.getByRole("button", { name: buyerNamePattern })
+    );
+
+    expect(
+      (
+        await screen.findByRole("menuitem", {
+          name: addressesMenuItemPattern,
+        })
+      ).getAttribute("href")
+    ).toBe(
+      "/en/account/direcciones?returnTo=%2Fen%2Fbuy%2Fmate-shop%2Fmate-premium%3Fcolor%3Dverde%26size%3Dgrande"
+    );
   });
 
   test("signs out from the checkout account menu", async () => {

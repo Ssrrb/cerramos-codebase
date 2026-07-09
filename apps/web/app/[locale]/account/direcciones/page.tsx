@@ -1,4 +1,5 @@
 import { getCurrentCustomerProfile, requireSession } from "@repo/auth/server";
+import { normalizeReturnTo } from "@repo/auth/utils";
 import { CustomerAccountHeader } from "@repo/design-system/components/customer-ordenes";
 import { Button } from "@repo/design-system/components/ui/button";
 import {
@@ -8,7 +9,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@repo/design-system/components/ui/empty";
-import { TriangleAlert } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import { getCustomerAddressesPageData } from "@/lib/customer-addresses";
 import { CustomerAddressesPageClient } from "./page-client";
@@ -16,6 +17,9 @@ import { CustomerAddressesPageClient } from "./page-client";
 interface CustomerAddressesPageRouteProps {
   params: Promise<{
     locale: string;
+  }>;
+  searchParams?: Promise<{
+    returnTo?: string | string[];
   }>;
 }
 
@@ -25,8 +29,14 @@ export const metadata: Metadata = {
 
 const CustomerAddressesRoute = async ({
   params,
+  searchParams,
 }: CustomerAddressesPageRouteProps) => {
   const { locale } = await params;
+  const resolvedSearchParams = await searchParams;
+  const returnToParam = Array.isArray(resolvedSearchParams?.returnTo)
+    ? resolvedSearchParams.returnTo[0]
+    : resolvedSearchParams?.returnTo;
+  const returnToHref = normalizeReturnTo(returnToParam);
   const session = await requireSession();
 
   try {
@@ -37,7 +47,10 @@ const CustomerAddressesRoute = async ({
       : [];
 
     return (
-      <CustomerAddressesPageClient initialAddresses={initialAddresses} />
+      <CustomerAddressesPageClient
+        initialAddresses={initialAddresses}
+        returnToHref={returnToHref}
+      />
     );
   } catch {
     const breadcrumbItems = [
@@ -71,9 +84,19 @@ const CustomerAddressesRoute = async ({
               <EmptyTitle>{errorState.title}</EmptyTitle>
               <EmptyDescription>{errorState.description}</EmptyDescription>
             </EmptyHeader>
-            <Button asChild>
-              <a href={errorState.action.href}>{errorState.action.label}</a>
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {returnToHref ? (
+                <Button asChild variant="outline">
+                  <a href={returnToHref}>
+                    <ArrowLeft className="size-4" />
+                    Volver al checkout
+                  </a>
+                </Button>
+              ) : null}
+              <Button asChild>
+                <a href={errorState.action.href}>{errorState.action.label}</a>
+              </Button>
+            </div>
           </Empty>
         </div>
       </main>

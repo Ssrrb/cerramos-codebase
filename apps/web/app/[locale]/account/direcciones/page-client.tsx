@@ -9,6 +9,8 @@ import {
 } from "@repo/design-system/components/addresses";
 import { Button } from "@repo/design-system/components/ui/button";
 import { Form } from "@repo/design-system/components/ui/form";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -77,10 +79,12 @@ const toFormValues = (address: CustomerAddressSummary): AddressFormValues => ({
 
 interface CustomerAddressesPageClientProps {
   initialAddresses: CustomerAddressSummary[];
+  returnToHref?: string | null;
 }
 
 export function CustomerAddressesPageClient({
   initialAddresses,
+  returnToHref = null,
 }: CustomerAddressesPageClientProps) {
   const [addresses, setAddresses] =
     useState<CustomerAddressSummary[]>(initialAddresses);
@@ -262,6 +266,16 @@ export function CustomerAddressesPageClient({
   return (
     <main className="mx-auto w-full max-w-7xl px-6 py-10 sm:py-12">
       <div className="space-y-8">
+        {returnToHref ? (
+          <div>
+            <Button asChild variant="outline">
+              <Link href={returnToHref}>
+                <ArrowLeft className="size-4" />
+                Volver al checkout
+              </Link>
+            </Button>
+          </div>
+        ) : null}
         <AddressesPanel
           addresses={addresses}
           onAddAddress={openCreateForm}
